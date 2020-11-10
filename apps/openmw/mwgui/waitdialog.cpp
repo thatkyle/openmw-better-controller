@@ -23,6 +23,10 @@
 #include "../mwmechanics/npcstats.hpp"
 #include "../mwmechanics/actorutil.hpp"
 
+#include "../mwstate/charactermanager.hpp"
+
+#include "../mwinput/actions.hpp"
+
 namespace MWGui
 {
 

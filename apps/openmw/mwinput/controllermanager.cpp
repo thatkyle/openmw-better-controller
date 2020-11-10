@@ -23,6 +23,8 @@
 
 namespace MWInput
 {
+    MyGUI::KeyCode menuActionToKeyCode(MWInput::MenuAction action);
+
     ControllerManager::ControllerManager(BindingsManager* bindingsManager,
             ActionManager* actionManager,
             MouseManager* mouseManager,
@@ -297,27 +299,26 @@ namespace MWInput
     bool ControllerManager::gamepadToGuiControl(const SDL_ControllerButtonEvent &arg)
     {
         // Presumption of GUI mode will be removed in the future.
-        // MyGUI KeyCodes *may* change.
-        MyGUI::KeyCode key = MyGUI::KeyCode::None;
+        MWInput::MenuAction key = MWInput::MenuAction::MA_None;
         switch (arg.button)
         {
             case SDL_CONTROLLER_BUTTON_DPAD_UP:
-                key = MyGUI::KeyCode::ArrowUp;
+                key = MWInput::MenuAction::MA_DPadUp;
                 break;
             case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
-                key = MyGUI::KeyCode::ArrowRight;
+                key = MWInput::MenuAction::MA_DPadRight;
                 break;
             case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
-                key = MyGUI::KeyCode::ArrowDown;
+                key = MWInput::MenuAction::MA_DPadDown;
                 break;
             case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
-                key = MyGUI::KeyCode::ArrowLeft;
+                key = MWInput::MenuAction::MA_DPadLeft;
                 break;
             case SDL_CONTROLLER_BUTTON_A:
                 // If we are using the joystick as a GUI mouse, A must be handled via mouse.
                 if (mGamepadGuiCursorEnabled)
                     return false;
-                key = MyGUI::KeyCode::Space;
+                key = MWInput::MenuAction::MA_A;
                 break;
             case SDL_CONTROLLER_BUTTON_B:
                 if (MyGUI::InputManager::getInstance().isModalAny())
@@ -326,21 +327,30 @@ namespace MWInput
                     MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
                 return true;
             case SDL_CONTROLLER_BUTTON_X:
-                key = MyGUI::KeyCode::Semicolon;
+                key = MWInput::MenuAction::MA_X;
                 break;
             case SDL_CONTROLLER_BUTTON_Y:
-                key = MyGUI::KeyCode::Apostrophe;
+                key = MWInput::MenuAction::MA_Y;
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
-                key = MyGUI::KeyCode::Period;
+                key = MWInput::MenuAction::MA_Black;
                 break;
             case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
-                key = MyGUI::KeyCode::Slash;
+                key = MWInput::MenuAction::MA_White;
+                break;
+            case SDL_CONTROLLER_BUTTON_START:
+                key = MWInput::MenuAction::MA_Start;
+                break;
+            case SDL_CONTROLLER_BUTTON_BACK:
+                key = MWInput::MenuAction::MA_Select;
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSTICK:
                 mGamepadGuiCursorEnabled = !mGamepadGuiCursorEnabled;
                 MWBase::Environment::get().getWindowManager()->setCursorActive(mGamepadGuiCursorEnabled);
                 return true;
+            case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+                key = MWInput::MenuAction::MA_JSRightClick;
+                break;
             default:
                 return false;
         }
@@ -349,7 +359,7 @@ namespace MWInput
         if (SDL_IsTextInputActive())
             return false;
 
-        MWBase::Environment::get().getWindowManager()->injectKeyPress(key, 0, false);
+        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(key), 1, false); // Uses text '1' to signal a gamepad keypress.
         return true;
     }
 
@@ -359,11 +369,11 @@ namespace MWInput
         {
             case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
                 if (arg.value == 32767) // Treat like a button.
-                    MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::Minus, 0, false);
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, false);
                 break;
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
                 if (arg.value == 32767) // Treat like a button.
-                    MWBase::Environment::get().getWindowManager()->injectKeyPress(MyGUI::KeyCode::Equals, 0, false);
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, false);
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
             case SDL_CONTROLLER_AXIS_LEFTY:
@@ -399,4 +409,9 @@ namespace MWInput
             return false;
     }
 
+
+    MyGUI::KeyCode menuActionToKeyCode(MWInput::MenuAction action)
+    {
+        return static_cast<MyGUI::KeyCode::Enum>(static_cast<int>(action));
+    }
 }

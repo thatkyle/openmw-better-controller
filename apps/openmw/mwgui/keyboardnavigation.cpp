@@ -167,7 +167,7 @@ enum Direction
 
 bool KeyboardNavigation::injectKeyPress(MyGUI::KeyCode key, unsigned int text, bool repeat)
 {
-    if (!mEnabled)
+    if (!mEnabled || text != 0) // Text is used to signal gamepad controls.
         return false;
 
     switch (key.getValue())

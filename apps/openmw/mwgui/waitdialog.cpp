@@ -228,12 +228,40 @@ namespace MWGui
 
     void WaitDialog::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        if (key == MyGUI::KeyCode::ArrowUp)
-            mHourSlider->setScrollPosition(std::min(mHourSlider->getScrollPosition()+1, mHourSlider->getScrollRange()-1));
-        else if (key == MyGUI::KeyCode::ArrowDown)
-            mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition())-1, 0));
-        else
-            return;
+        if (character == 1) { // Gamepad control.
+            MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+            switch (action)
+            {
+                case MWInput::MA_A:
+                    onWaitButtonClicked(sender);
+                    break;
+                case MWInput::MA_X:
+                    if (mUntilHealedButton->getVisible())
+                        onUntilHealedButtonClicked(sender);
+                    break;
+                case MWInput::MA_B:
+                    onCancelButtonClicked(sender);
+                    break;
+                case MWInput::MA_DPadLeft:
+                    mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition())-1, 0));
+                    break;
+                case MWInput::MA_DPadRight:
+                    mHourSlider->setScrollPosition(std::min(mHourSlider->getScrollPosition()+1, mHourSlider->getScrollRange()-1));
+                    break;
+                default:
+                    break;
+            }
+        }
+        else {
+
+            if (key == MyGUI::KeyCode::ArrowUp)
+                mHourSlider->setScrollPosition(std::min(mHourSlider->getScrollPosition()+1, mHourSlider->getScrollRange()-1));
+            else if (key == MyGUI::KeyCode::ArrowDown)
+                mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition())-1, 0));
+            else
+                return;
+        }
+
         onHourSliderChangedPosition(mHourSlider, mHourSlider->getScrollPosition());
     }
 

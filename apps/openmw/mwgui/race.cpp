@@ -14,6 +14,7 @@
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwrender/characterpreview.hpp"
+#include "../mwinput/actions.hpp"
 
 #include "tooltips.hpp"
 
@@ -90,6 +91,7 @@ namespace MWGui
         mRaceList->setScrollVisible(true);
         mRaceList->eventListSelectAccept += MyGUI::newDelegate(this, &RaceDialog::onAccept);
         mRaceList->eventListChangePosition += MyGUI::newDelegate(this, &RaceDialog::onSelectRace);
+        mRaceList->eventKeyButtonPressed += MyGUI::newDelegate(this, &RaceDialog::onKeyButtonPressed);
 
         setText("SkillsT", MWBase::Environment::get().getWindowManager()->getGameSettingString("sBonusSkillTitle", "Skill Bonus"));
         getWidget(mSkillList, "SkillList");
@@ -208,6 +210,72 @@ namespace MWGui
     void RaceDialog::onBackClicked(MyGUI::Widget* _sender)
     {
         eventBack();
+    }
+
+    void RaceDialog::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        size_t currentRaceIndex = mRaceList->getIndexSelected();
+        size_t scrollPos = mHeadRotate->getScrollPosition();
+
+        switch (action)
+        {
+            case MWInput::MA_A:
+                RaceDialog::onOkClicked(sender);
+                break;
+            case MWInput::MA_B:
+                onBackClicked(sender);
+                break;
+            case MWInput::MA_X:
+                RaceDialog::onSelectNextGender(sender);
+                break;
+            case MWInput::MA_Black:
+                RaceDialog::onSelectNextFace(sender);
+                break;
+            case MWInput::MA_White:
+                RaceDialog::onSelectNextHair(sender);
+                break;
+            case MWInput::MA_DPadUp:
+                if (currentRaceIndex)
+                {
+                    mRaceList->setIndexSelected(--currentRaceIndex);
+                    RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
+                    mRaceList->beginToItemAt(currentRaceIndex);
+                }
+                break;
+            case MWInput::MA_DPadDown:
+                if (currentRaceIndex + 1 < mRaceList->getItemCount())
+                {
+                    mRaceList->setIndexSelected(++currentRaceIndex);
+                    RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
+                    mRaceList->beginToItemAt(currentRaceIndex);
+                }
+                break;
+            case MWInput::MA_DPadRight: // TODO: Transition to MA_RTrigger when sensitivity is handled.
+                if (scrollPos + mHeadRotate->getScrollWheelPage() >= mHeadRotate->getScrollRange())
+                    scrollPos = mHeadRotate->getScrollRange() - 1; // Subtract 1 to avoid resetting scrollbar to 0.
+                else
+                    scrollPos += mHeadRotate->getScrollWheelPage();
+
+                mHeadRotate->setScrollPosition(scrollPos);
+                RaceDialog::onHeadRotate(mHeadRotate, scrollPos);
+                break;
+            case MWInput::MA_DPadLeft:  // TODO: Transition to MA_LTrigger when sensitivity is handled.
+                if (scrollPos <= mHeadRotate->getScrollWheelPage())
+                    scrollPos = 0;
+                else
+                    scrollPos -= mHeadRotate->getScrollWheelPage();
+
+                mHeadRotate->setScrollPosition(scrollPos);
+                RaceDialog::onHeadRotate(mHeadRotate, scrollPos);
+                break;
+            default:
+                break;
+        }
     }
 
     void RaceDialog::onHeadRotate(MyGUI::ScrollBar* scroll, size_t _position)

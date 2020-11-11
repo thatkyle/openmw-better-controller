@@ -20,11 +20,14 @@
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/cellstore.hpp"
 
+#include "../mwinput/actions.hpp"
+
 namespace MWGui
 {
     TravelWindow::TravelWindow() :
         WindowBase("openmw_travel_window.layout")
         , mCurrentY(0)
+        , mDestinationHighlight(0)
     {
         getWidget(mCancelButton, "CancelButton");
         getWidget(mPlayerGold, "PlayerGold");
@@ -32,6 +35,7 @@ namespace MWGui
         getWidget(mDestinations, "Travel");
         getWidget(mDestinationsView, "DestinationsView");
 
+        mDestinationsView->eventKeyButtonPressed += MyGUI::newDelegate(this, &TravelWindow::onKeyButtonPressed);
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &TravelWindow::onCancelButtonClicked);
 
         mDestinations->setCoord(450/2-mDestinations->getTextSize().width/2,
@@ -104,6 +108,8 @@ namespace MWGui
         mCurrentY = 0;
         while (mDestinationsView->getChildCount())
             MyGUI::Gui::getInstance().destroyWidget(mDestinationsView->getChildAt(0));
+        mDestinationWidgets.clear();
+        mDestinationHighlight = 0;
     }
 
     void TravelWindow::setPtr(const MWWorld::Ptr& actor)
@@ -139,6 +145,18 @@ namespace MWGui
         mDestinationsView->setVisibleVScroll(false);
         mDestinationsView->setCanvasSize (MyGUI::IntSize(mDestinationsView->getWidth(), std::max(mDestinationsView->getHeight(), mCurrentY)));
         mDestinationsView->setVisibleVScroll(true);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mDestinationsView);
+
+        // Gamepad controls need a list of selectable destinations.
+        MyGUI::EnumeratorWidgetPtr destButtonList = mDestinationsView->getEnumerator();
+        while (destButtonList.next())
+        {
+            if (destButtonList.current()->getEnabled())
+                mDestinationWidgets.push_back(destButtonList.current());
+        }
+
+        if (!mDestinationWidgets.empty())
+            mDestinationWidgets[mDestinationHighlight]->_setWidgetState("highlighted");
     }
 
     void TravelWindow::onTravelButtonClick(MyGUI::Widget* _sender)
@@ -222,6 +240,32 @@ namespace MWGui
             mDestinationsView->setViewOffset(MyGUI::IntPoint(0, 0));
         else
             mDestinationsView->setViewOffset(MyGUI::IntPoint(0, static_cast<int>(mDestinationsView->getViewOffset().top + _rel*0.3f)));
+    }
+
+    void TravelWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B)
+            onCancelButtonClicked(sender);
+        else if (!mDestinationWidgets.empty()) // Only control travel options if there are any.
+        {
+            if (action == MWInput::MA_A)
+                onTravelButtonClick(mDestinationWidgets[mDestinationHighlight]);
+            else if (action == MWInput::MA_DPadUp && mDestinationHighlight > 0)
+            {
+                mDestinationWidgets[mDestinationHighlight]->_setWidgetState("normal");
+                mDestinationWidgets[--mDestinationHighlight]->_setWidgetState("highlighted");
+            }
+            else if (action == MWInput::MA_DPadDown && mDestinationHighlight < mDestinationWidgets.size() - 1)
+            {
+                mDestinationWidgets[mDestinationHighlight]->_setWidgetState("normal");
+                mDestinationWidgets[++mDestinationHighlight]->_setWidgetState("highlighted");
+            }
+        }
     }
 }
 

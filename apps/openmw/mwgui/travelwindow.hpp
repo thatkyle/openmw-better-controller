@@ -1,6 +1,7 @@
 #ifndef MWGUI_TravelWINDOW_H
 #define MWGUI_TravelWINDOW_H
 
+#include <vector>
 
 #include "windowbase.hpp"
 #include "referenceinterface.hpp"
@@ -38,6 +39,11 @@ namespace MWGui
             void updateLabels();
 
             void onReferenceUnavailable() override;
+
+            // Gamepad controls:
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+            std::vector<MyGUI::Widget*> mDestinationWidgets;
+            unsigned int mDestinationHighlight;
     };
 }
 

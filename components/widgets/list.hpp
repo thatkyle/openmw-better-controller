@@ -47,6 +47,7 @@ namespace Gui
         ///< get widget for an item name, useful to set up tooltip
 
         void scrollToTop();
+        void scrollToTarget(const std::string name);
 
         void setPropertyOverride(const std::string& _key, const std::string& _value) override;
 

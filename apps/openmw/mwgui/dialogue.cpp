@@ -15,6 +15,7 @@
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/dialoguemanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -22,6 +23,8 @@
 
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/actorutil.hpp"
+
+#include "../mwinput/actions.hpp"
 
 #include "bookpage.hpp"
 #include "textcolours.hpp"
@@ -272,6 +275,8 @@ namespace MWGui
         , mPersuasionDialog(new ResponseCallback(this))
         , mCallback(new ResponseCallback(this))
         , mGreetingCallback(new ResponseCallback(this, false))
+        , mTopicHighlight(0)
+        , mChoiceHighlight(1)
     {
         // Centre dialog
         center();
@@ -287,6 +292,7 @@ namespace MWGui
 
         getWidget(mGoodbyeButton, "ByeButton");
         mGoodbyeButton->eventMouseButtonClick += MyGUI::newDelegate(this, &DialogueWindow::onByeClicked);
+        mGoodbyeButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &DialogueWindow::onKeyButtonPressed);
 
         getWidget(mDispositionBar, "Disposition");
         getWidget(mDispositionText,"DispositionText");
@@ -355,6 +361,8 @@ namespace MWGui
     {
         if (exit())
         {
+            mGoodbyeButton->setStateSelected(false);
+            mTopicHighlight = 0;
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Dialogue);
         }
     }
@@ -425,6 +433,8 @@ namespace MWGui
             // The history is not reset here
             mKeywords.clear();
             mTopicsList->clear();
+            mTopicWidgets.clear();
+            mTopicHighlight = 0;
             for (Link* link : mLinks)
                 mDeleteLater.push_back(link); // Links are not deleted right away to prevent issues with event handlers
             mLinks.clear();
@@ -499,6 +509,9 @@ namespace MWGui
 
     void DialogueWindow::updateTopicsPane()
     {
+        std::string currentTopic = "";
+        if (mTopicHighlight < mTopicWidgets.size())
+            currentTopic = mTopicWidgets[mTopicHighlight]->getCaption();
         mTopicsList->clear();
         for (auto& linkPair : mTopicLinks)
             mDeleteLater.push_back(linkPair.second);
@@ -560,6 +573,38 @@ namespace MWGui
         updateHistory();
         // The topics list has been regenerated so topic formatting needs to be updated
         updateTopicFormat();
+
+        // Avoid separaters with gamepad controls. Could be replaced with a walk of mTopicsList that skips empty strings on each up/down button press.
+        // If replacing, keep mTopicHighlight update and highlight/scrollToTarget.
+        mTopicWidgets.clear();
+        std::string topicName = "";
+        bool foundTopic = false;
+        for (unsigned int i = 0; i < mTopicsList->getItemCount(); ++i)
+        {
+            topicName = mTopicsList->getItemNameAt(i);
+            if (!topicName.empty())
+            {
+                mTopicWidgets.push_back(mTopicsList->getItemWidget(topicName));
+                if(!currentTopic.compare(topicName))
+                {
+                    mTopicHighlight = mTopicWidgets.size() - 1;
+                    foundTopic = true;
+                }
+            }
+        }
+
+        if (!foundTopic)
+        {
+            if (mTopicHighlight >= mTopicWidgets.size())
+                mTopicHighlight = mTopicWidgets.size() - 1;
+        }
+
+        if (!mTopicWidgets.empty())
+        {
+            mTopicWidgets[mTopicHighlight]->_setWidgetState("highlighted");
+            if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+                mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+        }
     }
 
     void DialogueWindow::updateHistory(bool scrollbar)
@@ -593,7 +638,11 @@ namespace MWGui
             mLinks.push_back(link);
 
             typesetter->lineBreak();
-            BookTypesetter::Style* questionStyle = typesetter->createHotStyle(body, textColours.answer, textColours.answerOver,
+            MyGUI::Colour answerColour = textColours.answer;
+            if (mChoiceHighlight == choice.second) // Should && with XBox HUD mode check.
+                answerColour = textColours.answerOver;
+
+            BookTypesetter::Style* questionStyle = typesetter->createHotStyle(body, answerColour, textColours.answerOver,
                                                                               textColours.answerPressed,
                                                                               TypesetBook::InteractiveId(link));
             typesetter->write(questionStyle, to_utf8_span(choice.first.c_str()));
@@ -633,12 +682,7 @@ namespace MWGui
             onScrollbarMoved(mScrollBar, 0);
         }
 
-        bool goodbyeEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() || mGoodbye;
-        bool goodbyeWasEnabled = mGoodbyeButton->getEnabled();
-        mGoodbyeButton->setEnabled(goodbyeEnabled);
-        if (goodbyeEnabled && !goodbyeWasEnabled)
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
-
+        mGoodbyeButton->setEnabled(true); // Goodbye should always be enabled. As in the original, it simply won't work during choices. This makes gamepads work too.
         bool topicsEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye;
         mTopicsList->setEnabled(topicsEnabled);
     }
@@ -659,6 +703,7 @@ namespace MWGui
 
     void DialogueWindow::onChoiceActivated(int id)
     {
+        mChoiceHighlight = 1; // TODO: Setting to one and incrementing/decrementing causes problems in non-conforming dialogue scripts.
         if (mGoodbye)
         {
             onGoodbyeActivated();
@@ -724,6 +769,79 @@ namespace MWGui
     void DialogueWindow::onReferenceUnavailable()
     {
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Dialogue);
+    }
+
+    void DialogueWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad only controls.
+        if (character != 1)
+            return;
+
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B)
+            onByeClicked(mGoodbyeButton);
+        else if (action == MWInput::MA_A)
+        {
+            if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+                onChoiceActivated(mChoiceHighlight);
+            else if (mGoodbyeButton->getStateSelected() || mTopicWidgets.empty())
+                onByeClicked(mGoodbyeButton);
+            else if (mTopicHighlight < mTopicWidgets.size())
+                onSelectListItem(mTopicWidgets[mTopicHighlight]->getCaption(), *mTopicWidgets[mTopicHighlight]->getUserData<int>());
+        }
+        else if (action == MWInput::MA_LTrigger)
+            DialogueWindow::onMouseWheel(mScrollBar, 40);
+        else if (action == MWInput::MA_RTrigger)
+            DialogueWindow::onMouseWheel(mScrollBar, -40);
+        else if (action == MWInput::MA_DPadUp)
+        {
+            if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+            {
+                if (mChoiceHighlight > 1)
+                {
+                    --mChoiceHighlight;
+                    updateHistory();
+                }
+            }
+            else if (!mTopicWidgets.empty())
+            {
+                if (mGoodbyeButton->getStateSelected())
+                {
+                    mGoodbyeButton->setStateSelected(false);
+                    mTopicHighlight = mTopicWidgets.size() - 1;
+                    mTopicWidgets[mTopicHighlight]->_setWidgetState("highlighted");
+                }
+                else if (mTopicHighlight)
+                {
+                    mTopicWidgets[mTopicHighlight]->_setWidgetState("normal");
+                    mTopicWidgets[--mTopicHighlight]->_setWidgetState("highlighted");
+                    mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+                }
+            }
+        }
+        else if (action == MWInput::MA_DPadDown)
+        {
+            if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+            {
+                if ((unsigned long)mChoiceHighlight < MWBase::Environment::get().getDialogueManager()->getChoices().size())
+                {
+                    ++mChoiceHighlight;
+                    updateHistory();
+                }
+            }
+            else if (!mTopicWidgets.empty() && mTopicHighlight < mTopicWidgets.size() - 1)
+            {
+                mTopicWidgets[mTopicHighlight]->_setWidgetState("normal");
+                mTopicWidgets[++mTopicHighlight]->_setWidgetState("highlighted");
+                mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+            }
+            else
+            {
+                if (!mTopicWidgets.empty() && mTopicHighlight == mTopicWidgets.size() - 1)
+                    mTopicWidgets[mTopicHighlight]->_setWidgetState("normal");
+                mGoodbyeButton->setStateSelected(true);
+            }
+        }
     }
 
     void DialogueWindow::onFrame(float dt)

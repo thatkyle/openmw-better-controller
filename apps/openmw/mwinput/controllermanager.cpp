@@ -369,7 +369,7 @@ namespace MWInput
         {
             case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
                 if (arg.value == 32767) // Treat like a button.
-                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, false);
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger), 1, false);
                 break;
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
                 if (arg.value == 32767) // Treat like a button.

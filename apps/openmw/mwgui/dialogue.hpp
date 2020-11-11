@@ -149,6 +149,7 @@ namespace MWGui
         void updateHistory(bool scrollbar=false);
 
         void onReferenceUnavailable() override;
+        void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
 
     private:
         void updateDisposition();
@@ -184,6 +185,10 @@ namespace MWGui
         std::unique_ptr<ResponseCallback> mGreetingCallback;
 
         void updateTopicFormat();
+
+        std::vector<MyGUI::Button*> mTopicWidgets;
+        unsigned int mTopicHighlight;
+        int mChoiceHighlight;
     };
 }
 #endif

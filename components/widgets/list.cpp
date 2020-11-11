@@ -161,4 +161,18 @@ namespace Gui
     {
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
     }
+
+    void MWList::scrollToTarget(const std::string name)
+    {
+        // Centers target list item in mScrollView.
+        if (!mScrollView->isVisibleVScroll() || name.empty())
+            return; // Gamepad doesn't select separators so scrolling to them is pointless.
+
+        MyGUI::Button *target = getItemWidget(name);
+        if (target != NULL)
+        {
+            int scrollPos = (target->getCoord().top - (mScrollView->getViewCoord().height / 2)) * -1;
+            mScrollView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+        }
+    }
 }

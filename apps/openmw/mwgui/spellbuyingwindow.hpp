@@ -51,6 +51,11 @@ namespace MWGui
 
             bool playerHasSpell (const std::string& id);
 
+            // Gamepad controls:
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+            std::vector<MyGUI::Widget*> mSpellWidgets;
+            unsigned int mSpellHighlight;
+
         private:
             static bool sortSpells (const ESM::Spell* left, const ESM::Spell* right);
     };

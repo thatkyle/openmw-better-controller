@@ -16,6 +16,8 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/actorutil.hpp"
 
+#include "../mwinput/actions.hpp"
+
 namespace MWGui
 {
     SpellBuyingWindow::SpellBuyingWindow() :
@@ -27,6 +29,7 @@ namespace MWGui
         getWidget(mSpellsView, "SpellsView");
 
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellBuyingWindow::onCancelButtonClicked);
+        mCancelButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &SpellBuyingWindow::onKeyButtonPressed);
     }
 
     bool SpellBuyingWindow::sortSpells (const ESM::Spell* left, const ESM::Spell* right)
@@ -82,6 +85,8 @@ namespace MWGui
         while (mSpellsView->getChildCount())
             MyGUI::Gui::getInstance().destroyWidget(mSpellsView->getChildAt(0));
         mSpellsWidgetMap.clear();
+        mSpellWidgets.clear();
+        mSpellHighlight = 0;
     }
 
     void SpellBuyingWindow::setPtr(const MWWorld::Ptr &actor)
@@ -135,6 +140,22 @@ namespace MWGui
         mSpellsView->setCanvasSize (MyGUI::IntSize(mSpellsView->getWidth(), std::max(mSpellsView->getHeight(), mCurrentY)));
         mSpellsView->setVisibleVScroll(true);
         mSpellsView->setViewOffset(MyGUI::IntPoint(0, startOffset));
+
+        // Gamepad controls, currently jumps to top whenever a spell is purchased.
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        MyGUI::EnumeratorWidgetPtr spellList = mSpellsView->getEnumerator();
+        while (spellList.next())
+        {
+            // Must use price to determine if a spell is enabled due to setEnabled removing tooltip. Price is stored in UserData in addSpell.
+            if (*spellList.current()->getUserData<int>() <= playerGold)
+                mSpellWidgets.push_back(spellList.current());
+        }
+
+        if (!mSpellWidgets.empty())
+            mSpellWidgets[mSpellHighlight]->_setWidgetState("highlighted");
+
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCancelButton);
     }
 
     bool SpellBuyingWindow::playerHasSpell(const std::string &id)
@@ -195,6 +216,34 @@ namespace MWGui
             mSpellsView->setViewOffset(MyGUI::IntPoint(0, 0));
         else
             mSpellsView->setViewOffset(MyGUI::IntPoint(0, static_cast<int>(mSpellsView->getViewOffset().top + _rel*0.3f)));
+    }
+
+    void SpellBuyingWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B || (mSpellWidgets.empty() && action == MWInput::MA_A))
+            onCancelButtonClicked(sender);
+        else if (!mSpellWidgets.empty()) // Only control travel options if there are any.
+        {
+            if (action == MWInput::MA_A)
+                onSpellButtonClick(mSpellWidgets[mSpellHighlight]);
+            else if (action == MWInput::MA_DPadUp && mSpellHighlight > 0)
+            {
+                mSpellWidgets[mSpellHighlight]->_setWidgetState("normal");
+                mSpellWidgets[--mSpellHighlight]->_setWidgetState("highlighted");
+                onMouseWheel(mSpellsView, mSpellWidgets[mSpellHighlight]->getHeight());
+            }
+            else if (action == MWInput::MA_DPadDown && mSpellHighlight < mSpellWidgets.size() - 1)
+            {
+                mSpellWidgets[mSpellHighlight]->_setWidgetState("normal");
+                mSpellWidgets[++mSpellHighlight]->_setWidgetState("highlighted");
+                onMouseWheel(mSpellsView, -(mSpellWidgets[mSpellHighlight]->getHeight()));
+            }
+        }
     }
 }
 

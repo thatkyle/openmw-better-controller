@@ -249,7 +249,7 @@ namespace MWGui
             return;
 
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
-        if (action == MWInput::MA_B)
+        if (action == MWInput::MA_B || (mDestinationWidgets.empty() && action == MWInput::MA_A))
             onCancelButtonClicked(sender);
         else if (!mDestinationWidgets.empty()) // Only control travel options if there are any.
         {
@@ -259,11 +259,13 @@ namespace MWGui
             {
                 mDestinationWidgets[mDestinationHighlight]->_setWidgetState("normal");
                 mDestinationWidgets[--mDestinationHighlight]->_setWidgetState("highlighted");
+                onMouseWheel(mDestinationsView, mDestinationWidgets[mDestinationHighlight]->getHeight());
             }
             else if (action == MWInput::MA_DPadDown && mDestinationHighlight < mDestinationWidgets.size() - 1)
             {
                 mDestinationWidgets[mDestinationHighlight]->_setWidgetState("normal");
                 mDestinationWidgets[++mDestinationHighlight]->_setWidgetState("highlighted");
+                onMouseWheel(mDestinationsView, -(mDestinationWidgets[mDestinationHighlight]->getHeight()));
             }
         }
     }

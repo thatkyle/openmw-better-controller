@@ -224,6 +224,7 @@ namespace MWGui
         if (character != 1)
             return;
 
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         if (action == MWInput::MA_B || (mSpellWidgets.empty() && action == MWInput::MA_A))
             onCancelButtonClicked(sender);
@@ -244,6 +245,8 @@ namespace MWGui
                 onMouseWheel(mSpellsView, -(mSpellWidgets[mSpellHighlight]->getHeight()));
             }
         }
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }
 }
 

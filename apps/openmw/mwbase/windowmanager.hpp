@@ -345,6 +345,7 @@ namespace MWBase
 
             virtual bool injectKeyPress(MyGUI::KeyCode key, unsigned int text, bool repeat) = 0;
             virtual bool injectKeyRelease(MyGUI::KeyCode key) = 0;
+            virtual void consumeKeyPress(bool consume = true) = 0;
 
             void windowVisibilityChange(bool visible) override = 0;
             void windowResized(int x, int y) override = 0;

@@ -72,6 +72,8 @@
 
 #include "../mwrender/localmap.hpp"
 
+#include "../mwinput/actions.hpp"
+
 #include "console.hpp"
 #include "journalwindow.hpp"
 #include "journalviewmodel.hpp"
@@ -189,6 +191,7 @@ namespace MWGui
       , mEncoding(encoding)
       , mVersionDescription(versionDescription)
       , mWindowVisible(true)
+      , mKeyPressConsumed(false)
     {
         mScalingFactor = std::clamp(Settings::Manager::getFloat("scaling factor", "GUI"), 0.5f, 8.f);
         mGuiPlatform = new osgMyGUI::Platform(viewer, guiRoot, resourceSystem->getImageManager(), mScalingFactor);
@@ -2193,33 +2196,25 @@ namespace MWGui
 
     bool WindowManager::injectKeyPress(MyGUI::KeyCode key, unsigned int text, bool repeat)
     {
-        if (!mKeyboardNavigation->injectKeyPress(key, text, repeat))
+        // MyGUI doesn't allow widgets to state if a given key was actually used, a call to consumeKeyPress() is required.
+
+        bool isKeyActivator = activationKeyTest(key, text, repeat);
+        bool ret = false;
+
+        if (isKeyActivator && repeat)
+            ret = true; // Don't repeat activation keys to windows. Stops double selections.
+        else if (MyGUI::InputManager::getInstance().injectKeyPress(key, text)) // True if there is a key focus widget.
         {
-            MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
-            bool widgetActive = MyGUI::InputManager::getInstance().injectKeyPress(key, text);
-            if (!widgetActive || !focus)
-                return false;
-            // FIXME: MyGUI doesn't allow widgets to state if a given key was actually used, so make a guess
-            if (focus->getTypeName().find("Button") != std::string::npos)
-            {
-                switch (key.getValue())
-                {
-                case MyGUI::KeyCode::ArrowDown:
-                case MyGUI::KeyCode::ArrowUp:
-                case MyGUI::KeyCode::ArrowLeft:
-                case MyGUI::KeyCode::ArrowRight:
-                case MyGUI::KeyCode::Return:
-                case MyGUI::KeyCode::NumpadEnter:
-                case MyGUI::KeyCode::Space:
-                    return true;
-                default:
-                    return false;
-                }
-            }
-            return false;
+            if (!mKeyPressConsumed)
+                ret = mKeyboardNavigation->injectKeyPress(key, text, repeat);
+            else
+                ret = true;
         }
-        else
-            return true;
+
+        mKeyPressConsumed = false;
+        if (isKeyActivator)
+            MyGUI::InputManager::getInstance().injectKeyRelease(MyGUI::KeyCode::None);
+        return ret;
     }
 
     bool WindowManager::injectKeyRelease(MyGUI::KeyCode key)
@@ -2227,10 +2222,26 @@ namespace MWGui
         return MyGUI::InputManager::getInstance().injectKeyRelease(key);
     }
 
+    void WindowManager::consumeKeyPress(bool consume)
+    {
+        mKeyPressConsumed = consume;
+    }
+
     void WindowManager::GuiModeState::update(bool visible)
     {
         for (unsigned int i=0; i<mWindows.size(); ++i)
             mWindows[i]->setVisible(visible);
+    }
+
+    bool WindowManager::activationKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat)
+    {
+        // Text == 1 is used to signal gamepad controls.
+        if (text == 1 && static_cast<MWInput::MenuAction>(key.getValue()) == MWInput::MA_A)
+            return true;
+        else if (key == MyGUI::KeyCode::Return || key == MyGUI::KeyCode::Space || key == MyGUI::KeyCode::NumpadEnter)
+            return true;
+
+        return false;
     }
 
     void WindowManager::watchActor(const MWWorld::Ptr& ptr)

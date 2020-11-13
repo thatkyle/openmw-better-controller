@@ -248,6 +248,7 @@ namespace MWGui
         if (character != 1)
             return;
 
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         if (action == MWInput::MA_B || (mDestinationWidgets.empty() && action == MWInput::MA_A))
             onCancelButtonClicked(sender);
@@ -267,7 +268,11 @@ namespace MWGui
                 mDestinationWidgets[++mDestinationHighlight]->_setWidgetState("highlighted");
                 onMouseWheel(mDestinationsView, -(mDestinationWidgets[mDestinationHighlight]->getHeight()));
             }
+            else
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
         }
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }
 }
 

@@ -777,6 +777,7 @@ namespace MWGui
         if (character != 1)
             return;
 
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true); // Set to false if not consumed.
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         if (action == MWInput::MA_B)
             onByeClicked(mGoodbyeButton);
@@ -842,6 +843,8 @@ namespace MWGui
                 mGoodbyeButton->setStateSelected(true);
             }
         }
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }
 
     void DialogueWindow::onFrame(float dt)

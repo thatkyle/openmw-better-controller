@@ -386,6 +386,7 @@ namespace MWGui
 
     bool injectKeyPress(MyGUI::KeyCode key, unsigned int text, bool repeat=false) override;
     bool injectKeyRelease(MyGUI::KeyCode key) override;
+    void consumeKeyPress(bool consume = true) override;
 
     const std::string& getVersionDescription() const override;
 
@@ -574,6 +575,8 @@ namespace MWGui
     void updatePinnedWindows();
 
     void enableScene(bool enable);
+    bool activationKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat);
+    bool mKeyPressConsumed;
 
     void handleScheduledMessageBoxes();
 

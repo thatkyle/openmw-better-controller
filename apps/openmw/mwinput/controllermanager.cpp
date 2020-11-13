@@ -36,6 +36,7 @@ namespace MWInput
         , mJoystickEnabled (Settings::Manager::getBool("enable controller", "Input"))
         , mGamepadCursorSpeed(Settings::Manager::getFloat("gamepad cursor speed", "Input"))
         , mSneakToggleShortcutTimer(0.f)
+        , mGamepadZoom(0)
         , mGamepadGuiCursorEnabled(true)
         , mGuiCursorEnabled(true)
         , mJoystickLastUsed(false)

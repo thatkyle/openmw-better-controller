@@ -228,6 +228,7 @@ namespace MWGui
 
     void WaitDialog::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         if (character == 1) { // Gamepad control.
             MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
             switch (action)
@@ -249,6 +250,7 @@ namespace MWGui
                     mHourSlider->setScrollPosition(std::min(mHourSlider->getScrollPosition()+1, mHourSlider->getScrollRange()-1));
                     break;
                 default:
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
                     break;
             }
         }
@@ -259,7 +261,10 @@ namespace MWGui
             else if (key == MyGUI::KeyCode::ArrowDown)
                 mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition())-1, 0));
             else
+            {
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
                 return;
+            }
         }
 
         onHourSliderChangedPosition(mHourSlider, mHourSlider->getScrollPosition());

@@ -218,6 +218,8 @@ namespace MWGui
         if (character != 1)
             return;
 
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         size_t currentRaceIndex = mRaceList->getIndexSelected();
         size_t scrollPos = mHeadRotate->getScrollPosition();
@@ -274,6 +276,7 @@ namespace MWGui
                 RaceDialog::onHeadRotate(mHeadRotate, scrollPos);
                 break;
             default:
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
                 break;
         }
     }

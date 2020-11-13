@@ -41,6 +41,9 @@ namespace MWInput
         , mGuiCursorEnabled(true)
         , mJoystickLastUsed(false)
         , mSneakGamepadShortcut(false)
+        , mGamepadPreviewMode(false)
+        , mRTriggerHeld(false)
+        , mLTriggerHeld(false)
     {
         if (!controllerBindingsFile.empty())
         {
@@ -369,12 +372,28 @@ namespace MWInput
         switch (arg.axis)
         {
             case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-                if (arg.value == 32767) // Treat like a button.
+                if (!mRTriggerHeld && arg.value == 32767) // Treat like a button.
+                {
+                    mRTriggerHeld = true;
                     MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger), 1, false);
+                }
+                else
+                {
+                    MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
+                    mRTriggerHeld = false;
+                }
                 break;
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-                if (arg.value == 32767) // Treat like a button.
+                if (!mLTriggerHeld && arg.value == 32767) // Treat like a button.
+                {
+                    mLTriggerHeld = true;
                     MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, false);
+                }
+                else
+                {
+                    MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
+                    mLTriggerHeld = false;
+                }
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
             case SDL_CONTROLLER_AXIS_LEFTY:

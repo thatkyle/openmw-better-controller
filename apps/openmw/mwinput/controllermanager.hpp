@@ -60,6 +60,9 @@ namespace MWInput
         bool mGuiCursorEnabled;
         bool mJoystickLastUsed;
         bool mSneakGamepadShortcut;
+        bool mGamepadPreviewMode;
+        bool mRTriggerHeld;
+        bool mLTriggerHeld;
     };
 }
 #endif

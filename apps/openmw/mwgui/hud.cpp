@@ -26,6 +26,7 @@
 #include "draganddrop.hpp"
 
 #include "itemwidget.hpp"
+#include "worlditemmodel.hpp"
 
 namespace MWGui
 {

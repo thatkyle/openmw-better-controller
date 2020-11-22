@@ -22,7 +22,9 @@ namespace MWInput
         MA_Start,
         MA_Select,
         MA_White,
-        MA_Black
+        MA_Black,
+        // Specialized actions for menu use.
+        MA_Unequip
     };
 
     enum Actions

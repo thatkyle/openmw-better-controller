@@ -359,10 +359,6 @@ namespace MWInput
                 return false;
         }
 
-        // Some keys will work even when Text Input windows/modals are in focus.
-        if (SDL_IsTextInputActive())
-            return false;
-
         MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(key), 1, false); // Uses text '1' to signal a gamepad keypress.
         return true;
     }

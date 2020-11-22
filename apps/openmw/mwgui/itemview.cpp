@@ -18,6 +18,8 @@ namespace MWGui
 ItemView::ItemView()
     : mModel(nullptr)
     , mScrollView(nullptr)
+    , mRows(0)
+    , mHighlight(0)
 {
 }
 
@@ -74,6 +76,7 @@ void ItemView::layoutWidgets()
 
         if (y > maxHeight-42 && i < dragArea->getChildCount()-1)
         {
+            mRows = y / 42; // True row value, "rows" is a guestimate.
             x += 42;
             y = 0;
         }
@@ -125,6 +128,7 @@ void ItemView::update()
 
         itemWidget->eventMouseButtonClick += MyGUI::newDelegate(this, &ItemView::onSelectedItem);
         itemWidget->eventMouseWheel += MyGUI::newDelegate(this, &ItemView::onMouseWheelMoved);
+        itemWidget->setHighlight((i == mHighlight) ? true : false); // Clears highlight on all other items.
     }
 
     layoutWidgets();
@@ -173,6 +177,32 @@ void ItemView::setCoord(const MyGUI::IntCoord &_value)
 void ItemView::registerComponents()
 {
     MyGUI::FactoryManager::getInstance().registerFactory<MWGui::ItemView>("Widget");
+}
+
+void ItemView::highlightItem(int index)
+{
+    mHighlight = index;
+    update();
+    scrollToTarget(mHighlight);
+}
+
+int ItemView::getRowCount()
+{
+    return mRows;
+}
+
+void ItemView::scrollToTarget(int index)
+{
+    if (mScrollView->isVisibleHScroll() && index >= 0) // -1 index is used to hide selection cursor.
+    {
+        // Places index in the next to last column as possible.
+        int targetRealColumn = (index / mRows) * 42;
+        int scrollTargetOffset = 0;
+        if (targetRealColumn > mScrollView->getViewCoord().width - 84)
+            scrollTargetOffset = (targetRealColumn - (mScrollView->getViewCoord().width - 84)) * -1;
+
+        mScrollView->setViewOffset(MyGUI::IntPoint(scrollTargetOffset, 0));
+    }
 }
 
 }

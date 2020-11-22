@@ -36,6 +36,9 @@ namespace MWGui
             void onEditValueChanged(int value);
             void onSliderMoved(MyGUI::ScrollBar* _sender, size_t _position);
             void onEnterKeyPressed(MyGUI::EditBox* _sender);
+
+            // Gamepad Menu Controls:  
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
     };
 
 }

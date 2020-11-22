@@ -6,6 +6,7 @@
 
 #include "../mwworld/ptr.hpp"
 #include "../mwrender/characterpreview.hpp"
+#include "../mwinput/actions.hpp"
 
 namespace osg
 {
@@ -137,6 +138,16 @@ namespace MWGui
 
             /// Unequips count items from mSelectedItem, if it is equipped, and then updates mSelectedItem in case the items were re-stacked
             void ensureSelectedItemUnequipped(int count);
+
+            // Gamepad Menu Controls:  
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+            void gamepadDelayedAction();
+            void gamepadHighlightSelected();
+            void gamepadCycleFilter(MWInput::MenuAction action);
+            int mGamepadSelected;
+            int mGamepadFilterSelected;
+            bool isFilterCycleMode;
+            MWInput::MenuAction mLastAction;
     };
 }
 

@@ -42,6 +42,7 @@ namespace MWGui
         , mItemShadow(nullptr)
         , mFrame(nullptr)
         , mText(nullptr)
+        , mSelectionHighlight(nullptr)
     {
 
     }
@@ -66,6 +67,11 @@ namespace MWGui
         assignWidget(mText, "Text");
         if (mText)
             mText->setNeedMouseFocus(false);
+
+        // Gamepad selection highlighter:
+        mSelectionHighlight = createWidget<MyGUI::ImageBox>("ImageBox", getCoord(), MyGUI::Align::Default);
+        mSelectionHighlight->setImageTexture("grey");
+        mSelectionHighlight->setVisible(false);
 
         Base::initialiseOverride();
     }
@@ -146,7 +152,7 @@ namespace MWGui
         if (state == None)
         {
             if (!isMagic)
-                backgroundTex = "";
+                backgroundTex += "_none";
         }
         else if (state == Equip)
         {
@@ -155,8 +161,7 @@ namespace MWGui
         else if (state == Barter)
             backgroundTex += "_barter";
 
-        if (backgroundTex != "")
-            backgroundTex += ".dds";
+        backgroundTex += ".dds";
 
         float scale = 1.f;
         if (!backgroundTex.empty())
@@ -183,6 +188,12 @@ namespace MWGui
             setFrame(backgroundTex, MyGUI::IntCoord(0,0,44*scale,44*scale));
 
         setIcon(ptr);
+    }
+
+    void ItemWidget::setHighlight(bool highlight)
+    {
+        if (mSelectionHighlight)
+            mSelectionHighlight->setVisible(highlight);
     }
 
     void SpellWidget::setSpellIcon(const std::string& icon)

@@ -2153,6 +2153,20 @@ namespace MWGui
         }
 
         {
+            MyGUI::ITexture* tex = MyGUI::RenderManager::getInstance().createTexture("grey");
+            tex->createManual(8, 8, MyGUI::TextureUsage::Write, MyGUI::PixelFormat::R8G8B8);
+            unsigned char* data = reinterpret_cast<unsigned char*>(tex->lock(MyGUI::TextureUsage::Write));
+            for (int x=0; x<8; ++x)
+                for (int y=0; y<8; ++y)
+                {
+                    *(data++) = 127;
+                    *(data++) = 127;
+                    *(data++) = 127;
+                }
+            tex->unlock();
+        }
+
+        {
             MyGUI::ITexture* tex = MyGUI::RenderManager::getInstance().createTexture("transparent");
             tex->createManual(8, 8, MyGUI::TextureUsage::Write, MyGUI::PixelFormat::R8G8B8A8);
             setMenuTransparency(Settings::Manager::getFloat("menu transparency", "GUI"));
@@ -2198,10 +2212,10 @@ namespace MWGui
     {
         // MyGUI doesn't allow widgets to state if a given key was actually used, a call to consumeKeyPress() is required.
 
-        bool isKeyActivator = activationKeyTest(key, text, repeat);
+        bool isNoRepeatKey = noRepeatKeyTest(key, text, repeat);
         bool ret = false;
 
-        if (isKeyActivator && repeat)
+        if (isNoRepeatKey && repeat)
             ret = true; // Don't repeat activation keys to windows. Stops double selections.
         else if (MyGUI::InputManager::getInstance().injectKeyPress(key, text)) // True if there is a key focus widget.
         {
@@ -2212,7 +2226,7 @@ namespace MWGui
         }
 
         mKeyPressConsumed = false;
-        if (isKeyActivator)
+        if (isNoRepeatKey)
             MyGUI::InputManager::getInstance().injectKeyRelease(MyGUI::KeyCode::None);
         return ret;
     }
@@ -2233,11 +2247,15 @@ namespace MWGui
             mWindows[i]->setVisible(visible);
     }
 
-    bool WindowManager::activationKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat)
+    bool WindowManager::noRepeatKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat)
     {
         // Text == 1 is used to signal gamepad controls.
-        if (text == 1 && static_cast<MWInput::MenuAction>(key.getValue()) == MWInput::MA_A)
-            return true;
+        if (text == 1)
+        {
+            MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+            if (!(action >= MWInput::MA_RTrigger && action <= MWInput::MA_DPadRight)) // DPad and triggers are repeatable.
+                return true;
+        }
         else if (key == MyGUI::KeyCode::Return || key == MyGUI::KeyCode::Space || key == MyGUI::KeyCode::NumpadEnter)
             return true;
 

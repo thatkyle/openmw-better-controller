@@ -39,6 +39,7 @@ namespace MWGui
         void setIcon (const std::string& icon);
         void setIcon (const MWWorld::Ptr& ptr);
         void setFrame (const std::string& frame, const MyGUI::IntCoord& coord);
+        void setHighlight(bool highlight);
 
     protected:
         void initialiseOverride() override;
@@ -47,6 +48,7 @@ namespace MWGui
         MyGUI::ImageBox* mItemShadow;
         MyGUI::ImageBox* mFrame;
         MyGUI::TextBox* mText;
+        MyGUI::ImageBox *mSelectionHighlight;
 
         std::string mCurrentIcon;
         std::string mCurrentFrame;

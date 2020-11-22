@@ -575,7 +575,7 @@ namespace MWGui
     void updatePinnedWindows();
 
     void enableScene(bool enable);
-    bool activationKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat);
+    bool noRepeatKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat);
     bool mKeyPressConsumed;
 
     void handleScheduledMessageBoxes();

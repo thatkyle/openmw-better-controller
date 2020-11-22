@@ -189,6 +189,8 @@ namespace MWGui
         std::vector<MyGUI::Button*> mTopicWidgets;
         unsigned int mTopicHighlight;
         int mChoiceHighlight;
+        int mChoiceToRealVal;
+        std::string mCurrentTopic;
     };
 }
 #endif

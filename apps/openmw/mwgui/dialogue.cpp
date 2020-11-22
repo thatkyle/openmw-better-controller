@@ -15,7 +15,6 @@
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/dialoguemanager.hpp"
-#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -277,6 +276,7 @@ namespace MWGui
         , mGreetingCallback(new ResponseCallback(this, false))
         , mTopicHighlight(0)
         , mChoiceHighlight(1)
+        , mChoiceToRealVal(1)
     {
         // Centre dialog
         center();
@@ -363,12 +363,14 @@ namespace MWGui
         {
             mGoodbyeButton->setStateSelected(false);
             mTopicHighlight = 0;
+            mCurrentTopic = "";
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Dialogue);
         }
     }
 
     void DialogueWindow::onSelectListItem(const std::string& topic, int id)
     {
+        mCurrentTopic = topic;
         MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
 
         if (mGoodbye || dialogueManager->isInChoice())
@@ -435,6 +437,7 @@ namespace MWGui
             mTopicsList->clear();
             mTopicWidgets.clear();
             mTopicHighlight = 0;
+            mCurrentTopic = "";
             for (Link* link : mLinks)
                 mDeleteLater.push_back(link); // Links are not deleted right away to prevent issues with event handlers
             mLinks.clear();
@@ -509,9 +512,6 @@ namespace MWGui
 
     void DialogueWindow::updateTopicsPane()
     {
-        std::string currentTopic = "";
-        if (mTopicHighlight < mTopicWidgets.size())
-            currentTopic = mTopicWidgets[mTopicHighlight]->getCaption();
         mTopicsList->clear();
         for (auto& linkPair : mTopicLinks)
             mDeleteLater.push_back(linkPair.second);
@@ -585,7 +585,7 @@ namespace MWGui
             if (!topicName.empty())
             {
                 mTopicWidgets.push_back(mTopicsList->getItemWidget(topicName));
-                if(!currentTopic.compare(topicName))
+                if(!mCurrentTopic.compare(topicName))
                 {
                     mTopicHighlight = mTopicWidgets.size() - 1;
                     foundTopic = true;
@@ -601,9 +601,8 @@ namespace MWGui
 
         if (!mTopicWidgets.empty())
         {
-            mTopicWidgets[mTopicHighlight]->_setWidgetState("highlighted");
-            if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
-                mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+            if (!MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye)
+                mTopicWidgets[mTopicHighlight]->_setWidgetState("highlighted");
         }
     }
 
@@ -631,6 +630,7 @@ namespace MWGui
         // choices
         const TextColours& textColours = MWBase::Environment::get().getWindowManager()->getTextColours();
         mChoices = MWBase::Environment::get().getDialogueManager()->getChoices();
+        int choiceCounter = mChoiceToRealVal = 1;
         for (std::pair<std::string, int>& choice : mChoices)
         {
             Choice* link = new Choice(choice.second);
@@ -639,13 +639,17 @@ namespace MWGui
 
             typesetter->lineBreak();
             MyGUI::Colour answerColour = textColours.answer;
-            if (mChoiceHighlight == choice.second) // Should && with XBox HUD mode check.
+            if (mChoiceHighlight == choiceCounter) // Should && with XBox HUD mode check.
+            {
+                mChoiceToRealVal = choice.second; // Since choices can have variable values, manually count the available choices.
                 answerColour = textColours.answerOver;
+            }
 
             BookTypesetter::Style* questionStyle = typesetter->createHotStyle(body, answerColour, textColours.answerOver,
                                                                               textColours.answerPressed,
                                                                               TypesetBook::InteractiveId(link));
             typesetter->write(questionStyle, to_utf8_span(choice.first.c_str()));
+            ++choiceCounter;
         }
 
         mGoodbye = MWBase::Environment::get().getDialogueManager()->isGoodbye();
@@ -784,11 +788,14 @@ namespace MWGui
         else if (action == MWInput::MA_A)
         {
             if (MWBase::Environment::get().getDialogueManager()->isInChoice())
-                onChoiceActivated(mChoiceHighlight);
-            else if (mGoodbyeButton->getStateSelected() || mTopicWidgets.empty())
+                onChoiceActivated(mChoiceToRealVal);
+            else if (mGoodbye || mGoodbyeButton->getStateSelected() || mTopicWidgets.empty())
                 onByeClicked(mGoodbyeButton);
             else if (mTopicHighlight < mTopicWidgets.size())
+            {
                 onSelectListItem(mTopicWidgets[mTopicHighlight]->getCaption(), *mTopicWidgets[mTopicHighlight]->getUserData<int>());
+                mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption()); // Update scroll only when the gamepad is used.
+            }
         }
         else if (action == MWInput::MA_LTrigger)
             DialogueWindow::onMouseWheel(mScrollBar, 40);
@@ -796,6 +803,8 @@ namespace MWGui
             DialogueWindow::onMouseWheel(mScrollBar, -40);
         else if (action == MWInput::MA_DPadUp)
         {
+            if (mGoodbye)
+                return;
             if (MWBase::Environment::get().getDialogueManager()->isInChoice())
             {
                 if (mChoiceHighlight > 1)
@@ -822,6 +831,8 @@ namespace MWGui
         }
         else if (action == MWInput::MA_DPadDown)
         {
+            if (mGoodbye)
+                return;
             if (MWBase::Environment::get().getDialogueManager()->isInChoice())
             {
                 if ((unsigned long)mChoiceHighlight < MWBase::Environment::get().getDialogueManager()->getChoices().size())

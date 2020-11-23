@@ -34,6 +34,7 @@ namespace MWGui
 
         // Gamepad control functions:
         void highlightItem(int index);
+        MyGUI::Widget* getHighlightWidget();
         int getRowCount();
 
     private:
@@ -53,6 +54,7 @@ namespace MWGui
         MyGUI::ScrollView* mScrollView;
         int mRows;
         int mHighlight;
+        MyGUI::Widget *mHighlightWidget;
 
     };
 

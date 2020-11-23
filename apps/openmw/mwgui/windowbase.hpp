@@ -49,11 +49,16 @@ namespace MWGui
 
         virtual void onDeleteCustomData(const MWWorld::Ptr& ptr) {}
 
+        /// Place gamepad highlight on a given child widget.
+        void widgetHighlight(MyGUI::Widget *target);
+        void hideWidgetHighlight(bool hide);
     protected:
         virtual void onTitleDoubleClicked();
 
     private:
         void onDoubleClick(MyGUI::Widget* _sender);
+        MyGUI::Widget *mCurrentHighlight;
+        bool mIsHighlightHidden;
     };
 
     /*

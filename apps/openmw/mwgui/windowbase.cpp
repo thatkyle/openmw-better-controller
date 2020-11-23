@@ -1,8 +1,11 @@
 #include "windowbase.hpp"
 
+#include <climits>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_RenderManager.h>
+#include <MyGUI_Gui.h>
 
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/environment.hpp"
@@ -17,6 +20,8 @@ using namespace MWGui;
 WindowBase::WindowBase(const std::string& parLayout)
   : Layout(parLayout)
 {
+    mCurrentHighlight = nullptr;
+    mIsHighlightHidden = false;
     mMainWidget->setVisible(false);
 
     Window* window = mMainWidget->castType<Window>(false);
@@ -74,6 +79,44 @@ void WindowBase::center()
     coord.left = (layerSize.width - coord.width)/2;
     coord.top = (layerSize.height - coord.height)/2;
     mMainWidget->setCoord(coord);
+}
+
+void WindowBase::widgetHighlight(MyGUI::Widget *target)
+{
+    // Destroys previous highlight, only one highlight at a time per window. nullptr can be passed to have no highlight.
+    if (mCurrentHighlight && mCurrentHighlight->getParent())
+    {
+        MyGUI::Widget *realHighlightWidget = mCurrentHighlight->getParent()->findWidget("WindowHighlight");
+        if (realHighlightWidget)
+        {
+            mCurrentHighlight->_setWidgetState("normal"); // Only clearing highlight state now avoids conflict with mouse hover/keyboard controls.
+            MyGUI::Gui::getInstance().destroyWidget(realHighlightWidget);
+        }
+    }
+
+    // Though the target is stored, don't actually create a highlight unless it's supposed to be visible.
+    MyGUI::Widget *newSelection = nullptr;
+    if (target && target->getVisible() && (newSelection = target->getParent()) != nullptr)
+    {
+        if (mIsHighlightHidden == false)
+        {
+            target->_setWidgetState("highlighted");
+            MyGUI::ImageBox *highlight = newSelection->createWidget<MyGUI::ImageBox>("ImageBox", target->getCoord(), MyGUI::Align::Default, "WindowHighlight");
+            highlight->setImageTexture("grey");
+            highlight->setDepth(INT_MAX);
+        }
+    }
+
+    mCurrentHighlight = target;
+}
+
+void WindowBase::hideWidgetHighlight(bool hide)
+{
+    if (mIsHighlightHidden != hide)
+    {
+        mIsHighlightHidden = hide;
+        widgetHighlight(mCurrentHighlight); // Destroy highlight if mIsHighlightHidden so it doesn't interfere with mouse-over tooltips/selection.
+    }
 }
 
 WindowModal::WindowModal(const std::string& parLayout)

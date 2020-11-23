@@ -404,8 +404,8 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
         if (!mPtr.isEmpty())
         {
-            if (MWBase::Environment::get().getWindowManager()->getCursorVisible() || isFilterCycleMode)
-                mItemView->highlightItem(-1); // Hide gamepad selection icon if a mouse was used to open the menu.
+            if (isFilterCycleMode)
+                widgetHighlight(nullptr);
             else
                 gamepadHighlightSelected();
             updateEncumbranceBar();
@@ -506,6 +506,7 @@ namespace MWGui
         mFilterMisc->setStateSelected(false);
 
         mGamepadSelected = 0;
+        widgetHighlight(nullptr);
         mItemView->update();
 
         _sender->castType<MyGUI::Button>()->setStateSelected(true);
@@ -928,6 +929,8 @@ namespace MWGui
                 else
                 {
                     mGamepadSelected -= mItemView->getRowCount();
+                    if (mGamepadSelected < 0)
+                        mGamepadSelected = 0;
                     gamepadHighlightSelected();
                 }
                 break;
@@ -945,7 +948,7 @@ namespace MWGui
                     gamepadCycleFilter(action);
                 else if (mGamepadSelected % mItemView->getRowCount() == 0)
                 {
-                    mItemView->highlightItem(-1); // Remove item highlight.
+                    widgetHighlight(nullptr);
                     isFilterCycleMode = true;
                 }
                 else
@@ -1014,6 +1017,7 @@ namespace MWGui
                 mGamepadSelected = (int)mSortModel->getItemCount() - 1;
 
             mItemView->highlightItem(mGamepadSelected);
+            widgetHighlight(mItemView->getHighlightWidget());
         }
     }
 

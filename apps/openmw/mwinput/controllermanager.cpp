@@ -87,6 +87,13 @@ namespace MWInput
         }
     }
 
+    void ControllerManager::setJoystickLastUsed(bool enabled)
+    {
+        mJoystickLastUsed = enabled;
+        if (MWBase::Environment::get().getWindowManager()->isGuiMode())
+            MWBase::Environment::get().getWindowManager()->toggleSelectionHighlights(enabled); // Toggle off when pc controls are used.
+    }
+
     bool ControllerManager::update(float dt)
     {
         if (mGuiCursorEnabled && !(mJoystickLastUsed && !mGamepadGuiCursorEnabled))
@@ -144,7 +151,7 @@ namespace MWInput
 
             if (triedToMove)
             {
-                mJoystickLastUsed = true;
+                setJoystickLastUsed(true);
                 MWBase::Environment::get().getInputManager()->resetIdleTime();
             }
 
@@ -194,7 +201,7 @@ namespace MWInput
         MWBase::Environment::get().getLuaManager()->inputEvent(
             {MWBase::LuaManager::InputEvent::ControllerPressed, arg.button});
 
-        mJoystickLastUsed = true;
+        setJoystickLastUsed(true);
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             if (gamepadToGuiControl(arg))
@@ -245,7 +252,7 @@ namespace MWInput
         if (!mJoystickEnabled || MWBase::Environment::get().getInputManager()->controlsDisabled())
             return;
 
-        mJoystickLastUsed = true;
+        setJoystickLastUsed(true);
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             if (mGamepadGuiCursorEnabled)
@@ -276,7 +283,7 @@ namespace MWInput
         if (!mJoystickEnabled || MWBase::Environment::get().getInputManager()->controlsDisabled())
             return;
 
-        mJoystickLastUsed = true;
+        setJoystickLastUsed(true);
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
             gamepadToGuiControl(arg);

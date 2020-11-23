@@ -376,6 +376,9 @@ namespace MWGui
         if (mGoodbye || dialogueManager->isInChoice())
             return;
 
+        if (mGoodbyeButton->getEnabled())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
+
         const MWWorld::Store<ESM::GameSetting> &gmst = MWBase::Environment::get().getWorld()->getStore().get<ESM::GameSetting>();
 
         const std::string sPersuasion = gmst.find("sPersuasion")->mValue.getString();
@@ -393,8 +396,6 @@ namespace MWGui
          && topic != sEnchanting && topic != sServiceTrainingTitle && topic != sRepair)
         {
             onTopicActivated(topic);
-            if (mGoodbyeButton->getEnabled())
-                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
         }
         else if (topic == sPersuasion)
             mPersuasionDialog.setVisible(true);
@@ -574,11 +575,9 @@ namespace MWGui
         // The topics list has been regenerated so topic formatting needs to be updated
         updateTopicFormat();
 
-        // Avoid separaters with gamepad controls. Could be replaced with a walk of mTopicsList that skips empty strings on each up/down button press.
-        // If replacing, keep mTopicHighlight update and highlight/scrollToTarget.
+        // Find last selected topic for gamepda highlight.
         mTopicWidgets.clear();
-        std::string topicName = "";
-        bool foundTopic = false;
+        std::string topicName;
         for (unsigned int i = 0; i < mTopicsList->getItemCount(); ++i)
         {
             topicName = mTopicsList->getItemNameAt(i);
@@ -586,23 +585,25 @@ namespace MWGui
             {
                 mTopicWidgets.push_back(mTopicsList->getItemWidget(topicName));
                 if(!mCurrentTopic.compare(topicName))
-                {
                     mTopicHighlight = mTopicWidgets.size() - 1;
-                    foundTopic = true;
-                }
             }
         }
 
-        if (!foundTopic)
-        {
-            if (mTopicHighlight >= mTopicWidgets.size())
-                mTopicHighlight = mTopicWidgets.size() - 1;
-        }
+        if (mTopicHighlight > mTopicWidgets.size() - 1)
+            mTopicHighlight = mTopicWidgets.empty() ? 0 : mTopicWidgets.size() - 1;
 
-        if (!mTopicWidgets.empty())
+        if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+            widgetHighlight(nullptr); // Choices aren't widgets so can't be highlighted.
+        else if (mGoodbye || mTopicWidgets.empty())
         {
-            if (!MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye)
-                mTopicWidgets[mTopicHighlight]->_setWidgetState("highlighted");
+            widgetHighlight(mGoodbyeButton);
+            mGoodbyeButton->setStateSelected(true);
+        }
+        else if (!mTopicWidgets.empty())
+        {
+            widgetHighlight(mTopicWidgets[mTopicHighlight]);
+            if (mGoodbyeButton->getStateSelected())
+                mGoodbyeButton->setStateSelected(false);
         }
     }
 
@@ -707,7 +708,7 @@ namespace MWGui
 
     void DialogueWindow::onChoiceActivated(int id)
     {
-        mChoiceHighlight = 1; // TODO: Setting to one and incrementing/decrementing causes problems in non-conforming dialogue scripts.
+        mChoiceHighlight = 1;
         if (mGoodbye)
         {
             onGoodbyeActivated();
@@ -777,9 +778,15 @@ namespace MWGui
 
     void DialogueWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        // Gamepad only controls.
         if (character != 1)
+        {
+            if (key == MyGUI::KeyCode::Return)
+            {
+                onSelectListItem(mTopicWidgets[mTopicHighlight]->getCaption(), *mTopicWidgets[mTopicHighlight]->getUserData<int>());
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+            }
             return;
+        }
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true); // Set to false if not consumed.
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
@@ -819,13 +826,13 @@ namespace MWGui
                 {
                     mGoodbyeButton->setStateSelected(false);
                     mTopicHighlight = mTopicWidgets.size() - 1;
-                    mTopicWidgets[mTopicHighlight]->_setWidgetState("highlighted");
+                    widgetHighlight(mTopicWidgets[mTopicHighlight]);
                 }
                 else if (mTopicHighlight)
                 {
-                    mTopicWidgets[mTopicHighlight]->_setWidgetState("normal");
-                    mTopicWidgets[--mTopicHighlight]->_setWidgetState("highlighted");
+                    --mTopicHighlight;
                     mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+                    widgetHighlight(mTopicWidgets[mTopicHighlight]);
                 }
             }
         }
@@ -843,15 +850,14 @@ namespace MWGui
             }
             else if (!mTopicWidgets.empty() && mTopicHighlight < mTopicWidgets.size() - 1)
             {
-                mTopicWidgets[mTopicHighlight]->_setWidgetState("normal");
-                mTopicWidgets[++mTopicHighlight]->_setWidgetState("highlighted");
+                ++mTopicHighlight;
                 mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+                widgetHighlight(mTopicWidgets[mTopicHighlight]);
             }
             else
             {
-                if (!mTopicWidgets.empty() && mTopicHighlight == mTopicWidgets.size() - 1)
-                    mTopicWidgets[mTopicHighlight]->_setWidgetState("normal");
                 mGoodbyeButton->setStateSelected(true);
+                widgetHighlight(mGoodbyeButton);
             }
         }
         else

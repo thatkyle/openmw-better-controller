@@ -628,6 +628,12 @@ namespace MWGui
 
         mInventoryWindow->setGuiMode(getMode());
 
+        // Rebuild current highlights. This prevents a requirement on windows to manage their own highlights onclose().
+        for (WindowBase *window : mWindows)
+            window->hideWidgetHighlight(true);
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            toggleSelectionHighlights(true); // Avoid double-labor in hiding if joystickLastUsed = false.
+
         // If in game mode (or interactive messagebox), show the pinned windows
         if (mGuiModes.empty())
         {
@@ -1632,6 +1638,21 @@ namespace MWGui
         return mCursorVisible && mCursorActive;
     }
 
+    void WindowManager::toggleSelectionHighlights(bool toggle)
+    {
+        for (WindowBase *window : mWindows)
+        {
+            if (window->isVisible())
+                window->hideWidgetHighlight(!toggle);
+        }
+
+        for (WindowModal *modal : mCurrentModals)
+        {
+            if (modal->isVisible())
+                modal->hideWidgetHighlight(!toggle);
+        }
+    }
+
     void WindowManager::trackWindow(Layout *layout, const std::string &name)
     {
         std::string settingName = name;
@@ -1861,6 +1882,7 @@ namespace MWGui
             if (!window->exit())
                 return;
             window->setVisible(false);
+            window->hideWidgetHighlight(true);
         }
     }
 
@@ -1874,12 +1896,15 @@ namespace MWGui
 
         mKeyboardNavigation->setModalWindow(input->mMainWidget);
         mKeyboardNavigation->setDefaultFocus(input->mMainWidget, input->getDefaultKeyFocus());
+        input->hideWidgetHighlight(!MWBase::Environment::get().getInputManager()->joystickLastUsed());
     }
 
     void WindowManager::removeCurrentModal(WindowModal* input)
     {
         if(!mCurrentModals.empty())
         {
+            if (input)
+                input->hideWidgetHighlight(true);
             if(input == mCurrentModals.back())
             {
                 mCurrentModals.pop_back();

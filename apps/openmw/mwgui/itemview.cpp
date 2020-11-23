@@ -109,6 +109,7 @@ void ItemView::update()
     dragArea->setNeedMouseFocus(true);
     dragArea->eventMouseButtonClick += MyGUI::newDelegate(this, &ItemView::onSelectedBackground);
     dragArea->eventMouseWheel += MyGUI::newDelegate(this, &ItemView::onMouseWheelMoved);
+    mHighlightWidget = nullptr;
 
     for (ItemModel::ModelIndex i=0; i<static_cast<int>(mModel->getItemCount()); ++i)
     {
@@ -128,7 +129,8 @@ void ItemView::update()
 
         itemWidget->eventMouseButtonClick += MyGUI::newDelegate(this, &ItemView::onSelectedItem);
         itemWidget->eventMouseWheel += MyGUI::newDelegate(this, &ItemView::onMouseWheelMoved);
-        itemWidget->setHighlight((i == mHighlight) ? true : false); // Clears highlight on all other items.
+        if (i == mHighlight)
+            mHighlightWidget = itemWidget;
     }
 
     layoutWidgets();
@@ -184,6 +186,11 @@ void ItemView::highlightItem(int index)
     mHighlight = index;
     update();
     scrollToTarget(mHighlight);
+}
+
+MyGUI::Widget* ItemView::getHighlightWidget()
+{
+    return mHighlightWidget;
 }
 
 int ItemView::getRowCount()

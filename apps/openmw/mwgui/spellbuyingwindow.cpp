@@ -153,7 +153,7 @@ namespace MWGui
         }
 
         if (!mSpellWidgets.empty())
-            mSpellWidgets[mSpellHighlight]->_setWidgetState("highlighted");
+            widgetHighlight(mSpellWidgets[mSpellHighlight]);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCancelButton);
     }
@@ -234,14 +234,14 @@ namespace MWGui
                 onSpellButtonClick(mSpellWidgets[mSpellHighlight]);
             else if (action == MWInput::MA_DPadUp && mSpellHighlight > 0)
             {
-                mSpellWidgets[mSpellHighlight]->_setWidgetState("normal");
-                mSpellWidgets[--mSpellHighlight]->_setWidgetState("highlighted");
+                --mSpellHighlight;
+                widgetHighlight(mSpellWidgets[mSpellHighlight]);
                 onMouseWheel(mSpellsView, mSpellWidgets[mSpellHighlight]->getHeight());
             }
             else if (action == MWInput::MA_DPadDown && mSpellHighlight < mSpellWidgets.size() - 1)
             {
-                mSpellWidgets[mSpellHighlight]->_setWidgetState("normal");
-                mSpellWidgets[++mSpellHighlight]->_setWidgetState("highlighted");
+                ++mSpellHighlight;
+                widgetHighlight(mSpellWidgets[mSpellHighlight]);
                 onMouseWheel(mSpellsView, -(mSpellWidgets[mSpellHighlight]->getHeight()));
             }
         }

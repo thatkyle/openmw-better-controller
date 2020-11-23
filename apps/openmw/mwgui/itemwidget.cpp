@@ -68,11 +68,6 @@ namespace MWGui
         if (mText)
             mText->setNeedMouseFocus(false);
 
-        // Gamepad selection highlighter:
-        mSelectionHighlight = createWidget<MyGUI::ImageBox>("ImageBox", getCoord(), MyGUI::Align::Default);
-        mSelectionHighlight->setImageTexture("grey");
-        mSelectionHighlight->setVisible(false);
-
         Base::initialiseOverride();
     }
 
@@ -188,12 +183,6 @@ namespace MWGui
             setFrame(backgroundTex, MyGUI::IntCoord(0,0,44*scale,44*scale));
 
         setIcon(ptr);
-    }
-
-    void ItemWidget::setHighlight(bool highlight)
-    {
-        if (mSelectionHighlight)
-            mSelectionHighlight->setVisible(highlight);
     }
 
     void SpellWidget::setSpellIcon(const std::string& icon)

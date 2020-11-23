@@ -156,7 +156,7 @@ namespace MWGui
         }
 
         if (!mDestinationWidgets.empty())
-            mDestinationWidgets[mDestinationHighlight]->_setWidgetState("highlighted");
+            widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
     }
 
     void TravelWindow::onTravelButtonClick(MyGUI::Widget* _sender)
@@ -258,14 +258,14 @@ namespace MWGui
                 onTravelButtonClick(mDestinationWidgets[mDestinationHighlight]);
             else if (action == MWInput::MA_DPadUp && mDestinationHighlight > 0)
             {
-                mDestinationWidgets[mDestinationHighlight]->_setWidgetState("normal");
-                mDestinationWidgets[--mDestinationHighlight]->_setWidgetState("highlighted");
+                --mDestinationHighlight;
+                widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
                 onMouseWheel(mDestinationsView, mDestinationWidgets[mDestinationHighlight]->getHeight());
             }
             else if (action == MWInput::MA_DPadDown && mDestinationHighlight < mDestinationWidgets.size() - 1)
             {
-                mDestinationWidgets[mDestinationHighlight]->_setWidgetState("normal");
-                mDestinationWidgets[++mDestinationHighlight]->_setWidgetState("highlighted");
+                ++mDestinationHighlight;
+                widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
                 onMouseWheel(mDestinationsView, -(mDestinationWidgets[mDestinationHighlight]->getHeight()));
             }
             else

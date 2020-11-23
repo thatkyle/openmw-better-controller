@@ -321,6 +321,7 @@ namespace MWGui
     void onSoulgemDialogButtonPressed (int button);
 
     bool getCursorVisible() override;
+    void toggleSelectionHighlights(bool toggle) override;
 
     /// Call when mouse cursor or buttons are used.
     void setCursorActive(bool active) override;

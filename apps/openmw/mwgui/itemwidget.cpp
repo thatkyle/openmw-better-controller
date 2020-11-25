@@ -42,7 +42,6 @@ namespace MWGui
         , mItemShadow(nullptr)
         , mFrame(nullptr)
         , mText(nullptr)
-        , mSelectionHighlight(nullptr)
     {
 
     }

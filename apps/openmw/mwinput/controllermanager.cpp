@@ -397,7 +397,7 @@ namespace MWInput
                 {
                     // Only inject a single keypress when trigger is first pressed. Prevents studdering scroll actions.
                     mRTriggerPressureVal = makeAxisRatio(arg.value);
-                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger), 1, false);
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger), 1, true);
                 }
 
                 mRTriggerPressureVal = makeAxisRatio(arg.value); // Update axis regardless.
@@ -409,7 +409,7 @@ namespace MWInput
                 {
                     // Only inject a single keypress when trigger is first pressed. Prevents studdering scroll actions.
                     mLTriggerPressureVal = makeAxisRatio(arg.value);
-                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, false);
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, true);
                 }
 
                 mLTriggerPressureVal = makeAxisRatio(arg.value); // Update axis regardless.

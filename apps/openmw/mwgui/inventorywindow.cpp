@@ -1009,15 +1009,20 @@ namespace MWGui
 
     void InventoryWindow::gamepadHighlightSelected()
     {
-        if (mGamepadSelected < 0 || mSortModel->getItemCount() == 0)
+        if (mGamepadSelected > (int)mSortModel->getItemCount() - 1)
+            mGamepadSelected = (int)mSortModel->getItemCount() - 1;
+        if (mGamepadSelected < 0)
             mGamepadSelected = 0;
-        else
-        {
-            if (mGamepadSelected > (int)mSortModel->getItemCount() - 1)
-                mGamepadSelected = (int)mSortModel->getItemCount() - 1;
 
+        if (mSortModel->getItemCount())
+        {
             mItemView->highlightItem(mGamepadSelected);
             widgetHighlight(mItemView->getHighlightWidget());
+        }
+        else
+        {
+            isFilterCycleMode = true;
+            widgetHighlight(nullptr);
         }
     }
 

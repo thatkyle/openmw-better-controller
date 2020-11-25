@@ -47,7 +47,6 @@ namespace MWGui
         MyGUI::ImageBox* mItemShadow;
         MyGUI::ImageBox* mFrame;
         MyGUI::TextBox* mText;
-        MyGUI::ImageBox *mSelectionHighlight;
 
         std::string mCurrentIcon;
         std::string mCurrentFrame;

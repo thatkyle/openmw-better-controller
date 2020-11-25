@@ -20,6 +20,7 @@ ItemView::ItemView()
     , mScrollView(nullptr)
     , mRows(0)
     , mHighlight(0)
+    , mHighlightWidget(nullptr)
 {
 }
 
@@ -66,6 +67,7 @@ void ItemView::layoutWidgets()
     if (showScrollbar)
         maxHeight -= 18;
 
+    mRows = rows = 0;
     for (unsigned int i=0; i<dragArea->getChildCount(); ++i)
     {
         MyGUI::Widget* w = dragArea->getChildAt(i);
@@ -73,14 +75,18 @@ void ItemView::layoutWidgets()
         w->setPosition(x, y);
 
         y += 42;
-
+        ++rows;
         if (y > maxHeight-42 && i < dragArea->getChildCount()-1)
         {
-            mRows = y / 42; // True row value, "rows" is a guestimate.
+            if (!mRows)
+                mRows = y / 42;
             x += 42;
             y = 0;
         }
     }
+    if (!mRows)
+        mRows = rows;
+
     x += 42;
 
     MyGUI::IntSize size = MyGUI::IntSize(std::max(mScrollView->getSize().width, x), mScrollView->getSize().height);
@@ -203,6 +209,9 @@ void ItemView::scrollToTarget(int index)
     if (mScrollView->isVisibleHScroll() && index >= 0) // -1 index is used to hide selection cursor.
     {
         // Places index in the next to last column as possible.
+        if (mRows == 0)
+            mRows = 1;
+
         int targetRealColumn = (index / mRows) * 42;
         int scrollTargetOffset = 0;
         if (targetRealColumn > mScrollView->getViewCoord().width - 84)

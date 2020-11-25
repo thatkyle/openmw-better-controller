@@ -15,6 +15,7 @@
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/dialoguemanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -805,9 +806,9 @@ namespace MWGui
             }
         }
         else if (action == MWInput::MA_LTrigger)
-            DialogueWindow::onMouseWheel(mScrollBar, 40);
+            DialogueWindow::onMouseWheel(mScrollBar, 40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action)));
         else if (action == MWInput::MA_RTrigger)
-            DialogueWindow::onMouseWheel(mScrollBar, -40);
+            DialogueWindow::onMouseWheel(mScrollBar, -40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action)));
         else if (action == MWInput::MA_DPadUp)
         {
             if (mGoodbye)

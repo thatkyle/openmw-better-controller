@@ -93,6 +93,7 @@ namespace MWInput
 
         void setJoystickLastUsed(bool enabled) override;
         bool joystickLastUsed() override;
+        float getAxisRatio(int action) override;
 
         int countSavedGameRecords() const override;
         void write(ESM::ESMWriter& writer, Loading::Listener& progress) override;

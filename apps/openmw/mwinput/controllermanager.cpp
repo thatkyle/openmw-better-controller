@@ -24,6 +24,7 @@
 namespace MWInput
 {
     MyGUI::KeyCode menuActionToKeyCode(MWInput::MenuAction action);
+    float makeAxisRatio(int pressureVal);
 
     ControllerManager::ControllerManager(BindingsManager* bindingsManager,
             ActionManager* actionManager,
@@ -42,8 +43,8 @@ namespace MWInput
         , mJoystickLastUsed(false)
         , mSneakGamepadShortcut(false)
         , mGamepadPreviewMode(false)
-        , mRTriggerHeld(false)
-        , mLTriggerHeld(false)
+        , mRTriggerPressureVal(0.f)
+        , mLTriggerPressureVal(0.f)
     {
         if (!controllerBindingsFile.empty())
         {
@@ -370,33 +371,50 @@ namespace MWInput
         return true;
     }
 
+    float ControllerManager::getAxisRatio(int action)
+    {
+        MWInput::MenuAction axis = static_cast<MWInput::MenuAction>(action);
+
+        switch (axis)
+        {
+            case MA_RTrigger:
+                return mRTriggerPressureVal;
+            case MA_LTrigger:
+                return mLTriggerPressureVal;
+            default:
+                break;
+        }
+
+        return 0.f;
+    }
+
     bool ControllerManager::gamepadToGuiControl(const SDL_ControllerAxisEvent &arg)
     {
         switch (arg.axis)
         {
             case SDL_CONTROLLER_AXIS_TRIGGERRIGHT:
-                if (!mRTriggerHeld && arg.value == 32767) // Treat like a button.
+                if (!mRTriggerPressureVal)
                 {
-                    mRTriggerHeld = true;
+                    // Only inject a single keypress when trigger is first pressed. Prevents studdering scroll actions.
+                    mRTriggerPressureVal = makeAxisRatio(arg.value);
                     MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger), 1, false);
                 }
-                else
-                {
+
+                mRTriggerPressureVal = makeAxisRatio(arg.value); // Update axis regardless.
+                if (!mRTriggerPressureVal)
                     MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
-                    mRTriggerHeld = false;
-                }
                 break;
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
-                if (!mLTriggerHeld && arg.value == 32767) // Treat like a button.
+                if (!mLTriggerPressureVal)
                 {
-                    mLTriggerHeld = true;
+                    // Only inject a single keypress when trigger is first pressed. Prevents studdering scroll actions.
+                    mLTriggerPressureVal = makeAxisRatio(arg.value);
                     MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, false);
                 }
-                else
-                {
+
+                mLTriggerPressureVal = makeAxisRatio(arg.value); // Update axis regardless.
+                if (!mLTriggerPressureVal)
                     MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
-                    mLTriggerHeld = false;
-                }
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
             case SDL_CONTROLLER_AXIS_LEFTY:
@@ -436,5 +454,10 @@ namespace MWInput
     MyGUI::KeyCode menuActionToKeyCode(MWInput::MenuAction action)
     {
         return static_cast<MyGUI::KeyCode::Enum>(static_cast<int>(action));
+    }
+
+    float makeAxisRatio(int pressureVal)
+    {
+        return pressureVal / 32767.f;
     }
 }

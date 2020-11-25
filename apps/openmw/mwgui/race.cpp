@@ -13,6 +13,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwrender/characterpreview.hpp"
 #include "../mwinput/actions.hpp"
 
@@ -222,7 +223,6 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         size_t currentRaceIndex = mRaceList->getIndexSelected();
-        size_t scrollPos = mHeadRotate->getScrollPosition();
 
         switch (action)
         {
@@ -257,23 +257,22 @@ namespace MWGui
                     mRaceList->beginToItemAt(currentRaceIndex);
                 }
                 break;
-            case MWInput::MA_DPadRight: // TODO: Transition to MA_RTrigger when sensitivity is handled.
-                if (scrollPos + mHeadRotate->getScrollWheelPage() >= mHeadRotate->getScrollRange())
-                    scrollPos = mHeadRotate->getScrollRange() - 1; // Subtract 1 to avoid resetting scrollbar to 0.
-                else
-                    scrollPos += mHeadRotate->getScrollWheelPage();
+            case MWInput::MA_RTrigger:
+                // Pressure sensitive scrolling:
+                mHeadRotate->setScrollPosition(std::min(static_cast<int>(mHeadRotate->getScrollRange()-1),
+                                               std::max(0, static_cast<int>(
+                                               mHeadRotate->getScrollPosition() - (-40.f *
+                                               MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))) * 0.3))));
 
-                mHeadRotate->setScrollPosition(scrollPos);
-                RaceDialog::onHeadRotate(mHeadRotate, scrollPos);
+                RaceDialog::onHeadRotate(mHeadRotate, mHeadRotate->getScrollPosition());
                 break;
-            case MWInput::MA_DPadLeft:  // TODO: Transition to MA_LTrigger when sensitivity is handled.
-                if (scrollPos <= mHeadRotate->getScrollWheelPage())
-                    scrollPos = 0;
-                else
-                    scrollPos -= mHeadRotate->getScrollWheelPage();
-
-                mHeadRotate->setScrollPosition(scrollPos);
-                RaceDialog::onHeadRotate(mHeadRotate, scrollPos);
+            case MWInput::MA_LTrigger:
+                // Pressure sensitive scrolling:
+                mHeadRotate->setScrollPosition(std::min(static_cast<int>(mHeadRotate->getScrollRange()-1),
+                                               std::max(0, static_cast<int>(
+                                               mHeadRotate->getScrollPosition() - (40.f *
+                                               MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))) * 0.3))));
+                RaceDialog::onHeadRotate(mHeadRotate, mHeadRotate->getScrollPosition());
                 break;
             default:
                 MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

@@ -78,6 +78,9 @@ namespace MWBase
             virtual bool joystickLastUsed() = 0;
             virtual void setJoystickLastUsed(bool enabled) = 0;
 
+            /// Returns a ratio 0 - 1 of the given gamepad axis pressure, 0 is none.
+            virtual float getAxisRatio(int action) = 0;
+
             virtual int countSavedGameRecords() const = 0;
             virtual void write(ESM::ESMWriter& writer, Loading::Listener& progress) = 0;
             virtual void readRecord(ESM::ESMReader& reader, uint32_t type) = 0;

@@ -44,6 +44,8 @@ namespace MWInput
         float getAxisValue(SDL_GameControllerAxis axis) const;  // returns value in range [-1, 1]
         bool isButtonPressed(SDL_GameControllerButton button) const;
 
+        float getAxisRatio(int action);
+
     private:
         // Return true if GUI consumes input.
         bool gamepadToGuiControl(const SDL_ControllerButtonEvent &arg);
@@ -61,8 +63,8 @@ namespace MWInput
         bool mJoystickLastUsed;
         bool mSneakGamepadShortcut;
         bool mGamepadPreviewMode;
-        bool mRTriggerHeld;
-        bool mLTriggerHeld;
+        float mRTriggerPressureVal;
+        float mLTriggerPressureVal;
     };
 }
 #endif

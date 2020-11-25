@@ -250,6 +250,11 @@ namespace MWInput
         return mControllerManager->joystickLastUsed();
     }
 
+    float InputManager::getAxisRatio(int action)
+    {
+        return mControllerManager->getAxisRatio(action);
+    }
+
     void InputManager::executeAction(int action)
     {
         mActionManager->executeAction(action);

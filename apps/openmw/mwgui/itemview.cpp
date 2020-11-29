@@ -78,8 +78,7 @@ void ItemView::layoutWidgets()
         ++rows;
         if (y > maxHeight-42 && i < dragArea->getChildCount()-1)
         {
-            if (!mRows)
-                mRows = y / 42;
+            mRows = y / 42;
             x += 42;
             y = 0;
         }

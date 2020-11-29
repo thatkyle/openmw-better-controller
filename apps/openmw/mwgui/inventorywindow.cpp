@@ -901,6 +901,8 @@ namespace MWGui
 
                     onItemSelected(mGamepadSelected);
                 }
+
+                gamepadHighlightSelected();
                 break;
             }
             case MWInput::MA_X:
@@ -909,6 +911,7 @@ namespace MWGui
 
                 mLastAction = action;
                 onItemSelected(mGamepadSelected);
+                gamepadHighlightSelected();
                 break;
             case MWInput::MA_Y:
                 if (isFilterCycleMode)

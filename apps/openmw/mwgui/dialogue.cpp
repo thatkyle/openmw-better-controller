@@ -641,7 +641,7 @@ namespace MWGui
 
             typesetter->lineBreak();
             MyGUI::Colour answerColour = textColours.answer;
-            if (mChoiceHighlight == choiceCounter) // Should && with XBox HUD mode check.
+            if (mChoiceHighlight == choiceCounter && MWBase::Environment::get().getInputManager()->joystickLastUsed())
             {
                 mChoiceToRealVal = choice.second; // Since choices can have variable values, manually count the available choices.
                 answerColour = textColours.answerOver;
@@ -816,10 +816,9 @@ namespace MWGui
             if (MWBase::Environment::get().getDialogueManager()->isInChoice())
             {
                 if (mChoiceHighlight > 1)
-                {
                     --mChoiceHighlight;
-                    updateHistory();
-                }
+
+                updateHistory(); // Update regardless, this highlights a choice for gamepad.
             }
             else if (!mTopicWidgets.empty())
             {
@@ -844,10 +843,9 @@ namespace MWGui
             if (MWBase::Environment::get().getDialogueManager()->isInChoice())
             {
                 if ((unsigned long)mChoiceHighlight < MWBase::Environment::get().getDialogueManager()->getChoices().size())
-                {
                     ++mChoiceHighlight;
-                    updateHistory();
-                }
+
+                updateHistory(); // Update regardless, this highlights a choice for gamepad.
             }
             else if (!mTopicWidgets.empty() && mTopicHighlight < mTopicWidgets.size() - 1)
             {

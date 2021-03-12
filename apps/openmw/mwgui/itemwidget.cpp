@@ -146,7 +146,7 @@ namespace MWGui
         if (state == None)
         {
             if (!isMagic)
-                backgroundTex += "_none";
+                backgroundTex = "";
         }
         else if (state == Equip)
         {
@@ -155,7 +155,8 @@ namespace MWGui
         else if (state == Barter)
             backgroundTex += "_barter";
 
-        backgroundTex += ".dds";
+        if (backgroundTex != "")
+            backgroundTex += ".dds";
 
         float scale = 1.f;
         if (!backgroundTex.empty())

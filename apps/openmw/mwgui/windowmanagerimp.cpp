@@ -2181,13 +2181,7 @@ namespace MWGui
             MyGUI::ITexture* tex = MyGUI::RenderManager::getInstance().createTexture("grey");
             tex->createManual(8, 8, MyGUI::TextureUsage::Write, MyGUI::PixelFormat::R8G8B8);
             unsigned char* data = reinterpret_cast<unsigned char*>(tex->lock(MyGUI::TextureUsage::Write));
-            for (int x=0; x<8; ++x)
-                for (int y=0; y<8; ++y)
-                {
-                    *(data++) = 127;
-                    *(data++) = 127;
-                    *(data++) = 127;
-                }
+            std::fill_n(data, 8 * 8 * 3, 127);
             tex->unlock();
         }
 

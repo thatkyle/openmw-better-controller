@@ -169,6 +169,7 @@ namespace MWGui
         mItemView->setModel(nullptr);
         mGamepadSelected = 0;
         mGamepadFilterSelected = 0;
+        widgetHighlight(nullptr);
         isFilterCycleMode = true;
     }
 

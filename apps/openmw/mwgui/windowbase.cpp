@@ -84,14 +84,11 @@ void WindowBase::center()
 void WindowBase::widgetHighlight(MyGUI::Widget *target)
 {
     // Destroys previous highlight, only one highlight at a time per window. nullptr can be passed to have no highlight.
-    if (mCurrentHighlight && mCurrentHighlight->getParent())
+    MyGUI::Widget* previousHighlight = getWidgetByFullName("WindowHighlight");
+    if (previousHighlight)
     {
-        MyGUI::Widget *realHighlightWidget = mCurrentHighlight->getParent()->findWidget("WindowHighlight");
-        if (realHighlightWidget)
-        {
-            mCurrentHighlight->_setWidgetState("normal"); // Only clearing highlight state now avoids conflict with mouse hover/keyboard controls.
-            MyGUI::Gui::getInstance().destroyWidget(realHighlightWidget);
-        }
+        mCurrentHighlight->_setWidgetState("normal"); // Only clearing highlight state now avoids conflict with mouse hover/keyboard controls.
+        MyGUI::Gui::getInstance().destroyWidget(previousHighlight);
     }
 
     // Though the target is stored, don't actually create a highlight unless it's supposed to be visible.

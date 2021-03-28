@@ -31,6 +31,7 @@ namespace MWGui
     }
 
     MyGUI::Widget* getWidget(const std::string& _name);
+    MyGUI::Widget* getWidgetByFullName(const std::string& _name);
 
     template <typename T>
     void getWidget(T * & _widget, const std::string & _name)

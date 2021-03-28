@@ -23,14 +23,14 @@ namespace MWGui
         mMainWidget->setPosition(pos);
     }
 
-    void ControlLegend::setControls(std::vector<std::pair<MWInput::MenuAction, std::string>> &leftActions,
+    /*void ControlLegend::setControls(std::vector<std::pair<MWInput::MenuAction, std::string>> &leftActions,
                                     std::vector<std::pair<MWInput::MenuAction, std::string>> &rightActions)
     {
         for (auto &action : leftActions)
         {
             
         }
-    }
+    }*/
 
     void ControlLegend::updateControls(GuiMode mode) 
     {
@@ -54,7 +54,7 @@ namespace MWGui
 
     std::string gamepadActionToIcon(MWInput::MenuAction action)
     {
-
+        return "";
     }
 
 }

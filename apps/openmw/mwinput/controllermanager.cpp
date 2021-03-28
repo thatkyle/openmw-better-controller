@@ -45,6 +45,10 @@ namespace MWInput
         , mGamepadPreviewMode(false)
         , mRTriggerPressureVal(0.f)
         , mLTriggerPressureVal(0.f)
+        , mLStickPressedLeftInGui(false)
+        , mLStickPressedRightInGui(false)
+        , mLStickPressedUpInGui(false)
+        , mLStickPressedDownInGui(false)
     {
         if (!controllerBindingsFile.empty())
         {
@@ -290,10 +294,31 @@ namespace MWInput
             gamepadToGuiControl(arg);
         }
         else if (MWBase::Environment::get().getWorld()->isPreviewModeEnabled() &&
-                (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))
+            (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT || arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT))
         {
             // Preview Mode Gamepad Zooming; do not propagate to mBindingsManager
             return;
+        }
+        else
+        {
+            mLStickPressedLeftInGui = false;
+            mLStickPressedRightInGui = false;
+            mLStickPressedUpInGui = false;
+            mLStickPressedDownInGui = false;
+
+            if (mGamepadPreviewMode) // Preview Mode Gamepad Zooming
+            {
+                if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERRIGHT)
+                {
+                    mGamepadZoom = arg.value * 0.85f / 1000.f / 12.f;
+                    return; // Do not propagate event.
+                }
+                else if (arg.axis == SDL_CONTROLLER_AXIS_TRIGGERLEFT)
+                {
+                    mGamepadZoom = -arg.value * 0.85f / 1000.f / 12.f;
+                    return; // Do not propagate event.
+                }
+            }
         }
         mBindingsManager->controllerAxisMoved(deviceID, arg);
     }
@@ -417,7 +442,81 @@ namespace MWInput
                     MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
+                if (mGamepadGuiCursorEnabled)
+                {
+                    mLStickPressedLeftInGui = false;
+                    mLStickPressedRightInGui = false;
+                    return false;
+                }
+
+                if (!mLStickPressedLeftInGui && !mLStickPressedRightInGui)
+                {
+                    if (arg.value < -8000)
+                    {
+                        mLStickPressedLeftInGui = true;
+                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft), 1, true);
+                    }
+                    else if (arg.value > 8000)
+                    {
+                        mLStickPressedRightInGui = true;
+                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight), 1, true);
+                    }
+                }
+                else
+                {
+                    // it's possible to go from all the way left to all the way right in one frame. That is why these are separate.
+                    if (arg.value >= -8000 && mLStickPressedLeftInGui)
+                    {
+                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft));
+                        mLStickPressedLeftInGui = false;
+                    }
+
+                    if (arg.value <= 8000 && mLStickPressedRightInGui)
+                    {
+                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight));
+                        mLStickPressedRightInGui = false;
+                    }
+                }
+
+                break;
             case SDL_CONTROLLER_AXIS_LEFTY:
+                if (mGamepadGuiCursorEnabled)
+                {
+                    mLStickPressedUpInGui = false;
+                    mLStickPressedDownInGui = false;
+                    return false;
+                }
+
+                if (!mLStickPressedUpInGui && !mLStickPressedDownInGui)
+                {
+                    if (arg.value < -8000)
+                    {
+                        mLStickPressedUpInGui = true;
+                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp), 1, true);
+                    }
+                    else if (arg.value > 8000)
+                    {
+                        mLStickPressedDownInGui = true;
+                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown), 1, true);
+                    }
+                }
+                else
+                {
+                    // it's possible to go from all the way up to all the way down in one frame. That is why these are separate.
+                    if (arg.value >= -8000 && mLStickPressedUpInGui)
+                    {
+                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp));
+                        mLStickPressedUpInGui = false;
+                    }
+
+                    if (arg.value <= 8000 && mLStickPressedDownInGui)
+                    {
+                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown));
+                        mLStickPressedDownInGui = false;
+                    }
+                }
+
+                break;
             case SDL_CONTROLLER_AXIS_RIGHTX:
             case SDL_CONTROLLER_AXIS_RIGHTY:
                 // If we are using the joystick as a GUI mouse, process mouse movement elsewhere.

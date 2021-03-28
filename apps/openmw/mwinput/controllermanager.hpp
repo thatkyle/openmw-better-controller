@@ -65,6 +65,10 @@ namespace MWInput
         bool mGamepadPreviewMode;
         float mRTriggerPressureVal;
         float mLTriggerPressureVal;
+        bool mLStickPressedLeftInGui;
+        bool mLStickPressedRightInGui;
+        bool mLStickPressedUpInGui;
+        bool mLStickPressedDownInGui;
     };
 }
 #endif

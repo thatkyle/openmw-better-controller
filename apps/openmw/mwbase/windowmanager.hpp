@@ -70,6 +70,7 @@ namespace MWGui
     class WindowModal;
     class JailScreen;
     class MessageBox;
+    class ControlLegend;
 
     enum ShowInDialogueMode {
         ShowInDialogueMode_IfPossible,

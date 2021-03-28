@@ -123,6 +123,7 @@
 #include "itemchargeview.hpp"
 #include "keyboardnavigation.hpp"
 #include "resourceskin.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -192,6 +193,7 @@ namespace MWGui
       , mVersionDescription(versionDescription)
       , mWindowVisible(true)
       , mKeyPressConsumed(false)
+      , mControlLegend(nullptr)
     {
         mScalingFactor = std::clamp(Settings::Manager::getFloat("scaling factor", "GUI"), 0.5f, 8.f);
         mGuiPlatform = new osgMyGUI::Platform(viewer, guiRoot, resourceSystem->getImageManager(), mScalingFactor);
@@ -477,6 +479,8 @@ namespace MWGui
 
         mCharGen = new CharacterCreation(mViewer->getSceneData()->asGroup(), mResourceSystem);
 
+        mControlLegend = new ControlLegend();
+
         updatePinnedWindows();
 
         // Set up visibility
@@ -641,6 +645,7 @@ namespace MWGui
             mStatsWindow->setVisible(mStatsWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Stats) && (mAllowed & GW_Stats));
             mInventoryWindow->setVisible(mInventoryWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Inventory) && (mAllowed & GW_Inventory));
             mSpellWindow->setVisible(mSpellWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Magic) && (mAllowed & GW_Magic));
+            mControlLegend->updateControls(GM_None);
             return;
         }
         else if (getMode() != GM_Inventory)
@@ -685,6 +690,15 @@ namespace MWGui
         default:
             break;
         }
+
+        if (getMode() == GM_Inventory)
+        {
+            // TODO: get specific instructions elsewhere
+            mControlLegend->updateControls(GM_None);
+            return;
+        }
+        else
+            mControlLegend->updateControls(getMode());
     }
 
     void WindowManager::setDrowningTimeLeft (float time, float maxTime)

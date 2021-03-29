@@ -14,6 +14,7 @@
 
 #include "draganddrop.hpp"
 #include "exposedwindow.hpp"
+#include "controllegend.hpp"
 
 using namespace MWGui;
 
@@ -128,6 +129,15 @@ void WindowModal::onOpen()
     MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
     MyGUI::InputManager::getInstance ().addWidgetModal (mMainWidget);
     MyGUI::InputManager::getInstance().setKeyFocusWidget(focus);
+
+    std::vector<MenuControl> leftControls{
+        MenuControl{MWInput::MenuAction::MA_A, "Select"}
+    };
+    std::vector<MenuControl> rightControls{
+        MenuControl{MWInput::MenuAction::MA_B, "Back"}
+    };
+
+    MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
 }
 
 void WindowModal::onClose()
@@ -135,6 +145,8 @@ void WindowModal::onClose()
     MWBase::Environment::get().getWindowManager()->removeCurrentModal(this);
 
     MyGUI::InputManager::getInstance ().removeWidgetModal (mMainWidget);
+
+    MWBase::Environment::get().getWindowManager()->popMenuControls();
 }
 
 NoDrop::NoDrop(DragAndDrop *drag, MyGUI::Widget *widget)

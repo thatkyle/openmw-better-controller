@@ -13,6 +13,7 @@
 #include "../mwworld/player.hpp"
 
 #include "widgets.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -79,6 +80,20 @@ namespace MWGui
 
         if (!signId.empty())
             setBirthId(signId);
+
+        std::vector<MenuControl> leftControls{
+            MenuControl{MWInput::MenuAction::MA_A, "OK"}
+        };
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+    }
+
+    void BirthDialog::onClose()
+    {
+        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void BirthDialog::setBirthId(const std::string &birthId)

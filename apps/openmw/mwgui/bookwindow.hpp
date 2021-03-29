@@ -19,6 +19,9 @@ namespace MWGui
 
             void onResChange(int, int) override { center(); }
 
+            void onOpen() override;
+            void onClose() override;
+
         protected:
             void onNextPageButtonClicked (MyGUI::Widget* sender);
             void onPrevPageButtonClicked (MyGUI::Widget* sender);

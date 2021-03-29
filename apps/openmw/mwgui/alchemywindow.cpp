@@ -1,5 +1,8 @@
 #include "alchemywindow.hpp"
 
+#include <vector>
+#include <string>
+
 #include <MyGUI_Gui.h>
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
@@ -26,6 +29,7 @@
 #include "itemview.hpp"
 #include "itemwidget.hpp"
 #include "widgets.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -273,6 +277,22 @@ namespace MWGui
         initFilter();
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+
+        std::vector<MenuControl> leftControls{
+            MenuControl{MWInput::MenuAction::MA_A, "Inventory"},
+            MenuControl{MWInput::MenuAction::MA_X, "Create"},
+            MenuControl{MWInput::MenuAction::MA_A, "Info"}
+        };
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+    }
+
+    void AlchemyWindow::onClose()
+    {
+        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void AlchemyWindow::onIngredientSelected(MyGUI::Widget* _sender)

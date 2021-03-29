@@ -1,5 +1,8 @@
 #include "dialogue.hpp"
 
+#include <vector>
+#include <string>
+
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_Window.h>
 #include <MyGUI_ProgressBar.h>
@@ -30,6 +33,7 @@
 #include "textcolours.hpp"
 
 #include "journalbooks.hpp" // to_utf8_span
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -399,7 +403,9 @@ namespace MWGui
             onTopicActivated(topic);
         }
         else if (topic == sPersuasion)
+        {
             mPersuasionDialog.setVisible(true);
+        }
         else if (topic == sCompanionShare)
             MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Companion, mPtr);
         else if (!dialogueManager->checkServiceRefused(mCallback.get()))
@@ -492,6 +498,18 @@ namespace MWGui
         mDeleteLater.clear();
     }
 
+    void DialogueWindow::onOpen()
+    {
+        std::vector<MenuControl> leftControls{
+            MenuControl{MWInput::MenuAction::MA_A, "Say"}
+        };
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+    }
+
     void DialogueWindow::onClose()
     {
         if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
@@ -500,6 +518,8 @@ namespace MWGui
         for (DialogueText* text : mHistoryContents)
             delete text;
         mHistoryContents.clear();
+
+        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)

@@ -129,6 +129,7 @@ namespace MWGui
 
         void updateTopics();
 
+        void onOpen() override;
         void onClose() override;
 
     protected:

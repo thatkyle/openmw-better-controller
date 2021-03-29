@@ -30,6 +30,7 @@ namespace MWGui
         AlchemyWindow();
 
         void onOpen() override;
+        void onClose() override;
 
         void onResChange(int, int) override { center(); }
 

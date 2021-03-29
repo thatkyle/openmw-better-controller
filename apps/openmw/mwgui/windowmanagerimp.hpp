@@ -127,6 +127,8 @@ namespace MWGui
   class ControlLegend;
   class KeyboardNavigation;
 
+  struct MenuControl;
+
   class WindowManager :
       public MWBase::WindowManager
   {
@@ -394,6 +396,10 @@ namespace MWGui
 
     void onDeleteCustomData(const MWWorld::Ptr& ptr) override;
     void forceLootMode(const MWWorld::Ptr& ptr) override;
+
+    void pushMenuControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls) override;
+    void popMenuControls() override;
+    void swapMenuControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls) override;
 
   private:
     unsigned int mOldUpdateMask; unsigned int mOldCullMask;

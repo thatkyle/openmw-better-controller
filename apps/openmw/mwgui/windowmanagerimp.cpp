@@ -645,7 +645,7 @@ namespace MWGui
             mStatsWindow->setVisible(mStatsWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Stats) && (mAllowed & GW_Stats));
             mInventoryWindow->setVisible(mInventoryWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Inventory) && (mAllowed & GW_Inventory));
             mSpellWindow->setVisible(mSpellWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Magic) && (mAllowed & GW_Magic));
-            mControlLegend->updateControls(GM_None);
+            mControlLegend->setVisible(false);
             return;
         }
         else if (getMode() != GM_Inventory)
@@ -691,14 +691,14 @@ namespace MWGui
             break;
         }
 
-        if (getMode() == GM_Inventory)
-        {
-            // TODO: get specific instructions elsewhere
-            mControlLegend->updateControls(GM_None);
-            return;
-        }
-        else
-            mControlLegend->updateControls(getMode());
+        //if (getMode() == GM_Inventory)
+        //{
+        //    // TODO: get specific instructions elsewhere
+        //    mControlLegend->updateControls(GM_None);
+        //    return;
+        //}
+        //else
+        //    mControlLegend->updateControls(getMode());
     }
 
     void WindowManager::setDrowningTimeLeft (float time, float maxTime)
@@ -2323,4 +2323,20 @@ namespace MWGui
         for(auto* window : mWindows)
             window->onDeleteCustomData(ptr);
     }
+    void WindowManager::pushMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls)
+    {
+        mControlLegend->pushControls(leftControls, rightControls);
+    }
+
+    void WindowManager::popMenuControls()
+    {
+        mControlLegend->popControls();
+    }
+
+    void WindowManager::swapMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls)
+    {
+        mControlLegend->popControls();
+        mControlLegend->pushControls(leftControls, rightControls);
+    }
+
 }

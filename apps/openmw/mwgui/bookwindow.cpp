@@ -15,6 +15,7 @@
 #include "../mwworld/class.hpp"
 
 #include "formatting.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -66,6 +67,23 @@ namespace MWGui
         }
 
         center();
+    }
+
+    void BookWindow::onOpen()
+    {
+        std::vector<MenuControl> leftControls{
+            MenuControl{MWInput::MenuAction::MA_A, "OK"}
+        };
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+    }
+
+    void BookWindow::onClose()
+    {
+        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void BookWindow::onMouseWheel(MyGUI::Widget *_sender, int _rel)
@@ -185,6 +203,22 @@ namespace MWGui
         {
             paper->setVisible(false);
         }
+
+        std::vector<MenuControl> leftControls;
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        bool showTakeButton = mBook.getContainerStore() != &player.getClass().getContainerStore(player);
+        if (showTakeButton)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Take" });
+        if (prevPageVisible)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_LTrigger, "Previous Page" });
+        if (nextPageVisible)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Next Page" });
+
+        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
     }
 
     void BookWindow::nextPage()

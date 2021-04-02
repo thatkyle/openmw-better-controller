@@ -124,6 +124,7 @@
 #include "keyboardnavigation.hpp"
 #include "resourceskin.hpp"
 #include "controllegend.hpp"
+#include "onscreenkeyboard.hpp"
 
 namespace MWGui
 {
@@ -194,6 +195,7 @@ namespace MWGui
       , mWindowVisible(true)
       , mKeyPressConsumed(false)
       , mControlLegend(nullptr)
+      , mOnscreenKeyboard(nullptr)
     {
         mScalingFactor = std::clamp(Settings::Manager::getFloat("scaling factor", "GUI"), 0.5f, 8.f);
         mGuiPlatform = new osgMyGUI::Platform(viewer, guiRoot, resourceSystem->getImageManager(), mScalingFactor);
@@ -480,6 +482,7 @@ namespace MWGui
         mCharGen = new CharacterCreation(mViewer->getSceneData()->asGroup(), mResourceSystem);
 
         mControlLegend = new ControlLegend();
+        mOnscreenKeyboard = new OnscreenKeyboard();
 
         updatePinnedWindows();
 
@@ -1126,6 +1129,29 @@ namespace MWGui
         }
     }
 
+    bool WindowManager::processInventoryTrigger(MWInput::MenuAction action,
+                                                MWGui::GuiMode caller,
+                                                MWGui::GuiWindow window)
+    {
+        return false;
+
+        int eff = mShown & mAllowed & ~mForceHidden;
+
+        switch (action)
+        {
+        case MWInput::MenuAction::MA_LTrigger:
+            break;
+        case MWInput::MenuAction::MA_RTrigger:
+            if (caller == GM_Inventory)
+            {
+            }
+            break;
+        default:
+            return false;
+        }
+        return true;
+    }
+
     void WindowManager::windowResized(int x, int y)
     {
         Settings::Manager::setInt("resolution x", "Video", x);
@@ -1623,7 +1649,18 @@ namespace MWGui
     void WindowManager::onKeyFocusChanged(MyGUI::Widget *widget)
     {
         if (widget && widget->castType<MyGUI::EditBox>(false))
-            SDL_StartTextInput();
+        {
+            if (MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
+            {
+                SDL_StartTextInput();
+            }
+            else
+            {
+                SDL_StartTextInput();
+                // TODO: enable the on-screen keyboard
+                //mOnscreenKeyboard->setVisible(true);
+            }
+        }
         else
             SDL_StopTextInput();
     }

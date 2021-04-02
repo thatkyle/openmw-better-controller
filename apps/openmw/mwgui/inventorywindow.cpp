@@ -921,11 +921,15 @@ namespace MWGui
                 MWBase::Environment::get().getWindowManager()->setFocusObjectScreenCoords(mMainWidget->getTop(), mMainWidget->getLeft(),
                                                                                           mMainWidget->getBottom(), mMainWidget->getRight());
                 MWBase::Environment::get().getWindowManager()->setFocusObject(mTradeModel->getItem(mSortModel->mapToSource(mGamepadSelected)).mBase);
-                // TODO: Actually make the tooltip... This may wind up requiring a mouse move imitation.
+                // TODO: Actually make the tooltip; will need to create a new static window at top of screen
                 break;
             case MWInput::MA_LTrigger: // Trigger for menu cycling (inventory stats map magic) should be handled by upper window function.
+                if (!MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Inventory))
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
                 break; // Go to barter/container when trading
             case MWInput::MA_RTrigger:
+                if (!MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Inventory))
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
                 break; // Perhaps trade window should handle this. Go to inventory when trading/container.
             case MWInput::MA_DPadLeft:
                 if (isFilterCycleMode)

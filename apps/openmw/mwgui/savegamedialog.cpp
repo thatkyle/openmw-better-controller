@@ -26,11 +26,13 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwstate/character.hpp"
 
 #include "confirmationdialog.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -144,7 +146,7 @@ namespace MWGui
         WindowModal::onOpen();
 
         mSaveNameEdit->setCaption ("");
-        if (mSaving)
+        if (mSaving && MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveNameEdit);
         else
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveList);
@@ -212,6 +214,30 @@ namespace MWGui
 
         fillSaveList();
 
+        if (mSaving)
+        {
+            std::vector<MenuControl> leftControls{
+                MenuControl{MWInput::MenuAction::MA_A, "Save"},
+                MenuControl{MWInput::MenuAction::MA_Y, "New Save"},
+            };
+            std::vector<MenuControl> rightControls{
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            };
+
+            MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
+        }
+        else
+        {
+            std::vector<MenuControl> leftControls{
+                MenuControl{MWInput::MenuAction::MA_A, "Load Game"},
+                MenuControl{MWInput::MenuAction::MA_X, "Delete Game"}
+            };
+            std::vector<MenuControl> rightControls{
+                MenuControl{MWInput::MenuAction::MA_X, "Cancel"}
+            };
+
+            MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
+        }
     }
 
     void SaveGameDialog::setLoadOrSave(bool load)
@@ -231,6 +257,7 @@ namespace MWGui
         }
 
         center();
+        
     }
 
     void SaveGameDialog::onCancelButtonClicked(MyGUI::Widget *sender)
@@ -297,19 +324,75 @@ namespace MWGui
 
         if (mSaving)
         {
-            MWBase::Environment::get().getStateManager()->saveGame (mSaveNameEdit->getCaption(), mCurrentSlot);
+            MWBase::Environment::get().getStateManager()->saveGame(mSaveNameEdit->getCaption(), mCurrentSlot);
         }
         else
         {
             assert (mCurrentCharacter && mCurrentSlot);
-            MWBase::Environment::get().getStateManager()->loadGame (mCurrentCharacter, mCurrentSlot->mPath.string());
+            MWBase::Environment::get().getStateManager()->loadGame(mCurrentCharacter, mCurrentSlot->mPath.string());
         }
     }
 
     void SaveGameDialog::onKeyButtonPressed(MyGUI::Widget* _sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        if (key == MyGUI::KeyCode::Delete && mCurrentSlot)
-            confirmDeleteSave();
+        if (character != 1)
+        {
+            if (key == MyGUI::KeyCode::Delete && mCurrentSlot)
+                confirmDeleteSave();
+
+            return;
+        }
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true); // Set to false if not consumed.
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_DPadUp)
+        {
+            int index = mSaveList->getIndexSelected();
+            if (mSaveList->getItemCount() > 1 && index > 0)
+            {
+                mSaveList->setIndexSelected(index - 1);
+                onSlotSelected(mSaveList, index - 1);
+            }
+        }
+        else if (action == MWInput::MA_DPadDown)
+        {
+            int index = mSaveList->getIndexSelected();
+            if (mSaveList->getItemCount() > 1 && index < mSaveList->getItemCount() - 1)
+            {
+                mSaveList->setIndexSelected(index + 1);
+                onSlotSelected(mSaveList, index + 1);
+            }
+        }
+        else if (action == MWInput::MA_A)
+        {
+            onOkButtonClicked(_sender);
+        }
+        else if (action == MWInput::MA_B)
+        {
+            onCancelButtonClicked(_sender);
+        }
+        else if (action == MWInput::MA_X && !mSaving)
+        {
+            onDeleteButtonClicked(_sender);
+        }
+        else if (action == MWInput::MA_Y && mSaving)
+        {
+            // set the current slot to null, so that we start a new save
+            mCurrentSlot = nullptr;
+
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+
+            // set the caption of the save to the current date/time
+            std::stringstream timeStream;
+            timeStream << std::put_time(&tm, "%Y/%m/%d at %H:%M:%S");
+            mSaveNameEdit->setCaption(timeStream.str());
+
+            // submit!
+            onOkButtonClicked(_sender);
+        }
+        else
+             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }
 
     void SaveGameDialog::onOkButtonClicked(MyGUI::Widget *sender)
@@ -350,8 +433,9 @@ namespace MWGui
         {
             mSaveList->addItem(it->mProfile.mDescription);
         }
+
         // When loading, Auto-select the first save, if there is one
-        if (mSaveList->getItemCount() && !mSaving)
+        if (mSaveList->getItemCount() && (!mSaving || !MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled()))
         {
             mSaveList->setIndexSelected(0);
             onSlotSelected(mSaveList, 0);

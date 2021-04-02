@@ -125,6 +125,7 @@ namespace MWGui
   class DebugWindow;
   class JailScreen;
   class ControlLegend;
+  class OnscreenKeyboard;
   class KeyboardNavigation;
 
   struct MenuControl;
@@ -290,6 +291,10 @@ namespace MWGui
     std::string getGameSettingString(const std::string &id, const std::string &default_) override;
 
     void processChangedSettings(const Settings::CategorySettingVector& changed) override;
+
+    bool processInventoryTrigger(MWInput::MenuAction action,
+                                 MWGui::GuiMode caller,
+                                 MWGui::GuiWindow window = MWGui::GuiWindow::GW_None) override;
 
     void windowVisibilityChange(bool visible) override;
     void windowResized(int x, int y) override;
@@ -460,6 +465,7 @@ namespace MWGui
     JailScreen* mJailScreen;
     ContainerWindow* mContainerWindow;
     ControlLegend* mControlLegend;
+    OnscreenKeyboard* mOnscreenKeyboard;
 
     std::vector<WindowBase*> mWindows;
 

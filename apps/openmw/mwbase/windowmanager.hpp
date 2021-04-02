@@ -11,6 +11,8 @@
 
 #include "../mwgui/mode.hpp"
 
+#include "../mwinput/actions.hpp"
+
 #include <components/sdlutil/events.hpp>
 
 namespace Loading
@@ -71,6 +73,7 @@ namespace MWGui
     class JailScreen;
     class MessageBox;
     class ControlLegend;
+    class OnscreenKeyboard;
 
     enum ShowInDialogueMode {
         ShowInDialogueMode_IfPossible,
@@ -256,6 +259,17 @@ namespace MWBase
             virtual std::string getGameSettingString(const std::string &id, const std::string &default_) = 0;
 
             virtual void processChangedSettings(const std::set< std::pair<std::string, std::string> >& changed) = 0;
+
+            /**
+            * Processes a trigger press in an inventory menu (could be the regular inventory, or barter, or container)
+            * 
+            * @param action The menu action (should be a trigger) that invoked this function
+            * @param caller The calling GUI mode (inventory, container, barter, etc)
+            * @param window The specific window in the case that `caller` is GM_Inventory
+            */
+            virtual bool processInventoryTrigger(MWInput::MenuAction action, 
+                                                 MWGui::GuiMode caller, 
+                                                 MWGui::GuiWindow window = MWGui::GuiWindow::GW_None) = 0;
 
             virtual void executeInConsole (const std::string& path) = 0;
 

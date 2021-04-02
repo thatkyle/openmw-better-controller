@@ -1,0 +1,152 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Layout">
+    <Widget type="Window" skin="MW_DialogNoTransp" layer="MessageBox" position="0 0 600 300" align="Center" name="_Main">
+        <Property key="Padding" value="8"/>
+        <Property key="Spacing" value="8"/>
+
+        <Widget type="EditBox" skin="MW_TextEditClient" position="16 8 584 30" name="Input" align="Left Top Strech">
+            <Property key="FontName" value="Default"/>
+            <Property key="TextAlign" value="Top Left"/>
+            <Property key="Static" value="true"/>
+            <Property key="WordWrap" value="true"/>
+            <Property key="MultiLine" value="true"/>
+            <Property key="NeedKey" value="false"/>
+
+            <Property key="Caption" value="Test Caption"/>
+        </Widget>
+
+        <Widget type="HBox" skin="" align="Center Top">
+            <UserString key="HStretch" value="true"/>
+            <UserString key="VStretch" value="true"/>
+            <Property key="Spacing" value="8"/>
+
+            <Widget type="VBox" skin="" align="Left">
+
+                <UserString key="HStretch" value="true"/>
+                <UserString key="VStretch" value="true"/>
+
+                <Widget type="Button" skin="MW_Button_Key" name="CursorLeftButton">
+                    <Property key="Caption" value="Cursor left"/>
+                </Widget>
+
+                <Widget type="Button" skin="MW_Button_Key" name="CapsButton">
+                    <Property key="Caption" value="Caps"/>
+                </Widget>
+
+            </Widget>
+
+            <Widget type="VBox" skin="" align="Left">
+
+                <UserString key="HStretch" value="true"/>
+                <UserString key="VStretch" value="true"/>
+                <Property key="Spacing" value="8"/>
+
+                <Widget type="HBox" skin="" align="Center Top">
+
+                    <Widget type="Button" skin="MW_Button_Key" name="1Button">
+                        <Property key="Caption" value="1"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="2Button">
+                        <Property key="Caption" value="2"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="3Button">
+                        <Property key="Caption" value="3"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="4Button">
+                        <Property key="Caption" value="4"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="5Button">
+                        <Property key="Caption" value="5"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="6Button">
+                        <Property key="Caption" value="6"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="7Button">
+                        <Property key="Caption" value="7"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="8Button">
+                        <Property key="Caption" value="8"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="9Button">
+                        <Property key="Caption" value="9"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="0Button">
+                        <Property key="Caption" value="0"/>
+                    </Widget>
+
+                </Widget>
+
+                <Widget type="HBox" skin="" align="Center Top">
+
+                    <Widget type="Button" skin="MW_Button_Key" name="qButton">
+                        <Property key="Caption" value="q"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="wButton">
+                        <Property key="Caption" value="w"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="eButton">
+                        <Property key="Caption" value="e"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="rButton">
+                        <Property key="Caption" value="r"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="tButton">
+                        <Property key="Caption" value="t"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="yButton">
+                        <Property key="Caption" value="y"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="uButton">
+                        <Property key="Caption" value="u"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="iButton">
+                        <Property key="Caption" value="i"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="oButton">
+                        <Property key="Caption" value="o"/>
+                    </Widget>
+
+                    <Widget type="Button" skin="MW_Button_Key" name="pButton">
+                        <Property key="Caption" value="p"/>
+                    </Widget>
+
+                </Widget>
+
+
+            </Widget>
+
+            <Widget type="VBox" skin="" align="Left">
+
+                <UserString key="HStretch" value="true"/>
+                <UserString key="VStretch" value="true"/>
+
+                <Widget type="Button" skin="MW_Button" position="0 0 70 136" name="CursorRightButton">
+                    <Property key="Caption" value="Cursor right"/>
+                </Widget>
+
+                <Widget type="Button" skin="MW_Button" position="0 78 70 88" name="CapsButton">
+                    <Property key="Caption" value="Enter"/>
+                </Widget>
+
+            </Widget>
+        </Widget>
+    </Widget>
+</MyGUI>

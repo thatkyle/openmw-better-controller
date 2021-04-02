@@ -72,7 +72,7 @@ namespace MWGui
     void BookWindow::onOpen()
     {
         std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "OK"}
+            MenuControl{MWInput::MenuAction::MA_A, "Take"}
         };
         std::vector<MenuControl> rightControls{
             MenuControl{MWInput::MenuAction::MA_B, "Back"}
@@ -130,10 +130,32 @@ namespace MWGui
 
     void BookWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        if (key == MyGUI::KeyCode::ArrowUp)
-            prevPage();
-        else if (key == MyGUI::KeyCode::ArrowDown)
+        if (character != 1)
+        {
+            if (key == MyGUI::KeyCode::ArrowUp)
+                prevPage();
+            else if (key == MyGUI::KeyCode::ArrowDown)
+                nextPage();
+
+            return;
+        }
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        bool showTakeButton = mBook.getContainerStore() != &player.getClass().getContainerStore(player);
+
+        if (action == MWInput::MenuAction::MA_RTrigger)
             nextPage();
+        else if (action == MWInput::MenuAction::MA_LTrigger)
+            prevPage();
+        else if (action == MWInput::MenuAction::MA_A && showTakeButton)
+            onTakeButtonClicked(sender);
+        else if (action == MWInput::MenuAction::MA_B)
+            onCloseButtonClicked(sender);
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }
 
     void BookWindow::setInventoryAllowed(bool allowed)

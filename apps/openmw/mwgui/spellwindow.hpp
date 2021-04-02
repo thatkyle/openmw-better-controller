@@ -40,12 +40,17 @@ namespace MWGui
         void onTitleDoubleClicked() override;
         void onOpen() override;
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
         SpellView* mSpellView;
         SpellIcons* mSpellIcons;
         MyGUI::EditBox* mFilterEdit;
 
     private:
+        void gamepadHighlightSelected();
+        
         float mUpdateTimer;
+        int mGamepadSelected;
     };
 }
 

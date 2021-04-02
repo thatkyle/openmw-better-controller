@@ -54,6 +54,10 @@ namespace MWGui
 
         void resetScrollbars();
 
+        // Gamepad control functions:
+        void highlightItem(int index);
+        MyGUI::Widget* getHighlightWidget();
+
     private:
         MyGUI::ScrollView* mScrollView;
 
@@ -92,6 +96,11 @@ namespace MWGui
         SpellModel::ModelIndex getSpellModelIndex(MyGUI::Widget* _sender);
 
         static const char* sSpellModelIndex;
+
+        void scrollToTarget(int index);
+
+        int mHighlight;
+        MyGUI::Widget* mHighlightWidget;
     };
 
 }

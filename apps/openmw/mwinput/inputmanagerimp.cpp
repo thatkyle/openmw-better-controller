@@ -112,6 +112,11 @@ namespace MWInput
         mControllerManager->setGamepadGuiCursorEnabled(enabled);
     }
 
+    bool InputManager::isGamepadGuiCursorEnabled()
+    {
+        return mControllerManager->gamepadGuiCursorEnabled();
+    }
+
     void InputManager::changeInputMode(bool guiMode)
     {
         mControllerManager->setGuiCursorEnabled(guiMode);

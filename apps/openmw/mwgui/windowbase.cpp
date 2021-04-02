@@ -113,7 +113,7 @@ void WindowBase::hideWidgetHighlight(bool hide)
     if (mIsHighlightHidden != hide)
     {
         mIsHighlightHidden = hide;
-        widgetHighlight(mCurrentHighlight); // Destroy highlight if mIsHighlightHidden so it doesn't interfere with mouse-over tooltips/selection.
+        widgetHighlight(nullptr); // Destroy highlight if mIsHighlightHidden so it doesn't interfere with mouse-over tooltips/selection.
     }
 }
 

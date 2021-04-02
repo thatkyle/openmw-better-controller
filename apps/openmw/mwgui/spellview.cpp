@@ -27,6 +27,8 @@ namespace MWGui
         : mScrollView(nullptr)
         , mShowCostColumn(true)
         , mHighlightSelected(true)
+        , mHighlight(0)
+        , mHighlightWidget(nullptr)
     {
     }
 
@@ -134,6 +136,9 @@ namespace MWGui
                 mLines.emplace_back(t, (MyGUI::Widget*)nullptr, i);
 
             t->setStateSelected(spell.mSelected);
+
+            if (mHighlight == i)
+                mHighlightWidget = t;
         }
 
         layoutWidgets();
@@ -318,5 +323,31 @@ namespace MWGui
     void SpellView::resetScrollbars()
     {
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
+    }
+
+    void SpellView::highlightItem(int index)
+    {
+        mHighlight = index;
+        update();
+        //scrollToTarget(mHighlight);
+    }
+
+    MyGUI::Widget* SpellView::getHighlightWidget()
+    {
+        return mHighlightWidget;
+    }
+
+    void SpellView::scrollToTarget(int index)
+    {
+        if (mScrollView->isVisibleVScroll() && index >= 0) // -1 index is used to hide selection cursor.
+        {
+            //TODO: fix this scrolling
+            int targetRealColumn = (index / 1) * 42;
+            int scrollTargetOffset = 0;
+            if (targetRealColumn > mScrollView->getViewCoord().width - 84)
+                scrollTargetOffset = (targetRealColumn - (mScrollView->getViewCoord().width - 84)) * -1;
+
+            mScrollView->setViewOffset(MyGUI::IntPoint(scrollTargetOffset, 0));
+        }
     }
 }

@@ -391,6 +391,24 @@ namespace MWGui
             // submit!
             onOkButtonClicked(_sender);
         }
+        else if (action == MWInput::MA_LTrigger)
+        {
+            int index = mCharacterSelection->getIndexSelected();
+            if (mCharacterSelection->getItemCount() > 1 && index > 0)
+            {
+                mCharacterSelection->setIndexSelected(index - 1);
+                onCharacterAccept(mCharacterSelection, index - 1);
+            }
+        }
+        else if (action == MWInput::MA_RTrigger)
+        {
+            int index = mCharacterSelection->getIndexSelected();
+            if (mCharacterSelection->getItemCount() > 1 && index < mCharacterSelection->getItemCount() - 1)
+            {
+                mCharacterSelection->setIndexSelected(index + 1);
+                onCharacterAccept(mCharacterSelection, index + 1);
+            }
+        }
         else
              MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }

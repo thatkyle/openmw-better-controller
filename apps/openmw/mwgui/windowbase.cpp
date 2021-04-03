@@ -8,6 +8,7 @@
 #include <MyGUI_Gui.h>
 
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/environment.hpp"
 
 #include <components/widgets/imagebutton.hpp>
@@ -21,9 +22,13 @@ using namespace MWGui;
 WindowBase::WindowBase(const std::string& parLayout)
   : Layout(parLayout)
 {
-    mCurrentHighlight = nullptr;
-    mIsHighlightHidden = false;
     mMainWidget->setVisible(false);
+
+    mIsHighlightHidden = true;
+    mGamepadHighlight = mMainWidget->createWidget<MyGUI::ImageBox>("ImageBox", 0, 0, 0, 0, MyGUI::Align::Default, mPrefix + "GamepadHighlight");
+    mGamepadHighlight->setVisible(false);
+    mGamepadHighlight->setImageTexture("grey");
+    mGamepadHighlight->setDepth(INT_MAX);
 
     Window* window = mMainWidget->castType<Window>(false);
     if (!window)
@@ -84,37 +89,30 @@ void WindowBase::center()
 
 void WindowBase::widgetHighlight(MyGUI::Widget *target)
 {
-    // Destroys previous highlight, only one highlight at a time per window. nullptr can be passed to have no highlight.
-    MyGUI::Widget* previousHighlight = getWidgetByFullName("WindowHighlight");
-    if (previousHighlight)
+    if (target)
     {
-        mCurrentHighlight->_setWidgetState("normal"); // Only clearing highlight state now avoids conflict with mouse hover/keyboard controls.
-        MyGUI::Gui::getInstance().destroyWidget(previousHighlight);
+        // move the highlight to its new location
+        auto firstChildInHierarchy = target;
+        while (!firstChildInHierarchy->getParent()->isRootWidget())
+            firstChildInHierarchy = firstChildInHierarchy->getParent();
+
+        // we substract the absolute point of the first non-root element in the hierarchy to account for any padding
+        // that may be in the main window
+        auto coords = target->getAbsoluteCoord() - firstChildInHierarchy->getAbsoluteCoord().point();
+        mGamepadHighlight->setCoord(coords);
+
+        Log(Debug::Info) << "Highlight coords for layout " << mLayoutName << ": " << coords;
     }
 
-    // Though the target is stored, don't actually create a highlight unless it's supposed to be visible.
-    MyGUI::Widget *newSelection = nullptr;
-    if (target && target->getVisible() && (newSelection = target->getParent()) != nullptr)
-    {
-        if (mIsHighlightHidden == false)
-        {
-            target->_setWidgetState("highlighted");
-            MyGUI::ImageBox *highlight = newSelection->createWidget<MyGUI::ImageBox>("ImageBox", target->getCoord(), MyGUI::Align::Default, "WindowHighlight");
-            highlight->setImageTexture("grey");
-            highlight->setDepth(INT_MAX);
-        }
-    }
-
-    mCurrentHighlight = target;
+    updateHighlightVisibility();
 }
 
-void WindowBase::hideWidgetHighlight(bool hide)
+void WindowBase::updateHighlightVisibility()
 {
-    if (mIsHighlightHidden != hide)
-    {
-        mIsHighlightHidden = hide;
-        widgetHighlight(nullptr); // Destroy highlight if mIsHighlightHidden so it doesn't interfere with mouse-over tooltips/selection.
-    }
+    // only turn it on if the key focus widget is in this layout; this allows us to update widget positions without
+    // actually turning it on.
+    mGamepadHighlight->setVisible(MWBase::Environment::get().getInputManager()->joystickLastUsed() && 
+        isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget()));
 }
 
 WindowModal::WindowModal(const std::string& parLayout)

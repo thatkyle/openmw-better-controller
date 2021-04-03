@@ -406,6 +406,8 @@ namespace MWGui
     void popMenuControls() override;
     void swapMenuControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls) override;
 
+    void setHighlight(MyGUI::Widget* target);
+
   private:
     unsigned int mOldUpdateMask; unsigned int mOldCullMask;
 
@@ -474,6 +476,8 @@ namespace MWGui
     CharacterCreation* mCharGen;
 
     MyGUI::Widget* mInputBlocker;
+
+    MyGUI::ImageBox* mGamepadHighlight;
 
     bool mCrosshairEnabled;
     bool mSubtitlesEnabled;
@@ -596,6 +600,8 @@ namespace MWGui
     void handleScheduledMessageBoxes();
 
     void pushGuiMode(GuiMode mode, const MWWorld::Ptr& arg, bool force);
+    
+    GuiWindow mLastInventoryFocus;
   };
 }
 

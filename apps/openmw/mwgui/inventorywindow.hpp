@@ -66,6 +66,8 @@ namespace MWGui
             /// Cycle to previous/next weapon
             void cycle(bool next);
 
+            void focus() override;
+
         protected:
             void onTitleDoubleClicked() override;
 
@@ -139,8 +141,10 @@ namespace MWGui
             /// Unequips count items from mSelectedItem, if it is equipped, and then updates mSelectedItem in case the items were re-stacked
             void ensureSelectedItemUnequipped(int count);
 
-            // Gamepad Menu Controls:  
+            // Gamepad Menu Controls:
             void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+            void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
             void gamepadDelayedAction();
             void gamepadHighlightSelected();
             void gamepadCycleFilter(MWInput::MenuAction action);

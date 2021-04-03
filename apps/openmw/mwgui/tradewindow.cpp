@@ -52,6 +52,7 @@ namespace MWGui
         , mItemToSell(-1)
         , mCurrentBalance(0)
         , mCurrentMerchantOffer(0)
+        , mLastAction(MWInput::MA_None)
     {
         getWidget(mFilterAll, "AllButton");
         getWidget(mFilterWeapon, "WeaponButton");
@@ -73,6 +74,7 @@ namespace MWGui
 
         getWidget(mItemView, "ItemView");
         mItemView->eventItemClicked += MyGUI::newDelegate(this, &TradeWindow::onItemSelected);
+        mItemView->eventKeyButtonPressed += MyGUI::newDelegate(this, &TradeWindow::onKeyButtonPressed);
 
         mFilterAll->setStateSelected(true);
 
@@ -256,6 +258,11 @@ namespace MWGui
         {
             store.remove(MWWorld::ContainerStore::sGoldId, - amount, actor);
         }
+    }
+
+    void TradeWindow::offer()
+    {
+        onOfferButtonClicked(nullptr);
     }
 
     void TradeWindow::onOfferButtonClicked(MyGUI::Widget* _sender)
@@ -531,6 +538,8 @@ namespace MWGui
         mItemView->setModel(nullptr);
         mTradeModel = nullptr;
         mSortModel = nullptr;
+        mGamepadSelected = 0;
+        mGamepadFilterSelected = 0;
     }
 
     void TradeWindow::onClose()
@@ -545,5 +554,105 @@ namespace MWGui
     {
         if(mTradeModel && mTradeModel->usesContainer(ptr))
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Barter);
+    }
+
+    void TradeWindow::focus()
+    {
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
+    }
+
+    void TradeWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        mLastAction = MWInput::MA_None;
+        if (character != 1) // Gamepad control.
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        MyGUI::Widget* filterButton = nullptr;
+
+        if (mSortModel->getItemCount() == 0)
+            isFilterCycleMode = true; // Highlight filter selection if current sort has no elements (shortcut useful for selling all goods under a sort).
+
+        switch (action)
+        {
+        case MWInput::MA_A:
+        {
+            mItemToSell = mSortModel->mapToSource(mGamepadSelected);
+            MWWorld::Ptr ptr = mTradeModel->getItem(mItemToSell).mBase;
+
+            mLastAction = action;
+            onItemSelected(mGamepadSelected);
+
+            gamepadHighlightSelected();
+            break;
+        }
+        case MWInput::MA_X:
+            // NOT in parity with xbox... requires a new confirmation window to be in parity
+            mLastAction = action;
+            onOfferButtonClicked(mOfferButton);
+            break;
+        case MWInput::MA_Y:
+            MWBase::Environment::get().getWindowManager()->setFocusObjectScreenCoords(mMainWidget->getTop(), mMainWidget->getLeft(),
+                mMainWidget->getBottom(), mMainWidget->getRight());
+            MWBase::Environment::get().getWindowManager()->setFocusObject(mTradeModel->getItem(mSortModel->mapToSource(mGamepadSelected)).mBase);
+            // TODO: Actually make the tooltip; will need to create a new static window at top of screen
+            break;
+        case MWInput::MA_LTrigger: // Trigger for menu cycling (inventory stats map magic) should be handled by upper window function.
+        case MWInput::MA_RTrigger:
+            if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Barter))
+            {
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+            }
+            break; // Go to barter/container when trading
+                   // Perhaps trade window should handle this. Go to inventory when trading/container.
+        case MWInput::MA_DPadLeft:
+            mGamepadSelected -= mItemView->getRowCount();
+            if (mGamepadSelected < 0)
+                mGamepadSelected = 0;
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_DPadRight:
+            mGamepadSelected += mItemView->getRowCount();
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_DPadUp:
+            --mGamepadSelected;
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_DPadDown:
+            ++mGamepadSelected;
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_Black:
+            // TODO: let players hold these buttons rather than click n number of times.
+            onDecreaseButtonTriggered();
+            break;
+        case MWInput::MA_White:
+            onIncreaseButtonTriggered();
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
+    void TradeWindow::gamepadHighlightSelected()
+    {
+        if (mGamepadSelected > (int)mSortModel->getItemCount() - 1)
+            mGamepadSelected = (int)mSortModel->getItemCount() - 1;
+        if (mGamepadSelected < 0)
+            mGamepadSelected = 0;
+
+        if (mSortModel->getItemCount())
+        {
+            mItemView->highlightItem(mGamepadSelected);
+            widgetHighlight(mItemView->getHighlightWidget());
+        }
+        else
+        {
+            isFilterCycleMode = true;
+            widgetHighlight(nullptr);
+        }
     }
 }

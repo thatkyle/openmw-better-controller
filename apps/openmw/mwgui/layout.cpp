@@ -82,4 +82,8 @@ namespace MWGui
         return nullptr;
     }
 
+    bool Layout::isWidgetInLayout(const MyGUI::Widget* target) {
+        return target && (target == mMainWidget || isWidgetInLayout(target->getParent()));
+    }
+
 }

@@ -23,6 +23,8 @@ namespace MWGui
         /// Cycle to next/previous spell
         void cycle(bool next);
 
+        void focus();
+
     protected:
         MyGUI::Widget* mEffectBox;
 
@@ -48,7 +50,9 @@ namespace MWGui
 
     private:
         void gamepadHighlightSelected();
-        
+        void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+        void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+
         float mUpdateTimer;
         int mGamepadSelected;
     };

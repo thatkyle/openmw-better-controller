@@ -53,6 +53,9 @@ namespace MWGui
 
         mSpellView->eventKeyButtonPressed += MyGUI::newDelegate(this, &SpellWindow::onKeyButtonPressed);
 
+        mSpellView->eventKeySetFocus += MyGUI::newDelegate(this, &SpellWindow::onFocusGained);
+        mSpellView->eventKeyLostFocus += MyGUI::newDelegate(this, &SpellWindow::onFocusLost);
+
         setCoord(498, 300, 302, 300);
 
         // Adjust the spell filtering widget size because of MyGUI limitations.
@@ -85,11 +88,27 @@ namespace MWGui
         // Reset the filter focus when opening the window
         MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getKeyFocusWidget();
         if (focus == mFilterEdit)
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(nullptr);
-
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSpellView);
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(nullptr); 
 
         updateSpells();
+    }
+
+    void SpellWindow::focus()
+    {
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSpellView);
+    }
+
+    void SpellWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        if (!MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
+        {
+            gamepadHighlightSelected();
+        }
+    }
+
+    void SpellWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateHighlightVisibility();
     }
 
     void SpellWindow::onFrame(float dt) 
@@ -113,11 +132,6 @@ namespace MWGui
 
         mSpellView->setModel(new SpellModel(MWMechanics::getPlayer(), mFilterEdit->getCaption()));
         mSpellView->highlightItem(mGamepadSelected);
-
-        if (mSpellView->getHighlightWidget() && !MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
-        {
-            widgetHighlight(mSpellView->getHighlightWidget());
-        }
     }
 
     void SpellWindow::onEnchantedItemSelected(MWWorld::Ptr item, bool alreadyEquipped)
@@ -320,20 +334,20 @@ namespace MWGui
         else if (action == MWInput::MenuAction::MA_A)
         {
             onModelIndexSelected(mGamepadSelected);
+
+            gamepadHighlightSelected();
         }
         else if (action == MWInput::MenuAction::MA_Y)
         {
             // TODO: implement tooltip
         }
-        else if (action == MWInput::MenuAction::MA_LTrigger)
+        else if (action == MWInput::MenuAction::MA_LTrigger || action == MWInput::MenuAction::MA_RTrigger)
         {
-            if (!MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Inventory))
-                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
-        }
-        else if (action == MWInput::MenuAction::MA_RTrigger)
-        {
-            if (!MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Inventory))
-                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Magic))
+            {
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+                updateHighlightVisibility();
+            }
         }
         else
         {

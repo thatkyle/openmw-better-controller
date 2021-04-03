@@ -64,6 +64,8 @@ namespace MWGui
     // NOTE: this assume that mMainWidget is of type Window.
     void setTitle(const std::string& title);
 
+    bool isWidgetInLayout(const MyGUI::Widget* target);
+
     MyGUI::Widget* mMainWidget;
 
   protected:

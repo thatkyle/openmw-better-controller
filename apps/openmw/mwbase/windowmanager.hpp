@@ -380,6 +380,8 @@ namespace MWBase
             virtual void pushMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls) = 0;
             virtual void popMenuControls() = 0;
             virtual void swapMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls) = 0;
+
+            virtual void setHighlight(MyGUI::Widget* target) = 0;
     };
 }
 

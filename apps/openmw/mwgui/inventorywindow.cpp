@@ -73,7 +73,7 @@ namespace MWGui
         , mUpdateTimer(0.f)
         , mGamepadSelected(0)
         , mGamepadFilterSelected(0)
-        , isFilterCycleMode(true)
+        , isFilterCycleMode(false)
         , mLastAction(MWInput::MA_None)
     {
         mPreviewTexture.reset(new osgMyGUI::OSGTexture(mPreview->getTexture(), mPreview->getTextureStateSet()));
@@ -102,6 +102,8 @@ namespace MWGui
         mItemView->eventItemClicked += MyGUI::newDelegate(this, &InventoryWindow::onItemSelected);
         mItemView->eventBackgroundClicked += MyGUI::newDelegate(this, &InventoryWindow::onBackgroundSelected);
         mItemView->eventKeyButtonPressed += MyGUI::newDelegate(this, &InventoryWindow::onKeyButtonPressed);
+        mItemView->eventKeySetFocus += MyGUI::newDelegate(this, &InventoryWindow::onFocusGained);
+        mItemView->eventKeyLostFocus += MyGUI::newDelegate(this, &InventoryWindow::onFocusLost);
 
         mFilterAll->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
         mFilterWeapon->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
@@ -402,18 +404,28 @@ namespace MWGui
 
     void InventoryWindow::onOpen()
     {
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
         if (!mPtr.isEmpty())
         {
-            if (isFilterCycleMode)
-                widgetHighlight(nullptr);
-            else
-                gamepadHighlightSelected();
             updateEncumbranceBar();
             mItemView->update();
             notifyContentChanged();
         }
         adjustPanes();
+    }
+
+    void InventoryWindow::focus()
+    {
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
+    }
+
+    void InventoryWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        gamepadHighlightSelected();
+    }
+
+    void InventoryWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateHighlightVisibility();
     }
 
     std::string InventoryWindow::getModeSetting() const
@@ -463,6 +475,8 @@ namespace MWGui
             updatePreviewSize();
             updateArmorRating();
         }
+
+        gamepadHighlightSelected();
     }
 
     void InventoryWindow::updateArmorRating()
@@ -875,6 +889,7 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        MyGUI::Widget* filterButton = nullptr;
 
         if (mSortModel->getItemCount() == 0)
             isFilterCycleMode = true; // Highlight filter selection if current sort has no elements (shortcut useful for selling all goods under a sort).
@@ -883,12 +898,6 @@ namespace MWGui
         {
             case MWInput::MA_A:
             {
-                if (isFilterCycleMode)
-                {
-                    gamepadCycleFilter(action);
-                    break;
-                }
-
                 mSelectedItem = mSortModel->mapToSource(mGamepadSelected);
                 MWWorld::Ptr ptr = mTradeModel->getItem(mSelectedItem).mBase;
 
@@ -907,10 +916,14 @@ namespace MWGui
                 break;
             }
             case MWInput::MA_X:
-                if (isFilterCycleMode || mTrading)
-                    break;
-
                 mLastAction = action;
+
+                if (mTrading)
+                {
+                    MWBase::Environment::get().getWindowManager()->getTradeWindow()->offer();
+                    break;
+                }
+
                 onItemSelected(mGamepadSelected);
                 gamepadHighlightSelected();
                 break;
@@ -924,55 +937,53 @@ namespace MWGui
                 // TODO: Actually make the tooltip; will need to create a new static window at top of screen
                 break;
             case MWInput::MA_LTrigger: // Trigger for menu cycling (inventory stats map magic) should be handled by upper window function.
-                if (!MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Inventory))
-                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
-                break; // Go to barter/container when trading
             case MWInput::MA_RTrigger:
-                if (!MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Inventory))
-                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
-                break; // Perhaps trade window should handle this. Go to inventory when trading/container.
-            case MWInput::MA_DPadLeft:
-                if (isFilterCycleMode)
-                    gamepadCycleFilter(action);
-                else
+                if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, mTrading ? GM_Barter : GM_Inventory, GW_Inventory))
                 {
-                    mGamepadSelected -= mItemView->getRowCount();
-                    if (mGamepadSelected < 0)
-                        mGamepadSelected = 0;
-                    gamepadHighlightSelected();
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
                 }
+                break; // Go to barter/container when trading
+                       // Perhaps trade window should handle this. Go to inventory when trading/container.
+            case MWInput::MA_DPadLeft:
+                mGamepadSelected -= mItemView->getRowCount();
+                if (mGamepadSelected < 0)
+                    mGamepadSelected = 0;
+                gamepadHighlightSelected();
                 break;
             case MWInput::MA_DPadRight:
-                if (isFilterCycleMode)
-                    gamepadCycleFilter(action);
-                else
-                {
-                    mGamepadSelected += mItemView->getRowCount();
-                    gamepadHighlightSelected();
-                }
+                mGamepadSelected += mItemView->getRowCount();
+                gamepadHighlightSelected();
                 break;
             case MWInput::MA_DPadUp:
-                if (isFilterCycleMode)
-                    gamepadCycleFilter(action);
-                else if (mGamepadSelected % mItemView->getRowCount() == 0)
-                {
-                    widgetHighlight(nullptr);
-                    isFilterCycleMode = true;
-                }
-                else
-                {
-                    --mGamepadSelected;
-                    gamepadHighlightSelected();
-                }
+                --mGamepadSelected;
+                gamepadHighlightSelected();
                 break;
             case MWInput::MA_DPadDown:
-                if (isFilterCycleMode)
-                    gamepadCycleFilter(action);
-                else
-                {
-                    ++mGamepadSelected;
-                    gamepadHighlightSelected();
-                }
+                ++mGamepadSelected;
+                gamepadHighlightSelected();
+                break;
+            case MWInput::MA_Black:
+            case MWInput::MA_White:
+                if (action == MWInput::MA_Black && mGamepadFilterSelected == 0)
+                    break;
+                if (action == MWInput::MA_White && mGamepadFilterSelected == 4)
+                    break;
+
+                mGamepadFilterSelected += (action == MWInput::MA_White) ? 1 : -1;
+
+                if (mGamepadFilterSelected == 0)
+                    filterButton = mFilterAll;
+                else if (mGamepadFilterSelected == 1)
+                    filterButton = mFilterWeapon;
+                else if (mGamepadFilterSelected == 2)
+                    filterButton = mFilterApparel;
+                else if (mGamepadFilterSelected == 3)
+                    filterButton = mFilterMagic;
+                else if (mGamepadFilterSelected == 4)
+                    filterButton = mFilterMisc;
+
+                if (filterButton)
+                    onFilterChanged(filterButton);
                 break;
             default:
                 MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

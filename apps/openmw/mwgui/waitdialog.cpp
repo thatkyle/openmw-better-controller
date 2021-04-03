@@ -145,7 +145,6 @@ namespace MWGui
 
         onHourSliderChangedPosition(mHourSlider, 0);
         mHourSlider->setScrollPosition (0);
-        widgetHighlight(mHourSlider);
 
         std::string month = MWBase::Environment::get().getWorld ()->getMonthName();
         int hour = static_cast<int>(MWBase::Environment::get().getWorld()->getTimeStamp().getHour());
@@ -158,6 +157,8 @@ namespace MWGui
         std::string formattedHour = pm ? "#{sSaveMenuHelp05}" : "#{sSaveMenuHelp04}";
         std::string dateTimeText = Misc::StringUtils::format("%i %s (#{sDay} %i) %i %s", currentDate.mDay, month, daysPassed, hour, formattedHour);
         mDateTimeText->setCaptionWithReplacing (dateTimeText);
+
+        //widgetHighlight(mHourSlider);
     }
 
     void WaitDialog::onUntilHealedButtonClicked(MyGUI::Widget* sender)

@@ -2,6 +2,7 @@
 #define MWGUI_TRADEWINDOW_H
 
 #include "../mwmechanics/trading.hpp"
+#include "../mwinput/actions.hpp"
 
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
@@ -35,6 +36,7 @@ namespace MWGui
 
             void borrowItem (int index, size_t count);
             void returnItem (int index, size_t count);
+            void offer();
 
             int getMerchantServices();
 
@@ -43,6 +45,9 @@ namespace MWGui
             void resetReference() override;
 
             void onDeleteCustomData(const MWWorld::Ptr& ptr) override;
+
+
+            void focus() override;
 
             typedef MyGUI::delegates::CMultiDelegate0 EventHandle_TradeDone;
             EventHandle_TradeDone eventTradeDone;
@@ -114,6 +119,17 @@ namespace MWGui
             void onReferenceUnavailable() override;
 
             int getMerchantGold();
+
+            void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+            //void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            //void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+            //void gamepadDelayedAction();
+            void gamepadHighlightSelected();
+            //void gamepadCycleFilter(MWInput::MenuAction action);
+            int mGamepadSelected;
+            int mGamepadFilterSelected;
+            bool isFilterCycleMode;
+            MWInput::MenuAction mLastAction;
     };
 }
 

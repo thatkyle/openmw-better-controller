@@ -39,6 +39,8 @@ namespace MWGui
         /// Returns the visibility state of the window
         bool isVisible();
 
+        virtual void focus() {};
+
         void center();
 
         /// Clear any state specific to the running game
@@ -51,14 +53,18 @@ namespace MWGui
 
         /// Place gamepad highlight on a given child widget.
         void widgetHighlight(MyGUI::Widget *target);
-        void hideWidgetHighlight(bool hide);
+        void updateHighlightVisibility();
 
     protected:
         virtual void onTitleDoubleClicked();
 
     private:
         void onDoubleClick(MyGUI::Widget* _sender);
-        MyGUI::Widget *mCurrentHighlight;
+
+        virtual void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus) {};
+        virtual void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus) {};
+
+        MyGUI::ImageBox* mGamepadHighlight;
         bool mIsHighlightHidden;
     };
 

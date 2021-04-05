@@ -50,7 +50,7 @@ set(MYGUI_FILES
     openmw_map_window.layout
     openmw_map_window.skin.xml
     openmw_messagebox.layout
-    openmw_onscreen_keyboard.xml
+    openmw_onscreen_keyboard.layout
     openmw_pointer.xml
     openmw_progress.skin.xml
     openmw_resources.xml

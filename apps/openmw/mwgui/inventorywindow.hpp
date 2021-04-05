@@ -68,6 +68,8 @@ namespace MWGui
 
             void focus() override;
 
+            void onBackgroundSelected();
+
         protected:
             void onTitleDoubleClicked() override;
 
@@ -113,8 +115,6 @@ namespace MWGui
 
             void onItemSelected(int index);
             void onItemSelectedFromSourceModel(int index);
-
-            void onBackgroundSelected();
 
             std::string getModeSetting() const;
 

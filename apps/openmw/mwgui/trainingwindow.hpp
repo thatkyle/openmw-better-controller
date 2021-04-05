@@ -20,6 +20,7 @@ namespace MWGui
         TrainingWindow();
 
         void onOpen() override;
+        void onClose() override;
 
         bool exit() override;
 
@@ -51,6 +52,12 @@ namespace MWGui
         WaitDialogProgressBar mProgressBar;
         TimeAdvancer mTimeAdvancer;
         bool mTrainingSkillBasedOnBaseSkill;    //corresponds to the setting 'training skills based on base skill'
+
+        // gamepad functions
+        void gamepadHighlightSelected();
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        int mGamepadSelected;
     };
 
 }

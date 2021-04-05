@@ -91,6 +91,8 @@ void WindowBase::widgetHighlight(MyGUI::Widget *target)
 {
     if (target)
     {
+        mIsHighlightHidden = false;
+
         // move the highlight to its new location
         auto firstChildInHierarchy = target;
         while (!firstChildInHierarchy->getParent()->isRootWidget())
@@ -103,7 +105,9 @@ void WindowBase::widgetHighlight(MyGUI::Widget *target)
 
         Log(Debug::Info) << "Highlight coords for layout " << mLayoutName << ": " << coords;
     }
-
+    else
+        mIsHighlightHidden = true;
+        
     updateHighlightVisibility();
 }
 
@@ -111,8 +115,10 @@ void WindowBase::updateHighlightVisibility()
 {
     // only turn it on if the key focus widget is in this layout; this allows us to update widget positions without
     // actually turning it on.
-    mGamepadHighlight->setVisible(MWBase::Environment::get().getInputManager()->joystickLastUsed() && 
-        isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget()));
+    bool shouldTurnOn = !mIsHighlightHidden && MWBase::Environment::get().getInputManager()->joystickLastUsed() &&
+        isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget());
+
+    mGamepadHighlight->setVisible(shouldTurnOn);
 }
 
 WindowModal::WindowModal(const std::string& parLayout)

@@ -38,6 +38,7 @@
 #include "tradeitemmodel.hpp"
 #include "countdialog.hpp"
 #include "tradewindow.hpp"
+#include "container.hpp"
 #include "draganddrop.hpp"
 #include "widgets.hpp"
 #include "tooltips.hpp"
@@ -426,6 +427,9 @@ namespace MWGui
     void InventoryWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
     {
         updateHighlightVisibility();
+
+        // hide the gamepad tooltip
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
     }
 
     std::string InventoryWindow::getModeSetting() const
@@ -602,6 +606,8 @@ namespace MWGui
             mItemView->update();
 
             notifyContentChanged();
+
+            gamepadHighlightSelected();
         }
         // else: will be updated in open()
     }
@@ -901,8 +907,13 @@ namespace MWGui
                 mSelectedItem = mSortModel->mapToSource(mGamepadSelected);
                 MWWorld::Ptr ptr = mTradeModel->getItem(mSelectedItem).mBase;
 
-                if (!mTrading && (ptr.getTypeName() == typeid(ESM::Potion).name() || ptr.getTypeName() == typeid(ESM::Ingredient).name()))
-                    useItem(ptr); // Shortcut to use a single ingredient/potion instead of dealing with countDialog.
+                if (!mTrading && (
+                        ptr.getTypeName() == typeid(ESM::Potion).name() || 
+                        ptr.getTypeName() == typeid(ESM::Ingredient).name() ||
+                        ptr.getTypeName() == typeid(ESM::Book).name() ||
+                        ptr.getTypeName() == typeid(ESM::Repair).name()))
+                    useItem(ptr); // Shortcut to use a single ingredient/potion/book instead of dealing with countDialog.
+                                  // \TODO: add repair hammers here (and any other stackable, usable items)
                 else
                 {
                     mLastAction = action;
@@ -931,14 +942,12 @@ namespace MWGui
                 if (isFilterCycleMode)
                     break;
 
-                MWBase::Environment::get().getWindowManager()->setFocusObjectScreenCoords(mMainWidget->getTop(), mMainWidget->getLeft(),
-                                                                                          mMainWidget->getBottom(), mMainWidget->getRight());
-                MWBase::Environment::get().getWindowManager()->setFocusObject(mTradeModel->getItem(mSortModel->mapToSource(mGamepadSelected)).mBase);
+                //MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget());
                 // TODO: Actually make the tooltip; will need to create a new static window at top of screen
                 break;
             case MWInput::MA_LTrigger: // Trigger for menu cycling (inventory stats map magic) should be handled by upper window function.
             case MWInput::MA_RTrigger:
-                if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, mTrading ? GM_Barter : GM_Inventory, GW_Inventory))
+                if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, MWBase::Environment::get().getWindowManager()->getMode(), GW_Inventory))
                 {
                     MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
                 }
@@ -1010,11 +1019,16 @@ namespace MWGui
                 onBackgroundSelected();
                 break;
             case MWInput::MA_X:
+                if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Inventory)
                 {
                     // Create a WorldItemModel at center screen so DragAndDrop can place at crosshair or feet.
                     WorldItemModel centerFocus(0.5, 0.5);
                     mDragAndDrop->drop(&centerFocus, nullptr);
                     onBackgroundSelected();
+                }
+                else if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Container)
+                {
+                    MWBase::Environment::get().getWindowManager()->getContainerWindow()->onBackgroundSelected();
                 }
                 break;
             default:
@@ -1037,6 +1051,9 @@ namespace MWGui
         {
             mItemView->highlightItem(mGamepadSelected);
             widgetHighlight(mItemView->getHighlightWidget());
+
+            if (mMainWidget->getVisible())
+                MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget(), this);
         }
         else
         {

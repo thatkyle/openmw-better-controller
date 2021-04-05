@@ -14,6 +14,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -42,6 +43,8 @@ namespace MWGui
         , mFullHelp(false)
         , mShowOwned(0)
         , mFrameDuration(0.f)
+        , mGamepadGuiFocusWidget(nullptr)
+        , mGamepadGuiFocusLayout(nullptr)
     {
         getWidget(mDynamicToolTipBox, "DynamicToolTipBox");
 
@@ -99,11 +102,10 @@ namespace MWGui
 
         if (guiMode)
         {
-            if (!winMgr->getCursorVisible())
-                return;
+            bool joystickLastUsed = MWBase::Environment::get().getInputManager()->joystickLastUsed();
             const MyGUI::IntPoint& mousePos = MyGUI::InputManager::getInstance().getMousePosition();
 
-            if (winMgr->getWorldMouseOver() &&
+            if (winMgr->getWorldMouseOver() && !joystickLastUsed &&
                 (winMgr->isConsoleMode() ||
                 (winMgr->getMode() == GM_Container) ||
                 (winMgr->getMode() == GM_Inventory)))
@@ -133,26 +135,36 @@ namespace MWGui
 
                 setCoord(tooltipPosition.left, tooltipPosition.top, tooltipSize.width, tooltipSize.height);
             }
-
             else
             {
-                if (mousePos.left == mLastMouseX && mousePos.top == mLastMouseY)
+                if (!joystickLastUsed)
                 {
-                    mRemainingDelay -= frameDuration;
+                    if (mousePos.left == mLastMouseX && mousePos.top == mLastMouseY)
+                    {
+                        mRemainingDelay -= frameDuration;
+                    }
+                    else
+                    {
+                        mHorizontalScrollIndex = 0;
+                        mRemainingDelay = mDelay;
+                    }
+                    mLastMouseX = mousePos.left;
+                    mLastMouseY = mousePos.top;
+
+
+                    if (mRemainingDelay > 0)
+                        return;
                 }
                 else
                 {
-                    mHorizontalScrollIndex = 0;
-                    mRemainingDelay = mDelay;
+                    // set it so the tooltip updates automatically once the mouse moves again
+                    mRemainingDelay = 0;
                 }
-                mLastMouseX = mousePos.left;
-                mLastMouseY = mousePos.top;
 
+                MyGUI::Widget* focus = joystickLastUsed
+                    ? mGamepadGuiFocusWidget
+                    : MyGUI::InputManager::getInstance().getMouseFocusWidget();
 
-                if (mRemainingDelay > 0)
-                    return;
-
-                MyGUI::Widget* focus = MyGUI::InputManager::getInstance().getMouseFocusWidget();
                 if (focus == nullptr)
                     return;
 
@@ -320,16 +332,37 @@ namespace MWGui
 
     void ToolTips::position(MyGUI::IntPoint& position, MyGUI::IntSize size, MyGUI::IntSize viewportSize)
     {
-        position += MyGUI::IntPoint(0, 32)
-        - MyGUI::IntPoint(static_cast<int>(MyGUI::InputManager::getInstance().getMousePosition().left / float(viewportSize.width) * size.width), 0);
+        if (!mGamepadGuiFocusLayout)
+        {
+            position += MyGUI::IntPoint(0, 32)
+                - MyGUI::IntPoint(static_cast<int>(MyGUI::InputManager::getInstance().getMousePosition().left / float(viewportSize.width) * size.width), 0);
 
-        if ((position.left + size.width) > viewportSize.width)
-        {
-            position.left = viewportSize.width - size.width;
+            if ((position.left + size.width) > viewportSize.width)
+            {
+                position.left = viewportSize.width - size.width;
+            }
+            if ((position.top + size.height) > viewportSize.height)
+            {
+                position.top = MyGUI::InputManager::getInstance().getMousePosition().top - size.height - 8;
+            }
         }
-        if ((position.top + size.height) > viewportSize.height)
+        else
         {
-            position.top = MyGUI::InputManager::getInstance().getMousePosition().top - size.height - 8;
+            auto layoutCoords = mGamepadGuiFocusLayout->mMainWidget->getAbsoluteCoord();
+
+            //position = layoutCoords.point() - MyGUI::IntPoint(10 + size.width, 0);
+            //
+            //if (position.left < 0)
+            //{
+            //    position = layoutCoords.point() + MyGUI::IntPoint(10 + layoutCoords.width, 0);
+            //}
+
+            position = layoutCoords.point() + MyGUI::IntPoint((layoutCoords.width / 2) - (size.width / 2), -10 - size.height);
+
+            if (position.top < 0)
+            {
+                position = MyGUI::IntPoint(position.left, layoutCoords.point().top + layoutCoords.height + 10);
+            }
         }
     }
 
@@ -351,6 +384,17 @@ namespace MWGui
     void ToolTips::setFocusObject(const MWWorld::Ptr& focus)
     {
         mFocusObject = focus;
+
+        update(mFrameDuration);
+    }
+
+    void ToolTips::setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout)
+    {
+        mGamepadGuiFocusWidget = target;
+        mGamepadGuiFocusLayout = layout;
+
+        if (!target)
+            mFocusObject = nullptr;
 
         update(mFrameDuration);
     }

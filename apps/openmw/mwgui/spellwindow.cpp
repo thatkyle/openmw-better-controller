@@ -109,6 +109,7 @@ namespace MWGui
     void SpellWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
     {
         updateHighlightVisibility();
+
     }
 
     void SpellWindow::onFrame(float dt) 
@@ -297,6 +298,8 @@ namespace MWGui
         {
             mSpellView->highlightItem(mGamepadSelected);
             widgetHighlight(mSpellView->getHighlightWidget());
+
+            MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mSpellView->getHighlightWidget(), this);
         }
     }
 

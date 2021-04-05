@@ -152,6 +152,7 @@ namespace MWBase
             virtual MWGui::ConfirmationDialog* getConfirmationDialog() = 0;
             virtual MWGui::TradeWindow* getTradeWindow() = 0;
             virtual const std::vector<MWGui::MessageBox*> getActiveMessageBoxes() = 0;
+            virtual MWGui::ContainerWindow* getContainerWindow() = 0;
 
             /// Make the player use an item, while updating GUI state accordingly
             virtual void useItem(const MWWorld::Ptr& item, bool force=false) = 0;
@@ -170,6 +171,7 @@ namespace MWBase
 
             virtual void setFocusObject(const MWWorld::Ptr& focus) = 0;
             virtual void setFocusObjectScreenCoords(float min_x, float min_y, float max_x, float max_y) = 0;
+            virtual void setGamepadGuiFocusWidget(MyGUI::Widget* target, MWGui::Layout* layout) = 0;
 
             virtual void setCursorVisible(bool visible) = 0;
             virtual void setCursorActive(bool active) = 0;

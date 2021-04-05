@@ -65,6 +65,7 @@ namespace MWGui
 
         void setFocusObject(const MWWorld::Ptr& focus);
         void setFocusObjectScreenCoords(float min_x, float min_y, float max_x, float max_y);
+        void setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout);
         ///< set the screen-space position of the tooltip for focused object
 
         static std::string getWeightString(const float weight, const std::string& prefix);
@@ -139,6 +140,9 @@ namespace MWGui
         int mShowOwned;
 
         float mFrameDuration;
+
+        MyGUI::Widget* mGamepadGuiFocusWidget;
+        Layout* mGamepadGuiFocusLayout;
     };
 }
 #endif

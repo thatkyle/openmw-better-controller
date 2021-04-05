@@ -18,6 +18,7 @@ public:
     Repair();
 
     void onOpen() override;
+    void onClose() override;
 
     void setPtr (const MWWorld::Ptr& item) override;
 
@@ -46,6 +47,12 @@ protected:
 
     void onRepairItem(MyGUI::Widget* sender, const MWWorld::Ptr& ptr);
     void onCancel(MyGUI::Widget* sender);
+
+    // gamepad functions
+    void gamepadHighlightSelected();
+    void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+    int mGamepadSelected;
 
 };
 

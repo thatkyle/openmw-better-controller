@@ -22,12 +22,15 @@ namespace MWGui
 {
 MerchantRepair::MerchantRepair()
     : WindowBase("openmw_merchantrepair.layout")
+    , mGamepadSelected(0)
 {
     getWidget(mList, "RepairView");
     getWidget(mOkButton, "OkButton");
     getWidget(mGoldLabel, "PlayerGold");
 
     mOkButton->eventMouseButtonClick += MyGUI::newDelegate(this, &MerchantRepair::onOkButtonClick);
+
+    mList->eventKeyButtonPressed += MyGUI::newDelegate(this, &MerchantRepair::onKeyButtonPressed);
 }
 
 void MerchantRepair::setPtr(const MWWorld::Ptr &actor)
@@ -99,6 +102,8 @@ void MerchantRepair::setPtr(const MWWorld::Ptr &actor)
 
     mGoldLabel->setCaptionWithReplacing("#{sGold}: "
         + MyGUI::utility::toString(playerGold));
+
+    gamepadHighlightSelected();
 }
 
 void MerchantRepair::onMouseWheel(MyGUI::Widget* _sender, int _rel)
@@ -114,6 +119,14 @@ void MerchantRepair::onOpen()
     center();
     // Reset scrollbars
     mList->setViewOffset(MyGUI::IntPoint(0, 0));
+
+    mGamepadSelected = 0;
+    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mList);
+}
+
+void MerchantRepair::onClose()
+{
+    MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
 }
 
 void MerchantRepair::onRepairButtonClick(MyGUI::Widget *sender)
@@ -144,6 +157,70 @@ void MerchantRepair::onRepairButtonClick(MyGUI::Widget *sender)
 void MerchantRepair::onOkButtonClick(MyGUI::Widget *sender)
 {
     MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_MerchantRepair);
+}
+
+void MerchantRepair::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+{
+    if (character != 1) // Gamepad control.
+        return;
+
+    int itemCount = mList->getChildCount();
+
+    if (itemCount == 0)
+        return;
+
+    MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+    MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+    //TODO: support going through active effects; for now, just support spell selection
+
+    if (action == MWInput::MenuAction::MA_DPadDown)
+    {
+        if (mGamepadSelected < itemCount - 1)
+        {
+            mGamepadSelected++;
+            gamepadHighlightSelected();
+        }
+    }
+    else if (action == MWInput::MenuAction::MA_DPadUp)
+    {
+        if (mGamepadSelected > 0)
+        {
+            mGamepadSelected--;
+            gamepadHighlightSelected();
+        }
+    }
+    else if (action == MWInput::MenuAction::MA_A)
+    {
+        onRepairButtonClick(mList->getChildAt(mGamepadSelected));
+
+        gamepadHighlightSelected();
+    }
+    else
+    {
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+}
+
+void MerchantRepair::gamepadHighlightSelected()
+{
+    int itemCount = mList->getChildCount();
+
+    if (mGamepadSelected > itemCount - 1)
+        mGamepadSelected = itemCount - 1;
+    if (mGamepadSelected < 0)
+        mGamepadSelected = 0;
+
+    if (itemCount)
+    {
+        widgetHighlight(mList->getChildAt(mGamepadSelected));
+
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mList->getChildAt(mGamepadSelected), this);
+    }
+    else
+    {
+        widgetHighlight(nullptr);
+    }
 }
 
 }

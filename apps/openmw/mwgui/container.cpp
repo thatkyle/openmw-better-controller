@@ -8,6 +8,7 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/scriptmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/inventorystore.hpp"
@@ -39,6 +40,7 @@ namespace MWGui
         , mModel(nullptr)
         , mSelectedItem(-1)
         , mTreatNextOpenAsLoot(false)
+        , mLastAction(MWInput::MA_None)
     {
         getWidget(mDisposeCorpseButton, "DisposeCorpseButton");
         getWidget(mTakeButton, "TakeButton");
@@ -47,6 +49,9 @@ namespace MWGui
         getWidget(mItemView, "ItemView");
         mItemView->eventBackgroundClicked += MyGUI::newDelegate(this, &ContainerWindow::onBackgroundSelected);
         mItemView->eventItemClicked += MyGUI::newDelegate(this, &ContainerWindow::onItemSelected);
+        mItemView->eventKeyButtonPressed += MyGUI::newDelegate(this, &ContainerWindow::onKeyButtonPressed);
+        mItemView->eventKeySetFocus += MyGUI::newDelegate(this, &ContainerWindow::onFocusGained);
+        mItemView->eventKeyLostFocus += MyGUI::newDelegate(this, &ContainerWindow::onFocusLost);
 
         mDisposeCorpseButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ContainerWindow::onDisposeCorpseButtonClicked);
         mCloseButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ContainerWindow::onCloseButtonClicked);
@@ -101,6 +106,9 @@ namespace MWGui
             return;
 
         mDragAndDrop->startDrag(mSelectedItem, mSortModel, mModel, mItemView, count);
+
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            gamepadDelayedAction();
     }
 
     void ContainerWindow::dropItem()
@@ -162,6 +170,7 @@ namespace MWGui
         mItemView->setModel(nullptr);
         mModel = nullptr;
         mSortModel = nullptr;
+        mGamepadSelected = 0;
     }
 
     void ContainerWindow::onClose()
@@ -311,4 +320,131 @@ namespace MWGui
         if(mModel && mModel->usesContainer(ptr))
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Container);
     }
+
+    void ContainerWindow::focus()
+    {
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
+    }
+
+    void ContainerWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        gamepadHighlightSelected();
+    }
+
+    void ContainerWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateHighlightVisibility();
+
+        // hide the gamepad tooltip
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+    }
+
+    void ContainerWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        mLastAction = MWInput::MA_None;
+        if (character != 1) // Gamepad control.
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        MyGUI::Widget* filterButton = nullptr;
+
+        if (mSortModel->getItemCount() == 0)
+            isFilterCycleMode = true; // Highlight filter selection if current sort has no elements (shortcut useful for selling all goods under a sort).
+
+        switch (action)
+        {
+        case MWInput::MA_A:
+        {
+            mLastAction = action;
+            onItemSelected(mGamepadSelected);
+
+            gamepadHighlightSelected();
+            break;
+        }
+        case MWInput::MA_X:
+            onTakeAllButtonClicked(mTakeButton);
+            break;
+        case MWInput::MA_Y:
+            // TODO: Actually make the tooltip; will need to create a new static window at top of screen
+            break;
+        case MWInput::MA_LTrigger: // Trigger for menu cycling (inventory stats map magic) should be handled by upper window function.
+        case MWInput::MA_RTrigger:
+            if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Container))
+            {
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+            }
+            break; // Go to barter/container when trading
+                   // Perhaps trade window should handle this. Go to inventory when trading/container.
+        case MWInput::MA_DPadLeft:
+            mGamepadSelected -= mItemView->getRowCount();
+            if (mGamepadSelected < 0)
+                mGamepadSelected = 0;
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_DPadRight:
+            mGamepadSelected += mItemView->getRowCount();
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_DPadUp:
+            --mGamepadSelected;
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_DPadDown:
+            ++mGamepadSelected;
+            gamepadHighlightSelected();
+            break;
+        case MWInput::MA_White:
+            onDisposeCorpseButtonClicked(mDisposeCorpseButton);
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
+    void ContainerWindow::gamepadHighlightSelected()
+    {
+        if (mGamepadSelected > (int)mSortModel->getItemCount() - 1)
+            mGamepadSelected = (int)mSortModel->getItemCount() - 1;
+        if (mGamepadSelected < 0)
+            mGamepadSelected = 0;
+
+        if (mSortModel->getItemCount())
+        {
+            mItemView->highlightItem(mGamepadSelected);
+            widgetHighlight(mItemView->getHighlightWidget());
+
+            MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget(), this);
+        }
+        else
+        {
+            isFilterCycleMode = true;
+            widgetHighlight(nullptr);
+        }
+    }
+    
+    void ContainerWindow::gamepadDelayedAction()
+    {
+        switch (mLastAction)
+        {
+        case MWInput::MA_A:
+            if (mDragAndDrop->mIsOnDragAndDrop)
+            {
+                // onAvatarClicked has additional functionality that can't be used.
+                MWWorld::Ptr ptr = mDragAndDrop->mItem.mBase;
+                mDragAndDrop->finish();
+                MWBase::Environment::get().getWindowManager()->getInventoryWindow()->onBackgroundSelected();
+            }
+            break;
+        case MWInput::MA_Unequip:
+            onBackgroundSelected();
+            break;
+        }
+
+
+        mLastAction = MWInput::MA_None;
+        gamepadHighlightSelected();
+    }
+
 }

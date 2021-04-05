@@ -192,6 +192,7 @@ namespace MWGui
     MWGui::ConfirmationDialog* getConfirmationDialog() override;
     MWGui::TradeWindow* getTradeWindow() override;
     const std::vector<MWGui::MessageBox*> getActiveMessageBoxes() override;
+    MWGui::ContainerWindow* getContainerWindow() override;
 
     /// Make the player use an item, while updating GUI state accordingly
     void useItem(const MWWorld::Ptr& item, bool bypassBeastRestrictions=false) override;
@@ -209,6 +210,8 @@ namespace MWGui
 
     void setFocusObject(const MWWorld::Ptr& focus) override;
     void setFocusObjectScreenCoords(float min_x, float min_y, float max_x, float max_y) override;
+
+    void setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout) override;
 
     void getMousePosition(int &x, int &y) override;
     void getMousePosition(float &x, float &y) override;
@@ -439,7 +442,8 @@ namespace MWGui
     HUD *mHud;
     MapWindow *mMap;
     MWRender::LocalMap* mLocalMapRender;
-    ToolTips *mToolTips;
+    ToolTips* mToolTips;
+    ToolTips* mGamepadToolTips;
     StatsWindow *mStatsWindow;
     MessageBoxManager *mMessageBoxManager;
     Console *mConsole;
@@ -450,6 +454,7 @@ namespace MWGui
     BookWindow* mBookWindow;
     CountDialog* mCountDialog;
     TradeWindow* mTradeWindow;
+    ContainerWindow* mContainerWindow;
     SettingsWindow* mSettingsWindow;
     ConfirmationDialog* mConfirmationDialog;
     SpellWindow* mSpellWindow;

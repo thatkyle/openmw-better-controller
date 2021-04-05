@@ -7,6 +7,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
@@ -83,19 +84,55 @@ namespace MWGui
         setTakeButtonShow(showTakeButton);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCloseButton);
+
+
+
+        // \todo: move this to new method
+        std::vector<MenuControl> leftControls;
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        if (showTakeButton)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Take" });
+        if (mTextView->getViewOffset().top > 0)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_LTrigger, "Scroll Up" });
+        if (mTextView->getViewOffset().top < mTextView->getChildAt(0)->getSize().height)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Scroll Down" });
+
+        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
     }
 
     void ScrollWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        int scroll = 0;
-        if (key == MyGUI::KeyCode::ArrowUp)
-            scroll = 40;
-        else if (key == MyGUI::KeyCode::ArrowDown)
-            scroll = -40;
+        if (character != 1)
+        {
+            int scroll = 0;
+            if (key == MyGUI::KeyCode::ArrowUp)
+                scroll = 40;
+            else if (key == MyGUI::KeyCode::ArrowDown)
+                scroll = -40;
 
-        if (scroll != 0)
-            mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, scroll));
+            if (scroll != 0)
+                mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, scroll));
 
+            return;
+        }
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        bool showTakeButton = mScroll.getContainerStore() != &player.getClass().getContainerStore(player);
+
+        if (action == MWInput::MenuAction::MA_A && showTakeButton)
+            onTakeButtonClicked(sender);
+        else if (action == MWInput::MenuAction::MA_B)
+            onCloseButtonClicked(sender); 
+        else if (action == MWInput::MA_LTrigger)
+            mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, 40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))));
+        else if (action == MWInput::MA_RTrigger)
+            mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, -40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))));
 
 
         std::vector<MenuControl> leftControls;
@@ -103,8 +140,6 @@ namespace MWGui
             MenuControl{MWInput::MenuAction::MA_B, "Back"}
         };
 
-        MWWorld::Ptr player = MWMechanics::getPlayer();
-        bool showTakeButton = mScroll.getContainerStore() != &player.getClass().getContainerStore(player);
         if (showTakeButton)
             leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Take" });
         if (mTextView->getViewOffset().top > 0)

@@ -27,6 +27,7 @@ namespace MWGui
 Repair::Repair()
     : WindowBase("openmw_repair.layout")
     , mItemSelectionDialog(nullptr)
+    , mGamepadSelected(0)
 {
     getWidget(mRepairBox, "RepairBox");
     getWidget(mToolBox, "ToolBox");
@@ -38,6 +39,7 @@ Repair::Repair()
     mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &Repair::onCancel);
 
     mRepairBox->eventItemClicked += MyGUI::newDelegate(this, &Repair::onRepairItem);
+    mRepairBox->eventKeyButtonPressed += MyGUI::newDelegate(this, &Repair::onKeyButtonPressed);
     mRepairBox->setDisplayMode(ItemChargeView::DisplayMode_Health);
 
     mToolIcon->eventMouseButtonClick += MyGUI::newDelegate(this, &Repair::onSelectItem);
@@ -47,12 +49,20 @@ void Repair::onOpen()
 {
     center();
 
-    SortFilterItemModel * model = new SortFilterItemModel(new InventoryItemModel(MWMechanics::getPlayer()));
+    SortFilterItemModel* model = new SortFilterItemModel(new InventoryItemModel(MWMechanics::getPlayer()));
     model->setFilter(SortFilterItemModel::Filter_OnlyRepairable);
     mRepairBox->setModel(model);
 
+    mGamepadSelected = 0;
+    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mRepairBox);
+
     // Reset scrollbars
     mRepairBox->resetScrollbars();
+}
+
+void Repair::onClose()
+{
+    MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
 }
 
 void Repair::setPtr(const MWWorld::Ptr &item)
@@ -66,6 +76,8 @@ void Repair::setPtr(const MWWorld::Ptr &item)
     mToolIcon->setUserData(MWWorld::Ptr(item));
 
     updateRepairView();
+
+    gamepadHighlightSelected();
 }
 
 void Repair::updateRepairView()
@@ -102,6 +114,7 @@ void Repair::updateRepairView()
         throw std::runtime_error("main widget must be a box");
 
     box->notifyChildrenSizeChanged();
+
     center();
 }
 
@@ -148,6 +161,68 @@ void Repair::onRepairItem(MyGUI::Widget* /*sender*/, const MWWorld::Ptr& ptr)
     mRepair.repair(ptr);
 
     updateRepairView();
+}
+
+void Repair::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+{
+    if (character != 1) // Gamepad control.
+        return;
+
+    int repairCount = mRepairBox->getItemCount();
+
+    if (repairCount == 0)
+        return;
+
+    MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+    MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+    if (action == MWInput::MenuAction::MA_DPadDown)
+    {
+        if (mGamepadSelected < repairCount - 1)
+        {
+            mGamepadSelected++;
+            gamepadHighlightSelected();
+        }
+    }
+    else if (action == MWInput::MenuAction::MA_DPadUp)
+    {
+        if (mGamepadSelected > 0)
+        {
+            mGamepadSelected--;
+            gamepadHighlightSelected();
+        }
+    }
+    else if (action == MWInput::MenuAction::MA_A)
+    {
+        onRepairItem(nullptr, *mRepairBox->getItemWidget(mGamepadSelected)->getUserData<MWWorld::Ptr>());
+
+        gamepadHighlightSelected();
+    }
+    else
+    {
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+}
+
+void Repair::gamepadHighlightSelected()
+{
+    int repairCount = mRepairBox->getItemCount();
+
+    if (mGamepadSelected > repairCount - 1)
+        mGamepadSelected = repairCount - 1;
+    if (mGamepadSelected < 0)
+        mGamepadSelected = 0;
+
+    if (repairCount)
+    {
+        widgetHighlight(mRepairBox->getItemWidget(mGamepadSelected));
+
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mRepairBox->getItemWidget(mGamepadSelected), this);
+    }
+    else
+    {
+        widgetHighlight(nullptr);
+    }
 }
 
 }

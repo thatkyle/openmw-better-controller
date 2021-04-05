@@ -75,6 +75,8 @@ namespace MWGui
         getWidget(mItemView, "ItemView");
         mItemView->eventItemClicked += MyGUI::newDelegate(this, &TradeWindow::onItemSelected);
         mItemView->eventKeyButtonPressed += MyGUI::newDelegate(this, &TradeWindow::onKeyButtonPressed);
+        mItemView->eventKeySetFocus += MyGUI::newDelegate(this, &TradeWindow::onFocusGained);
+        mItemView->eventKeyLostFocus += MyGUI::newDelegate(this, &TradeWindow::onFocusLost);
 
         mFilterAll->setStateSelected(true);
 
@@ -561,6 +563,19 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
     }
 
+    void TradeWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        gamepadHighlightSelected();
+    }
+
+    void TradeWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateHighlightVisibility();
+
+        // hide the gamepad tooltip
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+    }
+
     void TradeWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
         mLastAction = MWInput::MA_None;
@@ -578,9 +593,6 @@ namespace MWGui
         {
         case MWInput::MA_A:
         {
-            mItemToSell = mSortModel->mapToSource(mGamepadSelected);
-            MWWorld::Ptr ptr = mTradeModel->getItem(mItemToSell).mBase;
-
             mLastAction = action;
             onItemSelected(mGamepadSelected);
 
@@ -648,6 +660,8 @@ namespace MWGui
         {
             mItemView->highlightItem(mGamepadSelected);
             widgetHighlight(mItemView->getHighlightWidget());
+
+            MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget(), this);
         }
         else
         {

@@ -144,6 +144,7 @@ namespace MWGui
       , mMap(nullptr)
       , mLocalMapRender(nullptr)
       , mToolTips(nullptr)
+      , mGamepadToolTips(nullptr)
       , mStatsWindow(nullptr)
       , mMessageBoxManager(nullptr)
       , mConsole(nullptr)
@@ -154,6 +155,7 @@ namespace MWGui
       , mBookWindow(nullptr)
       , mCountDialog(nullptr)
       , mTradeWindow(nullptr)
+      , mContainerWindow(nullptr)
       , mSettingsWindow(nullptr)
       , mConfirmationDialog(nullptr)
       , mSpellWindow(nullptr)
@@ -379,6 +381,7 @@ namespace MWGui
         mWindows.push_back(mHud);
 
         mToolTips = new ToolTips();
+        mGamepadToolTips = new ToolTips();
 
         mScrollWindow = new ScrollWindow();
         mWindows.push_back(mScrollWindow);
@@ -632,7 +635,10 @@ namespace MWGui
             setCursorVisible(!gameMode);
 
         if (gameMode)
-            setKeyFocusWidget (nullptr);
+        {
+            setKeyFocusWidget(nullptr);
+            mGamepadToolTips->setGamepadGuiFocusWidget(nullptr, nullptr);
+        }
 
         // Icons of forced hidden windows are displayed
         setMinimapVisibility((mAllowed & GW_Map) && (!mMap->pinned() || (mForceHidden & GW_Map)));
@@ -1020,6 +1026,11 @@ namespace MWGui
         mToolTips->setFocusObjectScreenCoords(min_x, min_y, max_x, max_y);
     }
 
+    void WindowManager::setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout)
+    {
+        mGamepadToolTips->setGamepadGuiFocusWidget(target, layout);
+    }
+
     bool WindowManager::toggleFullHelp()
     {
         return mToolTips->toggleFullHelp();
@@ -1198,6 +1209,19 @@ namespace MWGui
                     break;
                 }
             }
+            else if (caller == GM_Container)
+            {
+                if (window == GW_Inventory)
+                {
+                    mContainerWindow->focus();
+                    break;
+                }
+                else
+                {
+                    mInventoryWindow->focus();
+                    break;
+                }
+            }
             else
             {
                 return false;
@@ -1243,6 +1267,19 @@ namespace MWGui
                 if (window == GW_Inventory)
                 {
                     mTradeWindow->focus();
+                    break;
+                }
+                else
+                {
+                    mInventoryWindow->focus();
+                    break;
+                }
+            }
+            else if (caller == GM_Container)
+            {
+                if (window == GW_Inventory)
+                {
+                    mContainerWindow->focus();
                     break;
                 }
                 else
@@ -1541,6 +1578,7 @@ namespace MWGui
     MWGui::CountDialog* WindowManager::getCountDialog() { return mCountDialog; }
     MWGui::ConfirmationDialog* WindowManager::getConfirmationDialog() { return mConfirmationDialog; }
     MWGui::TradeWindow* WindowManager::getTradeWindow() { return mTradeWindow; }
+    MWGui::ContainerWindow* WindowManager::getContainerWindow() { return mContainerWindow; }
 
     void WindowManager::useItem(const MWWorld::Ptr &item, bool bypassBeastRestrictions)
     {
@@ -1811,6 +1849,11 @@ namespace MWGui
         {
             if (modal->isVisible())
                 modal->updateHighlightVisibility();
+        }
+
+        if (!toggle)
+        {
+            mGamepadToolTips->setGamepadGuiFocusWidget(nullptr, nullptr);
         }
     }
 

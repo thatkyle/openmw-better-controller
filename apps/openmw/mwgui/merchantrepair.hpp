@@ -13,6 +13,7 @@ public:
     MerchantRepair();
 
     void onOpen() override;
+    void onClose() override;
 
     void setPtr(const MWWorld::Ptr& actor) override;
 
@@ -27,6 +28,12 @@ protected:
     void onMouseWheel(MyGUI::Widget* _sender, int _rel);
     void onRepairButtonClick(MyGUI::Widget* sender);
     void onOkButtonClick(MyGUI::Widget* sender);
+
+    // gamepad functions
+    void gamepadHighlightSelected();
+    void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+    int mGamepadSelected;
 };
 
 }

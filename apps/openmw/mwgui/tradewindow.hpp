@@ -121,8 +121,8 @@ namespace MWGui
             int getMerchantGold();
 
             void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
-            //void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
-            //void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+            void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
             //void gamepadDelayedAction();
             void gamepadHighlightSelected();
             //void gamepadCycleFilter(MWInput::MenuAction action);

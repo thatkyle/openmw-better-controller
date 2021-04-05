@@ -29,6 +29,7 @@ set(MYGUI_FILES
     openmw_console.skin.xml
     openmw_container_window.layout
     openmw_count_window.layout
+    openmw_control_legend.layout
     openmw_dialogue_window.layout
     openmw_dialogue_window.skin.xml
     openmw_edit.skin.xml
@@ -49,6 +50,7 @@ set(MYGUI_FILES
     openmw_map_window.layout
     openmw_map_window.skin.xml
     openmw_messagebox.layout
+    openmw_onscreen_keyboard.xml
     openmw_pointer.xml
     openmw_progress.skin.xml
     openmw_resources.xml

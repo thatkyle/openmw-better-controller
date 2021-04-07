@@ -98,7 +98,7 @@ namespace MWGui
 
         static const char* sSpellModelIndex;
 
-        void scrollToTarget(int index);
+        void scrollToTarget();
 
         int mHighlight;
         MyGUI::Widget* mHighlightWidget;

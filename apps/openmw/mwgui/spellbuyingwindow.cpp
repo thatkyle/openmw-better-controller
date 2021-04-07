@@ -228,21 +228,21 @@ namespace MWGui
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         if (action == MWInput::MA_B || (mSpellWidgets.empty() && action == MWInput::MA_A))
             onCancelButtonClicked(sender);
-        else if (!mSpellWidgets.empty()) // Only control travel options if there are any.
+        else if (!mSpellWidgets.empty()) // Only control spell options if there are any.
         {
             if (action == MWInput::MA_A)
                 onSpellButtonClick(mSpellWidgets[mSpellHighlight]);
             else if (action == MWInput::MA_DPadUp && mSpellHighlight > 0)
             {
                 --mSpellHighlight;
-                widgetHighlight(mSpellWidgets[mSpellHighlight]);
                 onMouseWheel(mSpellsView, mSpellWidgets[mSpellHighlight]->getHeight());
+                widgetHighlight(mSpellWidgets[mSpellHighlight]);
             }
             else if (action == MWInput::MA_DPadDown && mSpellHighlight < mSpellWidgets.size() - 1)
             {
                 ++mSpellHighlight;
-                widgetHighlight(mSpellWidgets[mSpellHighlight]);
                 onMouseWheel(mSpellsView, -(mSpellWidgets[mSpellHighlight]->getHeight()));
+                widgetHighlight(mSpellWidgets[mSpellHighlight]);
             }
         }
         else

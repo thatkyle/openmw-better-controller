@@ -215,7 +215,7 @@ void MerchantRepair::gamepadHighlightSelected()
     {
         widgetHighlight(mList->getChildAt(mGamepadSelected));
 
-        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mList->getChildAt(mGamepadSelected), this);
+        updateGamepadTooltip(mList->getChildAt(mGamepadSelected));
     }
     else
     {

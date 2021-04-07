@@ -287,7 +287,7 @@ namespace MWGui
         {
             widgetHighlight(mTrainingOptions->getChildAt(mGamepadSelected));
 
-            MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mTrainingOptions->getChildAt(mGamepadSelected), this);
+            updateGamepadTooltip(mTrainingOptions->getChildAt(mGamepadSelected));
         }
         else
         {

@@ -217,7 +217,7 @@ void Repair::gamepadHighlightSelected()
     {
         widgetHighlight(mRepairBox->getItemWidget(mGamepadSelected));
 
-        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mRepairBox->getItemWidget(mGamepadSelected), this);
+        updateGamepadTooltip(mRepairBox->getItemWidget(mGamepadSelected));
     }
     else
     {

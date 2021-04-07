@@ -127,6 +127,8 @@ namespace MWGui
         updateHighlightVisibility();
 
         MWBase::Environment::get().getWindowManager()->popMenuControls();
+
+        updateGamepadTooltip(nullptr);
     }
 
     void SpellWindow::onFrame(float dt) 
@@ -324,7 +326,7 @@ namespace MWGui
             mSpellView->highlightItem(mGamepadSelected);
             widgetHighlight(mSpellView->getHighlightWidget());
 
-            MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mSpellView->getHighlightWidget(), this);
+            updateGamepadTooltip(mSpellView->getHighlightWidget());
         }
         else
         {

@@ -54,6 +54,7 @@ namespace MWGui
         /// Place gamepad highlight on a given child widget.
         void widgetHighlight(MyGUI::Widget *target);
         void updateHighlightVisibility();
+        void updateGamepadTooltip(MyGUI::Widget* target);
 
     protected:
         virtual void onTitleDoubleClicked();

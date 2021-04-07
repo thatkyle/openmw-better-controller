@@ -329,7 +329,7 @@ namespace MWGui
     {
         mHighlight = index;
         update();
-        //scrollToTarget(mHighlight);
+        scrollToTarget();
     }
 
     MyGUI::Widget* SpellView::getHighlightWidget()
@@ -337,22 +337,21 @@ namespace MWGui
         return mHighlightWidget;
     }
 
-    void SpellView::scrollToTarget(int index)
+    void SpellView::scrollToTarget()
     {
-        if (mScrollView->isVisibleVScroll() && index >= 0) // -1 index is used to hide selection cursor.
-        {
-            //TODO: fix this scrolling
-            int targetRealColumn = (index / 1) * 42;
-            int scrollTargetOffset = 0;
-            if (targetRealColumn > mScrollView->getViewCoord().width - 84)
-                scrollTargetOffset = (targetRealColumn - (mScrollView->getViewCoord().width - 84)) * -1;
+        // Centers target list item in mScrollView.
+        if (!mScrollView->isVisibleVScroll())
+            return;
 
-            mScrollView->setViewOffset(MyGUI::IntPoint(scrollTargetOffset, 0));
+        if (mHighlightWidget != NULL)
+        {
+            int scrollPos = (mHighlightWidget->getCoord().top - (mScrollView->getViewCoord().height / 2)) * -1;
+            mScrollView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
         }
     }
 
     int SpellView::getScrollViewWidth()
     {
-        return mScrollView->getWidth();
+        return mScrollView->getWidth() - (mScrollView->isVisibleVScroll() ? 18 : 0);
     }
 }

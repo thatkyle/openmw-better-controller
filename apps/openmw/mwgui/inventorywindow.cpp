@@ -1086,8 +1086,7 @@ namespace MWGui
             mItemView->highlightItem(mGamepadSelected);
             widgetHighlight(mItemView->getHighlightWidget());
 
-            if (mMainWidget->getVisible())
-                MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget(), this);
+           updateGamepadTooltip(mItemView->getHighlightWidget());
         }
         else
         {

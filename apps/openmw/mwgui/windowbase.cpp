@@ -134,6 +134,14 @@ void WindowBase::updateHighlightVisibility()
     mGamepadHighlight->setVisible(shouldTurnOn);
 }
 
+void WindowBase::updateGamepadTooltip(MyGUI::Widget* target)
+{
+    if (!target)
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+    else if (mMainWidget->isVisible() && isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget()))
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(target, this);
+}
+
 WindowModal::WindowModal(const std::string& parLayout)
     : WindowBase(parLayout)
 {

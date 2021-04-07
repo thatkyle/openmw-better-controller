@@ -21,13 +21,14 @@ using namespace MWGui;
 
 WindowBase::WindowBase(const std::string& parLayout)
   : Layout(parLayout)
+  , mUsesHighlightOffset(false)
+  , mUsesHighlightSizeOverride(false)
 {
     mMainWidget->setVisible(false);
 
     mIsHighlightHidden = true;
-    mGamepadHighlight = mMainWidget->createWidget<MyGUI::ImageBox>("ImageBox", 0, 0, 0, 0, MyGUI::Align::Default, mPrefix + "GamepadHighlight");
+    mGamepadHighlight = mMainWidget->createWidget<MyGUI::Widget>("MW_Highlight_Frame", 0, 0, 0, 0, MyGUI::Align::Default, mPrefix + "GamepadHighlight");
     mGamepadHighlight->setVisible(false);
-    mGamepadHighlight->setImageTexture("grey");
     mGamepadHighlight->setDepth(INT_MAX);
 
     Window* window = mMainWidget->castType<Window>(false);
@@ -101,6 +102,18 @@ void WindowBase::widgetHighlight(MyGUI::Widget *target)
         // we substract the absolute point of the first non-root element in the hierarchy to account for any padding
         // that may be in the main window
         auto coords = target->getAbsoluteCoord() - firstChildInHierarchy->getAbsoluteCoord().point();
+        
+        if (mUsesHighlightSizeOverride)
+        {
+            auto sizeOverride = highlightSizeOverride();
+
+            coords.width = sizeOverride.width;
+            coords.height = sizeOverride.height;
+        }
+
+        if (mUsesHighlightOffset)
+            coords += highlightOffset();
+
         mGamepadHighlight->setCoord(coords);
 
         Log(Debug::Info) << "Highlight coords for layout " << mLayoutName << ": " << coords;

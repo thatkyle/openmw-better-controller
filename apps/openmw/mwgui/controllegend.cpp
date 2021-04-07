@@ -18,7 +18,7 @@ namespace MWGui
         MyGUI::IntSize gameWindowSize = MyGUI::RenderManager::getInstance().getViewSize();
         MyGUI::IntPoint pos;
         pos.left = (gameWindowSize.width - mMainWidget->getWidth()) / 2;
-        pos.top = (gameWindowSize.height - mMainWidget->getHeight() - 30 - 48);
+        pos.top = (gameWindowSize.height - mMainWidget->getHeight() - 10);
 
         mMainWidget->setPosition(pos);
     }

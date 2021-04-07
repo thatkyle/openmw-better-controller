@@ -350,4 +350,9 @@ namespace MWGui
             mScrollView->setViewOffset(MyGUI::IntPoint(scrollTargetOffset, 0));
         }
     }
+
+    int SpellView::getScrollViewWidth()
+    {
+        return mScrollView->getWidth();
+    }
 }

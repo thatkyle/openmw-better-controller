@@ -152,6 +152,8 @@ namespace MWGui
         void onReferenceUnavailable() override;
         void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
 
+        MyGUI::IntCoord highlightOffset() override;
+
     private:
         void updateDisposition();
         void restock();

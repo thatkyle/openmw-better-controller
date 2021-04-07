@@ -48,6 +48,11 @@ namespace MWGui
         SpellIcons* mSpellIcons;
         MyGUI::EditBox* mFilterEdit;
 
+    protected:
+
+        MyGUI::IntSize highlightSizeOverride() override;
+        MyGUI::IntCoord highlightOffset() override;
+
     private:
         void gamepadHighlightSelected();
         void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);

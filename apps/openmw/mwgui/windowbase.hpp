@@ -58,13 +58,21 @@ namespace MWGui
     protected:
         virtual void onTitleDoubleClicked();
 
+        bool mUsesHighlightSizeOverride;
+        bool mUsesHighlightOffset;
+
+        /// if mUsesHighlightSizeOverride is true, overrides the size of the highlight (not the position)
+        virtual MyGUI::IntSize highlightSizeOverride() { return MyGUI::IntSize(); }
+        /// if mUsesHighlightOffset is true, offsets the highlight by the given position IntCoord
+        virtual MyGUI::IntCoord highlightOffset() { return MyGUI::IntCoord(); }
+
     private:
         void onDoubleClick(MyGUI::Widget* _sender);
 
         virtual void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus) {};
         virtual void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus) {};
 
-        MyGUI::ImageBox* mGamepadHighlight;
+        MyGUI::Widget* mGamepadHighlight;
         bool mIsHighlightHidden;
     };
 

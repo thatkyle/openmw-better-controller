@@ -57,6 +57,7 @@ namespace MWGui
         // Gamepad control functions:
         void highlightItem(int index);
         MyGUI::Widget* getHighlightWidget();
+        int getScrollViewWidth();
 
     private:
         MyGUI::ScrollView* mScrollView;

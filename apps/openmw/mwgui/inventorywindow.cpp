@@ -43,6 +43,7 @@
 #include "widgets.hpp"
 #include "tooltips.hpp"
 #include "worlditemmodel.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -422,6 +423,39 @@ namespace MWGui
     void InventoryWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
     {
         gamepadHighlightSelected();
+
+        std::vector<MenuControl> leftControls, rightControls;
+
+        switch (mGuiMode)
+        {
+        case GM_Inventory:
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Use" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Drop" });
+            rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_LTrigger, "Stats" });
+            rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Magic" });
+            break;
+        case GM_Container:
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Use" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Transfer" });
+            rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Container" });
+            break;
+        case GM_Companion:
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Use" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Transfer" });
+            rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Companion" });
+            break;
+        case GM_Barter:
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Select" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Offer" });
+            rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Merchant" });
+            break;
+        default:
+            break;
+        }
+
+        rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_B, "Back" });
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void InventoryWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)

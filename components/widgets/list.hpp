@@ -67,6 +67,8 @@ namespace Gui
         std::vector<std::string> mItems;
 
         int mItemHeight; // height of all items
+
+        MyGUI::TextBox* mGamepadHighlight;
     };
 }
 

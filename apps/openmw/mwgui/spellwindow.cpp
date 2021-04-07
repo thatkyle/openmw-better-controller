@@ -27,6 +27,7 @@
 #include "spellicons.hpp"
 #include "confirmationdialog.hpp"
 #include "spellview.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -61,6 +62,9 @@ namespace MWGui
         // Adjust the spell filtering widget size because of MyGUI limitations.
         int filterWidth = mSpellView->getSize().width - deleteButton->getSize().width - 3;
         mFilterEdit->setSize(filterWidth, mFilterEdit->getSize().height);
+
+        mUsesHighlightOffset = true;
+        mUsesHighlightSizeOverride = true;
     }
 
     SpellWindow::~SpellWindow()
@@ -104,12 +108,25 @@ namespace MWGui
         {
             gamepadHighlightSelected();
         }
+
+        std::vector<MenuControl> leftControls{
+            MenuControl{MWInput::MenuAction::MA_A, "Select"},
+            MenuControl{MWInput::MenuAction::MA_X, "Delete"}
+        };
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
+            MenuControl{MWInput::MenuAction::MA_RTrigger, "Map"},
+            MenuControl{MWInput::MenuAction::MA_B, "Back"},
+        };
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void SpellWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
     {
         updateHighlightVisibility();
 
+        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void SpellWindow::onFrame(float dt) 
@@ -132,7 +149,8 @@ namespace MWGui
         mSpellIcons->updateWidgets(mEffectBox, false);
 
         mSpellView->setModel(new SpellModel(MWMechanics::getPlayer(), mFilterEdit->getCaption()));
-        mSpellView->highlightItem(mGamepadSelected);
+        
+        gamepadHighlightSelected();
     }
 
     void SpellWindow::onEnchantedItemSelected(MWWorld::Ptr item, bool alreadyEquipped)
@@ -258,6 +276,8 @@ namespace MWGui
 
         spells.remove(mSpellToDelete);
 
+        mGamepadSelected--;
+
         updateSpells();
     }
 
@@ -294,12 +314,21 @@ namespace MWGui
 
     void SpellWindow::gamepadHighlightSelected()
     {
+        if (mGamepadSelected > (int)mSpellView->getModel()->getItemCount() - 1)
+            mGamepadSelected = (int)mSpellView->getModel()->getItemCount() - 1;
+        if (mGamepadSelected < 0)
+            mGamepadSelected = 0;
+
         if (mSpellView->getModel()->getItemCount())
         {
             mSpellView->highlightItem(mGamepadSelected);
             widgetHighlight(mSpellView->getHighlightWidget());
 
             MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mSpellView->getHighlightWidget(), this);
+        }
+        else
+        {
+            widgetHighlight(nullptr);
         }
     }
 
@@ -340,9 +369,13 @@ namespace MWGui
 
             gamepadHighlightSelected();
         }
-        else if (action == MWInput::MenuAction::MA_Y)
+        else if (action == MWInput::MenuAction::MA_X)
         {
-            // TODO: implement tooltip
+            const Spell& spell = mSpellView->getModel()->getItem(mGamepadSelected);
+            if (spell.mType != Spell::Type_EnchantedItem)
+                askDeleteSpell(spell.mId);
+
+            gamepadHighlightSelected();
         }
         else if (action == MWInput::MenuAction::MA_LTrigger || action == MWInput::MenuAction::MA_RTrigger)
         {
@@ -356,5 +389,15 @@ namespace MWGui
         {
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
         }
+    }
+
+    MyGUI::IntCoord SpellWindow::highlightOffset()
+    {
+        return MyGUI::IntCoord(-2, -1, 2, 3);
+    }
+
+    MyGUI::IntSize SpellWindow::highlightSizeOverride()
+    {
+        return MyGUI::IntSize(mSpellView->getScrollViewWidth() - 6, mSpellView->getHighlightWidget()->getHeight());
     }
 }

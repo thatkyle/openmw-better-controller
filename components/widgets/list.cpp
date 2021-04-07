@@ -11,6 +11,7 @@ namespace Gui
         : mScrollView(nullptr)
         , mClient(nullptr)
         , mItemHeight(0)
+        , mGamepadHighlight(nullptr)
     {
     }
 
@@ -49,10 +50,14 @@ namespace Gui
         const int spacing = 3;
         int viewPosition = -mScrollView->getViewOffset().top;
 
+        //this->setCoord(this->getCoord() + MyGUI::IntCoord(0, 0, 20, 0));
+        //mScrollView->setCoord(mScrollView->getCoord() + MyGUI::IntCoord(0, 0, 20, 0));
+
         while (mScrollView->getChildCount())
         {
             MyGUI::Gui::getInstance().destroyWidget(mScrollView->getChildAt(0));
         }
+
 
         mItemHeight = 0;
         int i=0;
@@ -103,6 +108,16 @@ namespace Gui
         if(viewPosition > viewRange)
             viewPosition = viewRange;
         mScrollView->setViewOffset(MyGUI::IntPoint(0, -viewPosition));
+
+
+//        mGamepadHighlight = mScrollView->createWidgetReal<MyGUI::TextBox>("SandTextRight", 0, 0, 0, 0, MyGUI::Align::Default, "ListGamepadHighlight");
+//        mGamepadHighlight->setVisible(false);
+//        mGamepadHighlight->setCaption(">");
+//        mGamepadHighlight->setDepth(INT_MAX);
+//
+//        auto firstItemCoord = mScrollView->getChildAt(1)->getCoord();
+//        mGamepadHighlight->setCoord(MyGUI::IntCoord(firstItemCoord.left - 20, firstItemCoord.top, 20, firstItemCoord.height));
+//        mGamepadHighlight->setVisible(true);
     }
 
     void MWList::setPropertyOverride(const std::string &_key, const std::string &_value)

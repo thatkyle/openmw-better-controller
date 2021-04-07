@@ -310,6 +310,8 @@ namespace MWGui
         mHistory->adviseLinkClicked(callback);
 
         mMainWidget->castType<MyGUI::Window>()->eventWindowChangeCoord += MyGUI::newDelegate(this, &DialogueWindow::onWindowResize);
+
+        mUsesHighlightOffset = true;
     }
 
     DialogueWindow::~DialogueWindow()
@@ -936,6 +938,11 @@ namespace MWGui
 
         return !actor.getClass().getScript(actor).empty()
                 && actor.getRefData().getLocals().getIntVar(actor.getClass().getScript(actor), "companion");
+    }
+
+    MyGUI::IntCoord DialogueWindow::highlightOffset()
+    {
+        return MyGUI::IntCoord(-1, -1, 4, 3);
     }
 
 }

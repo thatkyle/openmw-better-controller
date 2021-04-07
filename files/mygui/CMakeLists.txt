@@ -34,6 +34,7 @@ set(MYGUI_FILES
     openmw_dialogue_window.skin.xml
     openmw_edit.skin.xml
     openmw_font.xml
+    openmw_highlight_frame.skin.xml
     openmw_hud_box.skin.xml
     openmw_hud_energybar.skin.xml
     openmw_hud.layout

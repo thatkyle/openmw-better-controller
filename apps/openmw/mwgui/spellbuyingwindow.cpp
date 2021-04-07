@@ -29,7 +29,8 @@ namespace MWGui
         getWidget(mSpellsView, "SpellsView");
 
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellBuyingWindow::onCancelButtonClicked);
-        mCancelButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &SpellBuyingWindow::onKeyButtonPressed);
+        mSpellsView->eventKeyButtonPressed += MyGUI::newDelegate(this, &SpellBuyingWindow::onKeyButtonPressed);
+        mSpellsView->eventKeyLostFocus += MyGUI::newDelegate(this, &SpellBuyingWindow::onFocusLost);
     }
 
     bool SpellBuyingWindow::sortSpells (const ESM::Spell* left, const ESM::Spell* right)
@@ -152,10 +153,13 @@ namespace MWGui
                 mSpellWidgets.push_back(spellList.current());
         }
 
-        if (!mSpellWidgets.empty())
-            widgetHighlight(mSpellWidgets[mSpellHighlight]);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSpellsView);
 
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCancelButton);
+        if (!mSpellWidgets.empty())
+        {
+            widgetHighlight(mSpellWidgets[mSpellHighlight]);
+            updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
+        }
     }
 
     bool SpellBuyingWindow::playerHasSpell(const std::string &id)
@@ -218,6 +222,12 @@ namespace MWGui
             mSpellsView->setViewOffset(MyGUI::IntPoint(0, static_cast<int>(mSpellsView->getViewOffset().top + _rel*0.3f)));
     }
 
+    void SpellBuyingWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateGamepadTooltip(nullptr);
+    }
+
+
     void SpellBuyingWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
         // Gamepad controls only.
@@ -237,12 +247,14 @@ namespace MWGui
                 --mSpellHighlight;
                 onMouseWheel(mSpellsView, mSpellWidgets[mSpellHighlight]->getHeight());
                 widgetHighlight(mSpellWidgets[mSpellHighlight]);
+                updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
             }
             else if (action == MWInput::MA_DPadDown && mSpellHighlight < mSpellWidgets.size() - 1)
             {
                 ++mSpellHighlight;
                 onMouseWheel(mSpellsView, -(mSpellWidgets[mSpellHighlight]->getHeight()));
                 widgetHighlight(mSpellWidgets[mSpellHighlight]);
+                updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
             }
         }
         else

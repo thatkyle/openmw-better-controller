@@ -26,6 +26,7 @@ namespace MWGui
             void setPtr(const MWWorld::Ptr& actor, int startOffset);
 
             void onFrame(float dt) override { checkReferenceAvailable(); }
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
             void clear() override { resetReference(); }
 
             void onResChange(int, int) override { center(); }

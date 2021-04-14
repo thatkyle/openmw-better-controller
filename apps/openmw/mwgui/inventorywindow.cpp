@@ -435,13 +435,13 @@ namespace MWGui
             rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Magic" });
             break;
         case GM_Container:
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Use" });
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Transfer" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Transfer" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Use" });
             rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Container" });
             break;
         case GM_Companion:
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Use" });
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Transfer" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Transfer" });
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_X, "Use" });
             rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Companion" });
             break;
         case GM_Barter:
@@ -941,7 +941,7 @@ namespace MWGui
                 mSelectedItem = mSortModel->mapToSource(mGamepadSelected);
                 MWWorld::Ptr ptr = mTradeModel->getItem(mSelectedItem).mBase;
 
-                if (!mTrading && (
+                if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Inventory && (
                         ptr.getTypeName() == typeid(ESM::Potion).name() || 
                         ptr.getTypeName() == typeid(ESM::Ingredient).name() ||
                         ptr.getTypeName() == typeid(ESM::Book).name() ||
@@ -951,7 +951,8 @@ namespace MWGui
                 else
                 {
                     mLastAction = action;
-                    if (!mTrading && mTradeModel->getItem(mSelectedItem).mType & ItemStack::Type_Equipped)
+                    if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Inventory && 
+                                mTradeModel->getItem(mSelectedItem).mType & ItemStack::Type_Equipped)
                         mLastAction = MWInput::MA_Unequip;
 
                     onItemSelected(mGamepadSelected);
@@ -1041,12 +1042,20 @@ namespace MWGui
             case MWInput::MA_A:
                 if (mDragAndDrop->mIsOnDragAndDrop)
                 {
-                    // onAvatarClicked has additional functionality that can't be used.
-                    MWWorld::Ptr ptr = mDragAndDrop->mItem.mBase;
-                    mDragAndDrop->finish();
-                    useItem(ptr);
-                    if (mDragAndDrop->mDraggedCount > 1)
-                        onBackgroundSelected();
+                    if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Inventory)
+                    {
+                        // onAvatarClicked has additional functionality that can't be used.
+                        MWWorld::Ptr ptr = mDragAndDrop->mItem.mBase;
+                        mDragAndDrop->finish();
+                        useItem(ptr);
+                        if (mDragAndDrop->mDraggedCount > 1)
+                            onBackgroundSelected();
+                    }
+                    else 
+                    {
+                        // trading is taken care of in the initial run, so we can only get a container/companion
+                        MWBase::Environment::get().getWindowManager()->getContainerWindow()->onBackgroundSelected();
+                    }
                 }
                 break;
             case MWInput::MA_Unequip:
@@ -1060,9 +1069,14 @@ namespace MWGui
                     mDragAndDrop->drop(&centerFocus, nullptr);
                     onBackgroundSelected();
                 }
-                else if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Container)
+                else if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Container && mDragAndDrop->mIsOnDragAndDrop)
                 {
-                    MWBase::Environment::get().getWindowManager()->getContainerWindow()->onBackgroundSelected();
+                    // onAvatarClicked has additional functionality that can't be used.
+                    MWWorld::Ptr ptr = mDragAndDrop->mItem.mBase;
+                    mDragAndDrop->finish();
+                    useItem(ptr);
+                    if (mDragAndDrop->mDraggedCount > 1)
+                        onBackgroundSelected();
                 }
                 break;
             default:

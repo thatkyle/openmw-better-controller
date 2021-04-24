@@ -245,20 +245,30 @@ namespace MWGui
             else if (action == MWInput::MA_DPadUp && mSpellHighlight > 0)
             {
                 --mSpellHighlight;
-                onMouseWheel(mSpellsView, mSpellWidgets[mSpellHighlight]->getHeight());
+                scrollToTarget();
                 widgetHighlight(mSpellWidgets[mSpellHighlight]);
                 updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
             }
             else if (action == MWInput::MA_DPadDown && mSpellHighlight < mSpellWidgets.size() - 1)
             {
                 ++mSpellHighlight;
-                onMouseWheel(mSpellsView, -(mSpellWidgets[mSpellHighlight]->getHeight()));
+                scrollToTarget();
                 widgetHighlight(mSpellWidgets[mSpellHighlight]);
                 updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
             }
         }
         else
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+
+    void SpellBuyingWindow::scrollToTarget()
+    {
+        // Centers target list item in mScrollView.
+        if (!mSpellsView->isVisibleVScroll())
+            return;
+
+        int scrollPos = (mSpellWidgets[mSpellHighlight]->getCoord().top - (mSpellsView->getViewCoord().height / 2)) * -1;
+        mSpellsView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
     }
 }
 

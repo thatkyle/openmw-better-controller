@@ -259,20 +259,30 @@ namespace MWGui
             else if (action == MWInput::MA_DPadUp && mDestinationHighlight > 0)
             {
                 --mDestinationHighlight;
+                scrollToTarget();
                 widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
-                onMouseWheel(mDestinationsView, mDestinationWidgets[mDestinationHighlight]->getHeight());
             }
             else if (action == MWInput::MA_DPadDown && mDestinationHighlight < mDestinationWidgets.size() - 1)
             {
                 ++mDestinationHighlight;
+                scrollToTarget();
                 widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
-                onMouseWheel(mDestinationsView, -(mDestinationWidgets[mDestinationHighlight]->getHeight()));
             }
             else
                 MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
         }
         else
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+
+    void TravelWindow::scrollToTarget()
+    {
+        // Centers target list item in mScrollView.
+        if (!mDestinationsView->isVisibleVScroll())
+            return;
+
+        int scrollPos = (mDestinationWidgets[mDestinationHighlight]->getCoord().top - (mDestinationsView->getViewCoord().height / 2)) * -1;
+        mDestinationsView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
     }
 }
 

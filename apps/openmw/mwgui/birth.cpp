@@ -88,12 +88,7 @@ namespace MWGui
             MenuControl{MWInput::MenuAction::MA_B, "Back"}
         };
 
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
-    }
-
-    void BirthDialog::onClose()
-    {
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
     }
 
     void BirthDialog::setBirthId(const std::string &birthId)

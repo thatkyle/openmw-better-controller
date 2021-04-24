@@ -21,7 +21,6 @@ namespace MWGui
 
         void setNextButtonShow(bool shown);
         void onOpen() override;
-        void onClose() override;
 
         bool exit() override { return false; }
 

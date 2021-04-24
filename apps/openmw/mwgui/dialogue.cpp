@@ -348,12 +348,15 @@ namespace MWGui
     void DialogueWindow::onWindowResize(MyGUI::Window* _sender)
     {
         // if the window has only been moved, not resized, we don't need to update
-        if (mCurrentWindowSize == _sender->getSize()) return;
-
-        mTopicsList->adjustSize();
-        updateHistory();
-        updateTopicFormat();
-        mCurrentWindowSize = _sender->getSize();
+        if (mCurrentWindowSize == _sender->getSize())
+            updateHighlightAndCaptionList();
+        else
+        {
+            mTopicsList->adjustSize();
+            updateHistory();
+            updateTopicFormat();
+            mCurrentWindowSize = _sender->getSize();
+        }
     }
 
     void DialogueWindow::onMouseWheel(MyGUI::Widget* _sender, int _rel)
@@ -598,6 +601,11 @@ namespace MWGui
         // The topics list has been regenerated so topic formatting needs to be updated
         updateTopicFormat();
 
+        updateHighlightAndCaptionList();
+    }
+
+    void DialogueWindow::updateHighlightAndCaptionList()
+    {
         // Find last selected topic for gamepad highlight.
         mTopicWidgets.clear();
         std::string topicName;

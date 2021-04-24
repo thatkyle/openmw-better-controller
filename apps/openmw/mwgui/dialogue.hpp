@@ -188,6 +188,7 @@ namespace MWGui
         std::unique_ptr<ResponseCallback> mGreetingCallback;
 
         void updateTopicFormat();
+        void updateHighlightAndCaptionList();
 
         std::vector<MyGUI::Button*> mTopicWidgets;
         unsigned int mTopicHighlight;

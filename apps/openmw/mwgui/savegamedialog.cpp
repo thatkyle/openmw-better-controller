@@ -2,6 +2,7 @@
 
 #include <sstream>
 #include <iomanip>
+#include <regex>
 
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_ImageBox.h>
@@ -376,7 +377,7 @@ namespace MWGui
             onDeleteButtonClicked(_sender);
         }
         else if (action == MWInput::MA_Y && mSaving)
-        {
+        {   
             // set the current slot to null, so that we start a new save
             mCurrentSlot = nullptr;
 
@@ -492,7 +493,23 @@ namespace MWGui
         }
 
         if (mSaving)
+        {
             mSaveNameEdit->setCaption(sender->getItemNameAt(pos));
+
+            // if the selected save is dated in the same format as a new save created via the Gamepad, we can
+            // overwrite the date/time with the current date/time
+            if (std::regex_match(mSaveNameEdit->getCaption().asUTF8(), std::regex("^[0-9]{4,}/[0-9]{2}/[0-9]{2} at [0-9]{2}:[0-9]{2}:[0-9]{2}$")))
+            {
+                auto t = std::time(nullptr);
+                auto tm = *std::localtime(&t);
+
+                // set the caption of the save to the current date/time
+                std::stringstream timeStream;
+                timeStream << std::put_time(&tm, "%Y/%m/%d at %H:%M:%S");
+                mSaveNameEdit->setCaption(timeStream.str());
+            }
+        }
+            
 
         mCurrentSlot = nullptr;
         unsigned int i=0;

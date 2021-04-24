@@ -1,5 +1,7 @@
 #include "controllermanager.hpp"
 
+#include <cmath>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_Widget.h>
@@ -45,6 +47,8 @@ namespace MWInput
         , mGamepadPreviewMode(false)
         , mRTriggerPressureVal(0.f)
         , mLTriggerPressureVal(0.f)
+        , mLStickXAxisVal(0)
+        , mLStickYAxisVal(0)
         , mLStickPressedLeftInGui(false)
         , mLStickPressedRightInGui(false)
         , mLStickPressedUpInGui(false)
@@ -442,79 +446,13 @@ namespace MWInput
                     MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
-                if (mGamepadGuiCursorEnabled)
-                {
-                    mLStickPressedLeftInGui = false;
-                    mLStickPressedRightInGui = false;
-                    return false;
-                }
-
-                if (!mLStickPressedLeftInGui && !mLStickPressedRightInGui)
-                {
-                    if (arg.value < -8000)
-                    {
-                        mLStickPressedLeftInGui = true;
-                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft), 1, true);
-                    }
-                    else if (arg.value > 8000)
-                    {
-                        mLStickPressedRightInGui = true;
-                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight), 1, true);
-                    }
-                }
-                else
-                {
-                    // it's possible to go from all the way left to all the way right in one frame. That is why these are separate.
-                    if (arg.value >= -8000 && mLStickPressedLeftInGui)
-                    {
-                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft));
-                        mLStickPressedLeftInGui = false;
-                    }
-
-                    if (arg.value <= 8000 && mLStickPressedRightInGui)
-                    {
-                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight));
-                        mLStickPressedRightInGui = false;
-                    }
-                }
+                mLStickXAxisVal = arg.value;
+                processCurrentJoystickRatiosForGui();
 
                 break;
             case SDL_CONTROLLER_AXIS_LEFTY:
-                if (mGamepadGuiCursorEnabled)
-                {
-                    mLStickPressedUpInGui = false;
-                    mLStickPressedDownInGui = false;
-                    return false;
-                }
-
-                if (!mLStickPressedUpInGui && !mLStickPressedDownInGui)
-                {
-                    if (arg.value < -8000)
-                    {
-                        mLStickPressedUpInGui = true;
-                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp), 1, true);
-                    }
-                    else if (arg.value > 8000)
-                    {
-                        mLStickPressedDownInGui = true;
-                        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown), 1, true);
-                    }
-                }
-                else
-                {
-                    // it's possible to go from all the way up to all the way down in one frame. That is why these are separate.
-                    if (arg.value >= -8000 && mLStickPressedUpInGui)
-                    {
-                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp));
-                        mLStickPressedUpInGui = false;
-                    }
-
-                    if (arg.value <= 8000 && mLStickPressedDownInGui)
-                    {
-                        MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown));
-                        mLStickPressedDownInGui = false;
-                    }
-                }
+                mLStickYAxisVal = arg.value;
+                processCurrentJoystickRatiosForGui();
 
                 break;
             case SDL_CONTROLLER_AXIS_RIGHTX:
@@ -528,6 +466,73 @@ namespace MWInput
         }
 
         return true;
+    }
+
+    void ControllerManager::processCurrentJoystickRatiosForGui()
+    {
+        if (std::abs(mLStickXAxisVal) < 8000 && std::abs(mLStickYAxisVal) < 8000)
+        {
+            resetJoystickStatesForGui(MWInput::MenuAction::MA_None);
+            return;
+        }
+
+        if (std::abs(mLStickXAxisVal) > std::abs(mLStickYAxisVal))
+        {
+            if (mLStickXAxisVal < 0 && !mLStickPressedLeftInGui)
+            {
+                resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadLeft);
+
+                mLStickPressedLeftInGui = true;
+                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft), 1, true);
+            }
+            else if (mLStickXAxisVal > 0 && !mLStickPressedRightInGui)
+            {
+                resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadRight);
+
+                mLStickPressedRightInGui = true;
+                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight), 1, true);
+            }
+        }
+        else
+        {
+            if (mLStickYAxisVal < 0 && !mLStickPressedUpInGui)
+            {
+                resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadUp);
+
+                mLStickPressedUpInGui = true;
+                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp), 1, true);
+            }
+            else if (mLStickYAxisVal > 0 && !mLStickPressedDownInGui)
+            {
+                resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadDown);
+
+                mLStickPressedDownInGui = true;
+                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown), 1, true);
+            }
+        }
+    }
+
+    void ControllerManager::resetJoystickStatesForGui(MWInput::MenuAction dpadDirection) 
+    {
+        if (dpadDirection != MWInput::MenuAction::MA_DPadLeft && mLStickPressedLeftInGui) {
+            MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft));
+            mLStickPressedLeftInGui = false;
+        }
+
+        if (dpadDirection != MWInput::MenuAction::MA_DPadRight && mLStickPressedRightInGui) {
+            MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight));
+            mLStickPressedRightInGui = false;
+        }
+
+        if (dpadDirection != MWInput::MenuAction::MA_DPadUp && mLStickPressedUpInGui) {
+            MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp));
+            mLStickPressedUpInGui = false;
+        }
+
+        if (dpadDirection != MWInput::MenuAction::MA_DPadRight && mLStickPressedDownInGui) {
+            MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown));
+            mLStickPressedDownInGui = false;
+        }
     }
 
     float ControllerManager::getAxisValue(SDL_GameControllerAxis axis) const

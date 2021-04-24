@@ -5,6 +5,7 @@
 
 #include <components/settings/settings.hpp>
 #include <components/sdlutil/events.hpp>
+#include "actions.hpp"
 
 namespace MWInput
 {
@@ -51,6 +52,9 @@ namespace MWInput
         bool gamepadToGuiControl(const SDL_ControllerButtonEvent &arg);
         bool gamepadToGuiControl(const SDL_ControllerAxisEvent &arg);
 
+        void processCurrentJoystickRatiosForGui();
+        void resetJoystickStatesForGui(MenuAction dpadDirection);
+
         BindingsManager* mBindingsManager;
         ActionManager* mActionManager;
         MouseManager* mMouseManager;
@@ -65,6 +69,8 @@ namespace MWInput
         bool mGamepadPreviewMode;
         float mRTriggerPressureVal;
         float mLTriggerPressureVal;
+        int mLStickXAxisVal;
+        int mLStickYAxisVal;
         bool mLStickPressedLeftInGui;
         bool mLStickPressedRightInGui;
         bool mLStickPressedUpInGui;

@@ -29,6 +29,7 @@
 #include "pickpocketitemmodel.hpp"
 #include "draganddrop.hpp"
 #include "tooltips.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -329,6 +330,18 @@ namespace MWGui
     void ContainerWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
     {
         gamepadHighlightSelected();
+
+        std::vector<MenuControl> leftControls{
+            MenuControl{MWInput::MenuAction::MA_A, "Select"},
+            MenuControl{MWInput::MenuAction::MA_X, "Take All"},
+            MenuControl{MWInput::MenuAction::MA_White, "Dispose"},
+        };
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void ContainerWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
@@ -337,6 +350,8 @@ namespace MWGui
 
         // hide the gamepad tooltip
         MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+
+        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void ContainerWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)

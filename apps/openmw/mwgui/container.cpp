@@ -334,13 +334,15 @@ namespace MWGui
 
         std::vector<MenuControl> leftControls{
             MenuControl{MWInput::MenuAction::MA_A, "Select"},
-            MenuControl{MWInput::MenuAction::MA_X, "Take All"},
-            MenuControl{MWInput::MenuAction::MA_White, "Dispose"},
+            MenuControl{MWInput::MenuAction::MA_X, "Take All"}
         };
         std::vector<MenuControl> rightControls{
             MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
             MenuControl{MWInput::MenuAction::MA_B, "Back"}
         };
+
+        if (mDisposeCorpseButton->isVisible())
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_White, "Dispose" });
 
         MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
@@ -425,7 +427,10 @@ namespace MWGui
             gamepadHighlightSelected();
             break;
         case MWInput::MA_White:
-            onDisposeCorpseButtonClicked(mDisposeCorpseButton);
+            if (!mDisposeCorpseButton->getVisible())
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            else
+                onDisposeCorpseButtonClicked(mDisposeCorpseButton);
             break;
         default:
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

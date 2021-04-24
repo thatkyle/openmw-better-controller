@@ -377,20 +377,34 @@ namespace MWGui
             break; // Go to barter/container when trading
                    // Perhaps trade window should handle this. Go to inventory when trading/container.
         case MWInput::MA_DPadLeft:
+            // if we're in the first column, break
+            if (mGamepadSelected < mItemView->getRowCount())
+                break;
+
             mGamepadSelected -= mItemView->getRowCount();
-            if (mGamepadSelected < 0)
-                mGamepadSelected = 0;
             gamepadHighlightSelected();
             break;
         case MWInput::MA_DPadRight:
+            // if we're in the last column, break
+            if (mGamepadSelected + mItemView->getRowCount() >= mSortModel->getItemCount())
+                break;
+
             mGamepadSelected += mItemView->getRowCount();
             gamepadHighlightSelected();
             break;
         case MWInput::MA_DPadUp:
+            // if we're in the first row, break
+            if (mGamepadSelected % mItemView->getRowCount() == 0)
+                break;
+
             --mGamepadSelected;
             gamepadHighlightSelected();
             break;
         case MWInput::MA_DPadDown:
+            // if we're in the last row, break
+            if (mGamepadSelected % mItemView->getRowCount() == mItemView->getRowCount() - 1)
+                break;
+
             ++mGamepadSelected;
             gamepadHighlightSelected();
             break;

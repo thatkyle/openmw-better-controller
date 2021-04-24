@@ -4,6 +4,7 @@
 #include <MyGUI_ControllerManager.h>
 
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/environment.hpp"
 
 #include "../mwworld/class.hpp"
@@ -62,8 +63,11 @@ void DragAndDrop::startDrag (int index, SortFilterItemModel* sortModel, ItemMode
         mSourceSortModel = playerFilterModel;
     }
 
-    std::string sound = mItem.mBase.getClass().getUpSoundId(mItem.mBase);
-    MWBase::Environment::get().getWindowManager()->playSound (sound);
+    if (!MWBase::Environment::get().getInputManager()->joystickLastUsed()) {
+        // we only play drag sounds if we're using a mouse and keyboard 
+        std::string sound = mItem.mBase.getClass().getUpSoundId(mItem.mBase);
+        MWBase::Environment::get().getWindowManager()->playSound(sound);
+    }
 
     if (mSourceSortModel)
     {

@@ -938,6 +938,9 @@ namespace MWGui
         {
             case MWInput::MA_A:
             {
+                // We have to go through the entire drag/drop mechanic here because there's surrounding
+                // safety logic built in (such as checking for on-equip scripts, preventing bound items
+                // from being dropped, etc.
                 mSelectedItem = mSortModel->mapToSource(mGamepadSelected);
                 MWWorld::Ptr ptr = mTradeModel->getItem(mSelectedItem).mBase;
 
@@ -946,8 +949,7 @@ namespace MWGui
                         ptr.getTypeName() == typeid(ESM::Ingredient).name() ||
                         ptr.getTypeName() == typeid(ESM::Book).name() ||
                         ptr.getTypeName() == typeid(ESM::Repair).name()))
-                    useItem(ptr); // Shortcut to use a single ingredient/potion/book instead of dealing with countDialog.
-                                  // \TODO: add repair hammers here (and any other stackable, usable items)
+                    useItem(ptr); // Shortcut to use a single ingredient/potion/book/repair instead of dealing with countDialog.
                 else
                 {
                     mLastAction = action;
@@ -1100,7 +1102,7 @@ namespace MWGui
             mItemView->highlightItem(mGamepadSelected);
             widgetHighlight(mItemView->getHighlightWidget());
 
-           updateGamepadTooltip(mItemView->getHighlightWidget());
+            updateGamepadTooltip(mItemView->getHighlightWidget());
         }
         else
         {

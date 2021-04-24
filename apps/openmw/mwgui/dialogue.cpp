@@ -881,6 +881,9 @@ namespace MWGui
                 widgetHighlight(mGoodbyeButton);
             }
         }
+        else if (action == MWInput::MA_DPadLeft || action == MWInput::MA_DPadRight)
+            // consume the key press so we don't change focus
+            return;
         else
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }

@@ -447,7 +447,9 @@ namespace MWInput
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
                 mLStickXAxisVal = arg.value;
-                processCurrentJoystickRatiosForGui();
+
+                // we don't process the joystick ratios because the X axis is always reported first; we'll
+                // let the Y axis value get updated and then process the ratios.
 
                 break;
             case SDL_CONTROLLER_AXIS_LEFTY:

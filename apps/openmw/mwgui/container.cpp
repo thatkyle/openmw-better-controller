@@ -42,6 +42,7 @@ namespace MWGui
         , mSelectedItem(-1)
         , mTreatNextOpenAsLoot(false)
         , mLastAction(MWInput::MA_None)
+        , mGamepadSelected(0)
     {
         getWidget(mDisposeCorpseButton, "DisposeCorpseButton");
         getWidget(mTakeButton, "TakeButton");

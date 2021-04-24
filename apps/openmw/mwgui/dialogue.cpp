@@ -598,7 +598,7 @@ namespace MWGui
         // The topics list has been regenerated so topic formatting needs to be updated
         updateTopicFormat();
 
-        // Find last selected topic for gamepda highlight.
+        // Find last selected topic for gamepad highlight.
         mTopicWidgets.clear();
         std::string topicName;
         for (unsigned int i = 0; i < mTopicsList->getItemCount(); ++i)
@@ -607,7 +607,18 @@ namespace MWGui
             if (!topicName.empty())
             {
                 mTopicWidgets.push_back(mTopicsList->getItemWidget(topicName));
-                if(!mCurrentTopic.compare(topicName))
+                auto selectedTopic = mCurrentTopic;
+                auto currentTopic = topicName;
+
+                // some topics can start with a lower case, which OpenMW will order correctly based on alphabetical order,
+                // but std::string::compare will not, as it uses ASCII order (all uppercase before lowercase)
+                std::transform(selectedTopic.begin(), selectedTopic.end(), selectedTopic.begin(),
+                    [](unsigned char c) { return std::tolower(c); });
+                std::transform(currentTopic.begin(), currentTopic.end(), currentTopic.begin(),
+                    [](unsigned char c) { return std::tolower(c); });
+
+                // if the topic goes away, we will select the topic just before, in alphabetical order
+                if (selectedTopic.compare(currentTopic) >= 0)
                     mTopicHighlight = mTopicWidgets.size() - 1;
             }
         }
@@ -825,6 +836,7 @@ namespace MWGui
             {
                 onSelectListItem(mTopicWidgets[mTopicHighlight]->getCaption(), *mTopicWidgets[mTopicHighlight]->getUserData<int>());
                 mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption()); // Update scroll only when the gamepad is used.
+                widgetHighlight(mTopicWidgets[mTopicHighlight]);
             }
         }
         else if (action == MWInput::MA_LTrigger)

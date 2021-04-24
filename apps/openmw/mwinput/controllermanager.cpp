@@ -426,24 +426,34 @@ namespace MWInput
                 {
                     // Only inject a single keypress when trigger is first pressed. Prevents studdering scroll actions.
                     mRTriggerPressureVal = makeAxisRatio(arg.value);
+
+                    // It's possible our last recorded value is zero and a zero is reported again
+                    if (!mRTriggerPressureVal)
+                        break;
+                    
                     MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger), 1, true);
                 }
 
                 mRTriggerPressureVal = makeAxisRatio(arg.value); // Update axis regardless.
                 if (!mRTriggerPressureVal)
-                    MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
+                    MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_RTrigger));
                 break;
             case SDL_CONTROLLER_AXIS_TRIGGERLEFT:
                 if (!mLTriggerPressureVal)
                 {
                     // Only inject a single keypress when trigger is first pressed. Prevents studdering scroll actions.
                     mLTriggerPressureVal = makeAxisRatio(arg.value);
+
+                    // It's possible our last recorded value is zero and a zero is reported again
+                    if (!mLTriggerPressureVal)
+                        break;
+
                     MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger), 1, true);
                 }
 
                 mLTriggerPressureVal = makeAxisRatio(arg.value); // Update axis regardless.
                 if (!mLTriggerPressureVal)
-                    MWBase::Environment::get().getWindowManager()->injectKeyRelease(MyGUI::KeyCode::None);
+                    MWBase::Environment::get().getWindowManager()->injectKeyRelease(menuActionToKeyCode(MWInput::MenuAction::MA_LTrigger));
                 break;
             case SDL_CONTROLLER_AXIS_LEFTX:
                 mLStickXAxisVal = arg.value;

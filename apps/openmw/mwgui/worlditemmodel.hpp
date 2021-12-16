@@ -13,7 +13,7 @@ namespace MWGui
     public:
         WorldItemModel(float left, float top) : mLeft(left), mTop(top) {}
         virtual ~WorldItemModel() override {}
-        MWWorld::Ptr copyItem (const ItemStack& item, size_t count, bool /*allowAutoEquip*/) override
+        MWWorld::Ptr copyItem(const ItemStack& item, size_t count, bool /*allowAutoEquip*/) override
         {
             MWBase::World* world = MWBase::Environment::get().getWorld();
 
@@ -27,11 +27,12 @@ namespace MWGui
             return dropped;
         }
 
-        void removeItem (const ItemStack& item, size_t count) override { throw std::runtime_error("removeItem not implemented"); }
-        ModelIndex getIndex (ItemStack item) override { throw std::runtime_error("getIndex not implemented"); }
+        void removeItem(const ItemStack& item, size_t count) override { throw std::runtime_error("removeItem not implemented"); }
+        ModelIndex getIndex(const ItemStack &item) override { throw std::runtime_error("getIndex not implemented"); }
         void update() override {}
         size_t getItemCount() override { return 0; }
-        ItemStack getItem (ModelIndex index) override { throw std::runtime_error("getItem not implemented"); }
+        ItemStack getItem(ModelIndex index) override { throw std::runtime_error("getItem not implemented"); }
+        bool usesContainer(const MWWorld::Ptr&) override { return false; }
 
     private:
         // Where to drop the item

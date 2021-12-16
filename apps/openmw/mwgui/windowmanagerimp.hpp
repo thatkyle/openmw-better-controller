@@ -470,7 +470,6 @@ namespace MWGui
     ScreenFader* mScreenFader;
     DebugWindow* mDebugWindow;
     JailScreen* mJailScreen;
-    ContainerWindow* mContainerWindow;
     ControlLegend* mControlLegend;
     OnscreenKeyboard* mOnscreenKeyboard;
 

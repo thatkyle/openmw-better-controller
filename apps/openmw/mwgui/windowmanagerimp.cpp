@@ -171,7 +171,6 @@ namespace MWGui
       , mScreenFader(nullptr)
       , mDebugWindow(nullptr)
       , mJailScreen(nullptr)
-      , mContainerWindow(nullptr)
       , mTranslationDataStorage (translationDataStorage)
       , mCharGen(nullptr)
       , mInputBlocker(nullptr)

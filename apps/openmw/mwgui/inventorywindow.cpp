@@ -945,10 +945,10 @@ namespace MWGui
                 MWWorld::Ptr ptr = mTradeModel->getItem(mSelectedItem).mBase;
 
                 if (MWBase::Environment::get().getWindowManager()->getMode() == GM_Inventory && (
-                        ptr.getTypeName() == typeid(ESM::Potion).name() || 
-                        ptr.getTypeName() == typeid(ESM::Ingredient).name() ||
-                        ptr.getTypeName() == typeid(ESM::Book).name() ||
-                        ptr.getTypeName() == typeid(ESM::Repair).name()))
+                        ptr.getType() == ESM::Potion::sRecordId || 
+                        ptr.getType() == ESM::Ingredient::sRecordId ||
+                        ptr.getType() == ESM::Book::sRecordId ||
+                        ptr.getType() == ESM::Repair::sRecordId))
                     useItem(ptr); // Shortcut to use a single ingredient/potion/book/repair instead of dealing with countDialog.
                 else
                 {

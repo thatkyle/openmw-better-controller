@@ -34,7 +34,7 @@ namespace MWInput
 
         void processChangedSettings(const Settings::CategorySettingVector& changed);
 
-        void setJoystickLastUsed(bool enabled) { mJoystickLastUsed = enabled; }
+        void setJoystickLastUsed(bool enabled);
         bool joystickLastUsed() const { return mJoystickLastUsed; }
 
         void setGuiCursorEnabled(bool enabled) { mGuiCursorEnabled = enabled; }
@@ -71,6 +71,7 @@ namespace MWInput
         float mLTriggerPressureVal;
         int mLStickXAxisVal;
         int mLStickYAxisVal;
+        int mGamepadZoom;
         bool mLStickPressedLeftInGui;
         bool mLStickPressedRightInGui;
         bool mLStickPressedUpInGui;

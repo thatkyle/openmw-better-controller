@@ -62,6 +62,8 @@ namespace MWGui
             void updateMenu();
 
             SaveGameDialog* mSaveGameDialog;
+
+            void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
     };
 
 }

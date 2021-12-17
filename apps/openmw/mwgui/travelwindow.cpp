@@ -22,6 +22,8 @@
 
 #include "../mwinput/actions.hpp"
 
+#include "controllegend.hpp"
+
 namespace MWGui
 {
     TravelWindow::TravelWindow() :
@@ -283,6 +285,18 @@ namespace MWGui
 
         int scrollPos = (mDestinationWidgets[mDestinationHighlight]->getCoord().top - (mDestinationsView->getViewCoord().height / 2)) * -1;
         mDestinationsView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+    }
+
+    ControlSet TravelWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 }
 

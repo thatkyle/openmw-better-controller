@@ -34,6 +34,9 @@ namespace MWGui
 
         void onResChange(int, int) override { center(); }
 
+    protected:
+        ControlSet getControlLegendContents() override;
+
     private:
 
         static const float sCountChangeInitialPause; // in seconds

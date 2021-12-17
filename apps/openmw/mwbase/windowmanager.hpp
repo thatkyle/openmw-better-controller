@@ -83,6 +83,7 @@ namespace MWGui
 
     struct TextColours;
     struct MenuControl;
+    struct ControlSet;
 }
 
 namespace SFO
@@ -379,9 +380,8 @@ namespace MWBase
             virtual void onDeleteCustomData(const MWWorld::Ptr& ptr) = 0;
             virtual void forceLootMode(const MWWorld::Ptr& ptr) = 0;
 
-            virtual void pushMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls) = 0;
-            virtual void popMenuControls() = 0;
-            virtual void swapMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls) = 0;
+            virtual void setMenuControls(MWGui::ControlSet& controlSet) = 0;
+            virtual void clearMenuControls() = 0;
 
             virtual void setHighlight(MyGUI::Widget* target) = 0;
     };

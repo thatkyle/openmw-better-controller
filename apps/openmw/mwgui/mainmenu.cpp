@@ -263,6 +263,7 @@ namespace MWGui
                 button->setProperty("ImageNormal", "textures\\menu_" + buttonId + ".dds");
                 button->setProperty("ImagePushed", "textures\\menu_" + buttonId + "_pressed.dds");
                 button->eventMouseButtonClick += MyGUI::newDelegate(this, &MainMenu::onButtonClicked);
+                button->eventKeySetFocus += MyGUI::newDelegate(this, &MainMenu::onFocusGained);
                 button->setUserData(std::string(buttonId));
                 mButtons[buttonId] = button;
             }
@@ -307,6 +308,10 @@ namespace MWGui
         }
         else
             mButtonBox->setCoord (mWidth/2 - maxwidth/2, mHeight/2 - curH/2, maxwidth, curH);
+    }
 
+    void MainMenu::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        MWBase::Environment::get().getWindowManager()->clearMenuControls();
     }
 }

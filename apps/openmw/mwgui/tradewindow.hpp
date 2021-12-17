@@ -52,6 +52,9 @@ namespace MWGui
             typedef MyGUI::delegates::CMultiDelegate0 EventHandle_TradeDone;
             EventHandle_TradeDone eventTradeDone;
 
+        protected:
+            ControlSet getControlLegendContents() override;
+
         private:
             ItemView* mItemView;
             SortFilterItemModel* mSortModel;

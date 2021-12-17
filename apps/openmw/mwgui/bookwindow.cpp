@@ -69,21 +69,16 @@ namespace MWGui
         center();
     }
 
-    void BookWindow::onOpen()
+    ControlSet BookWindow::getControlLegendContents()
     {
-        std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "Take"}
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Take"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
         };
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
-
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
-    }
-
-    void BookWindow::onClose()
-    {
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void BookWindow::onMouseWheel(MyGUI::Widget *_sender, int _rel)
@@ -210,7 +205,7 @@ namespace MWGui
         if (nextPageVisible)
             leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Next Page" });
 
-        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
+        MWBase::Environment::get().getWindowManager()->setMenuControls(ControlSet{ leftControls, rightControls });
     }
 
     void BookWindow::nextPage()

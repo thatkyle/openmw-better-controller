@@ -505,14 +505,7 @@ namespace MWGui
 
     void DialogueWindow::onOpen()
     {
-        std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "Say"}
-        };
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
-
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+        
     }
 
     void DialogueWindow::onClose()
@@ -523,8 +516,18 @@ namespace MWGui
         for (DialogueText* text : mHistoryContents)
             delete text;
         mHistoryContents.clear();
+    }
 
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+    ControlSet DialogueWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Say"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
+        };
     }
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)

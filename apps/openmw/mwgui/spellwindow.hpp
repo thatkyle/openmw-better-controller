@@ -53,6 +53,8 @@ namespace MWGui
         MyGUI::IntSize highlightSizeOverride() override;
         MyGUI::IntCoord highlightOffset() override;
 
+        ControlSet getControlLegendContents() override;
+
     private:
         void gamepadHighlightSelected();
         void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);

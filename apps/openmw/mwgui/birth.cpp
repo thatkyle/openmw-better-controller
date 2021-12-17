@@ -80,15 +80,18 @@ namespace MWGui
 
         if (!signId.empty())
             setBirthId(signId);
+    }
 
-        std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "OK"}
+    ControlSet BirthDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "OK"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
         };
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
-
-        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
     }
 
     void BirthDialog::setBirthId(const std::string &birthId)

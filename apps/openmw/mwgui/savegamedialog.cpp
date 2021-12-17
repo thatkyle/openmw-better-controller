@@ -214,30 +214,33 @@ namespace MWGui
             mCharacterSelection->setCaption("Select Character ...");
 
         fillSaveList();
+    }
 
+    ControlSet SaveGameDialog::getControlLegendContents()
+    {
         if (mSaving)
         {
-            std::vector<MenuControl> leftControls{
-                MenuControl{MWInput::MenuAction::MA_A, "Save"},
-                MenuControl{MWInput::MenuAction::MA_Y, "New Save"},
+            return {
+                {
+                    MenuControl{MWInput::MenuAction::MA_A, "Save"},
+                    MenuControl{MWInput::MenuAction::MA_Y, "New Save"},
+                },
+                {
+                    MenuControl{MWInput::MenuAction::MA_B, "Back"}
+                }
             };
-            std::vector<MenuControl> rightControls{
-                MenuControl{MWInput::MenuAction::MA_B, "Back"}
-            };
-
-            MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
         }
         else
         {
-            std::vector<MenuControl> leftControls{
-                MenuControl{MWInput::MenuAction::MA_A, "Load Game"},
-                MenuControl{MWInput::MenuAction::MA_X, "Delete Game"}
+            return {
+                {
+                    MenuControl{MWInput::MenuAction::MA_A, "Load Game"},
+                    MenuControl{MWInput::MenuAction::MA_X, "Delete Game"}
+                },
+                {
+                    MenuControl{MWInput::MenuAction::MA_B, "Cancel"}
+                }
             };
-            std::vector<MenuControl> rightControls{
-                MenuControl{MWInput::MenuAction::MA_X, "Cancel"}
-            };
-
-            MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
         }
     }
 

@@ -18,6 +18,8 @@
 
 #include "../mwinput/actions.hpp"
 
+#include "controllegend.hpp"
+
 namespace MWGui
 {
     SpellBuyingWindow::SpellBuyingWindow() :
@@ -269,6 +271,18 @@ namespace MWGui
 
         int scrollPos = (mSpellWidgets[mSpellHighlight]->getCoord().top - (mSpellsView->getViewCoord().height / 2)) * -1;
         mSpellsView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+    }
+
+    ControlSet SpellBuyingWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 }
 

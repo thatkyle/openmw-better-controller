@@ -44,6 +44,9 @@ namespace MWGui
         void focus() override;
         void onBackgroundSelected();
 
+    protected:
+        ControlSet getControlLegendContents() override;
+
     private:
         DragAndDrop* mDragAndDrop;
 

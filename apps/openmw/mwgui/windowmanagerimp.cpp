@@ -2512,20 +2512,15 @@ namespace MWGui
         for(auto* window : mWindows)
             window->onDeleteCustomData(ptr);
     }
-    void WindowManager::pushMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls)
+
+    void WindowManager::setMenuControls(ControlSet& controlSet) 
     {
-        mControlLegend->pushControls(leftControls, rightControls);
+        mControlLegend->setControls(controlSet);
     }
 
-    void WindowManager::popMenuControls()
+    void WindowManager::clearMenuControls()
     {
-        mControlLegend->popControls();
-    }
-
-    void WindowManager::swapMenuControls(std::vector<MWGui::MenuControl>& leftControls, std::vector<MWGui::MenuControl>& rightControls)
-    {
-        mControlLegend->popControls();
-        mControlLegend->pushControls(leftControls, rightControls);
+        mControlLegend->clearControls();
     }
 
     void WindowManager::setHighlight(MyGUI::Widget* target)

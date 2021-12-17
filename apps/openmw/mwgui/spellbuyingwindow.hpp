@@ -56,6 +56,8 @@ namespace MWGui
             void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
             std::vector<MyGUI::Widget*> mSpellWidgets;
             unsigned int mSpellHighlight;
+            ControlSet getControlLegendContents() override;
+
 
         private:
             static bool sortSpells (const ESM::Spell* left, const ESM::Spell* right);

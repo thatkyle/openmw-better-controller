@@ -45,17 +45,22 @@ namespace MWGui
 
     void ScrollWindow::onOpen()
     {
-        std::vector<MenuControl> leftControls;
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
+        //std::vector<MenuControl> leftControls;
+        //std::vector<MenuControl> rightControls{
+        //    MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        //};
 
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+        //MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void ScrollWindow::onClose()
     {
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+        //MWBase::Environment::get().getWindowManager()->popMenuControls();
+    }
+
+    ControlSet ScrollWindow::getControlLegendContents()
+    {
+        return { {}, { MenuControl{MWInput::MenuAction::MA_B, "Back"} } };
     }
 
     void ScrollWindow::setPtr (const MWWorld::Ptr& scroll)
@@ -100,7 +105,7 @@ namespace MWGui
         if (mTextView->getViewOffset().top < mTextView->getChildAt(0)->getSize().height)
             leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Scroll Down" });
 
-        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
+        MWBase::Environment::get().getWindowManager()->setMenuControls(ControlSet{ leftControls, rightControls });
     }
 
     void ScrollWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
@@ -147,7 +152,7 @@ namespace MWGui
         if (mTextView->getViewOffset().top < mTextView->getChildAt(0)->getSize().height)
             leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Scroll Down" });
 
-        MWBase::Environment::get().getWindowManager()->swapMenuControls(leftControls, rightControls);
+        MWBase::Environment::get().getWindowManager()->setMenuControls(ControlSet{ leftControls, rightControls });
     }
 
     void ScrollWindow::setTakeButtonShow(bool show)

@@ -44,6 +44,8 @@ namespace MWGui
         void onOkClicked(MyGUI::Widget* _sender);
         void onBackClicked(MyGUI::Widget* _sender);
 
+        ControlSet getControlLegendContents() override;
+
     private:
         void updateBirths();
         void updateSpells();

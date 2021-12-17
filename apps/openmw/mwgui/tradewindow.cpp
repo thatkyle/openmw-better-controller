@@ -567,19 +567,6 @@ namespace MWGui
     void TradeWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
     {
         gamepadHighlightSelected();
-
-        std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "Select"},
-            MenuControl{MWInput::MenuAction::MA_X, "Offer"},
-            MenuControl{MWInput::MenuAction::MA_Black, "$ Down"},
-            MenuControl{MWInput::MenuAction::MA_White, "$ Up"},
-        };
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
-            MenuControl{MWInput::MenuAction::MA_B, "Cancel"}
-        };
-
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void TradeWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
@@ -588,8 +575,22 @@ namespace MWGui
 
         // hide the gamepad tooltip
         MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+    }
 
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+    ControlSet TradeWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"},
+                MenuControl{MWInput::MenuAction::MA_X, "Offer"},
+                MenuControl{MWInput::MenuAction::MA_Black, "$ Down"},
+                MenuControl{MWInput::MenuAction::MA_White, "$ Up"},
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
+                MenuControl{MWInput::MenuAction::MA_B, "Cancel"}
+            }
+        };
     }
 
     void TradeWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)

@@ -56,6 +56,7 @@ namespace MWGui
         // gamepad functions
         void gamepadHighlightSelected();
         void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        ControlSet getControlLegendContents() override;
 
         int mGamepadSelected;
     };

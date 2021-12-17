@@ -405,9 +405,8 @@ namespace MWGui
     void onDeleteCustomData(const MWWorld::Ptr& ptr) override;
     void forceLootMode(const MWWorld::Ptr& ptr) override;
 
-    void pushMenuControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls) override;
-    void popMenuControls() override;
-    void swapMenuControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls) override;
+    void setMenuControls(ControlSet& controlSet) override;
+    void clearMenuControls() override;
 
     void setHighlight(MyGUI::Widget* target);
 

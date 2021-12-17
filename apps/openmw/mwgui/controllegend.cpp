@@ -23,37 +23,40 @@ namespace MWGui
         mMainWidget->setPosition(pos);
     }
 
-    void ControlLegend::pushControls(std::vector<MenuControl>& leftControls,
+    void ControlLegend::setControls(std::vector<MenuControl>& leftControls,
                                      std::vector<MenuControl>& rightControls)
     {
-        mControlSetStack.push_back(ControlSet{ leftControls, rightControls });
+        setControls({ leftControls, rightControls });
+    }
+
+    void ControlLegend::setControls(ControlSet controlSet)
+    {
+        mControlSet = controlSet;
         updateControls();
     }
 
-    void ControlLegend::popControls()
+    void ControlLegend::clearControls()
     {
-        if (!mControlSetStack.empty())
-            mControlSetStack.pop_back();
-
+        mControlSet = { {}, {} };
         updateControls();
     }
 
     void ControlLegend::updateControls()
     {
-        if (mControlSetStack.empty())
+        if (mControlSet.leftControls.empty() && mControlSet.rightControls.empty())
         {
             this->setVisible(false);
         }
         else
         {
             std::string leftString = "";
-            for (auto& control : mControlSetStack.back().leftControls)
+            for (auto& control : mControlSet.leftControls)
             {
                 leftString += gamepadActionToIcon(control.action) + " " + control.caption + "   ";
             }
 
             std::string rightString = "";
-            for (auto& control : mControlSetStack.back().rightControls)
+            for (auto& control : mControlSet.rightControls)
             {
                 rightString += "   " + gamepadActionToIcon(control.action) + " " + control.caption;
             }

@@ -331,7 +331,15 @@ namespace MWGui
     void ContainerWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
     {
         gamepadHighlightSelected();
+    }
 
+    void ContainerWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateHighlightVisibility();
+    }
+
+    ControlSet ContainerWindow::getControlLegendContents()
+    {
         std::vector<MenuControl> leftControls{
             MenuControl{MWInput::MenuAction::MA_A, "Select"},
             MenuControl{MWInput::MenuAction::MA_X, "Take All"}
@@ -344,17 +352,7 @@ namespace MWGui
         if (mDisposeCorpseButton->isVisible())
             leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_White, "Dispose" });
 
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
-    }
-
-    void ContainerWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
-    {
-        updateHighlightVisibility();
-
-        // hide the gamepad tooltip
-        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
-
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+        return { leftControls, rightControls };
     }
 
     void ContainerWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)

@@ -1,6 +1,8 @@
 #include "windowbase.hpp"
 
 #include <climits>
+#include <vector>
+#include <tuple>
 
 #include <MyGUI_Button.h>
 #include <MyGUI_InputManager.h>
@@ -132,6 +134,14 @@ void WindowBase::updateHighlightVisibility()
         isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget());
 
     mGamepadHighlight->setVisible(shouldTurnOn);
+
+    if (shouldTurnOn)
+        MWBase::Environment::get().getWindowManager()->setMenuControls(getControlLegendContents());
+}
+
+ControlSet WindowBase::getControlLegendContents()
+{
+    return { {}, {} };
 }
 
 void WindowBase::updateGamepadTooltip(MyGUI::Widget* target)
@@ -155,14 +165,7 @@ void WindowModal::onOpen()
     MyGUI::InputManager::getInstance ().addWidgetModal (mMainWidget);
     MyGUI::InputManager::getInstance().setKeyFocusWidget(focus);
 
-    std::vector<MenuControl> leftControls{
-        MenuControl{MWInput::MenuAction::MA_A, "Select"}
-    };
-    std::vector<MenuControl> rightControls{
-        MenuControl{MWInput::MenuAction::MA_B, "Back"}
-    };
-
-    MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+    MWBase::Environment::get().getWindowManager()->setMenuControls(getControlLegendContents());
 }
 
 void WindowModal::onClose()
@@ -171,7 +174,19 @@ void WindowModal::onClose()
 
     MyGUI::InputManager::getInstance ().removeWidgetModal (mMainWidget);
 
-    MWBase::Environment::get().getWindowManager()->popMenuControls();
+    //MWBase::Environment::get().getWindowManager()->popMenuControls();
+}
+
+ControlSet WindowModal::getControlLegendContents()
+{
+    return {
+        {
+            MenuControl{MWInput::MenuAction::MA_A, "Select"}
+        },
+        {
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        }
+    };
 }
 
 NoDrop::NoDrop(DragAndDrop *drag, MyGUI::Widget *widget)

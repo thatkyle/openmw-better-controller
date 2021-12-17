@@ -17,6 +17,7 @@
 #include <components/settings/settings.hpp>
 
 #include "tooltips.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -293,6 +294,19 @@ namespace MWGui
         {
             widgetHighlight(nullptr);
         }
+    }
+
+    ControlSet TrainingWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 
 }

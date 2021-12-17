@@ -249,27 +249,27 @@ namespace MWGui
     void AlchemyWindow::onOpen()
     {
         mAlchemy->clear();
-        mAlchemy->setAlchemist (MWMechanics::getPlayer());
+        mAlchemy->setAlchemist(MWMechanics::getPlayer());
 
         mModel = new InventoryItemModel(MWMechanics::getPlayer());
         mSortModel = new SortFilterItemModel(mModel);
         mSortModel->setFilter(SortFilterItemModel::Filter_OnlyIngredients);
-        mItemView->setModel (mSortModel);
+        mItemView->setModel(mSortModel);
         mItemView->resetScrollBars();
 
         mNameEdit->setCaption("");
         mBrewCountEdit->setValue(1);
 
         int index = 0;
-        for (MWMechanics::Alchemy::TToolsIterator iter (mAlchemy->beginTools());
-            iter!=mAlchemy->endTools() && index<static_cast<int> (mApparatus.size()); ++iter, ++index)
+        for (MWMechanics::Alchemy::TToolsIterator iter(mAlchemy->beginTools());
+            iter != mAlchemy->endTools() && index < static_cast<int> (mApparatus.size()); ++iter, ++index)
         {
-            mApparatus.at (index)->setItem(*iter);
-            mApparatus.at (index)->clearUserStrings();
+            mApparatus.at(index)->setItem(*iter);
+            mApparatus.at(index)->clearUserStrings();
             if (!iter->isEmpty())
             {
-                mApparatus.at (index)->setUserString ("ToolTipType", "ItemPtr");
-                mApparatus.at (index)->setUserData (MWWorld::Ptr(*iter));
+                mApparatus.at(index)->setUserString("ToolTipType", "ItemPtr");
+                mApparatus.at(index)->setUserData(MWWorld::Ptr(*iter));
             }
         }
 
@@ -277,22 +277,25 @@ namespace MWGui
         initFilter();
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+    }
 
-        std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "Inventory"},
-            MenuControl{MWInput::MenuAction::MA_X, "Create"},
-            MenuControl{MWInput::MenuAction::MA_A, "Info"}
+    ControlSet AlchemyWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Inventory"},
+                MenuControl{MWInput::MenuAction::MA_X, "Create"},
+                MenuControl{MWInput::MenuAction::MA_A, "Info"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
         };
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
-
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void AlchemyWindow::onClose()
     {
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+        //MWBase::Environment::get().getWindowManager()->popMenuControls();
     }
 
     void AlchemyWindow::onIngredientSelected(MyGUI::Widget* _sender)

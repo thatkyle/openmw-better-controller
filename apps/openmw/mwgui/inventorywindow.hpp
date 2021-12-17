@@ -31,6 +31,8 @@ namespace MWGui
     class DragAndDrop;
     class ItemModel;
 
+    struct MenuControl;
+
     class InventoryWindow : public WindowPinnableBase
     {
         public:
@@ -72,6 +74,8 @@ namespace MWGui
 
         protected:
             void onTitleDoubleClicked() override;
+
+            ControlSet getControlLegendContents() override;
 
         private:
             DragAndDrop* mDragAndDrop;

@@ -29,14 +29,15 @@ namespace MWGui
     public:
         ControlLegend();
 
-        void pushControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls);
-        void popControls();
+        void setControls(std::vector<MenuControl>& leftControls, std::vector<MenuControl>& rightControls);
+        void setControls(ControlSet controlset);
+        void clearControls();
 
     private:
         void updateControls();
         std::string gamepadActionToIcon(MWInput::MenuAction action);
 
-        std::vector<ControlSet> mControlSetStack;
+        ControlSet mControlSet;
     };
 }
 

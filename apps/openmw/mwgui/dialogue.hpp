@@ -154,6 +154,8 @@ namespace MWGui
 
         MyGUI::IntCoord highlightOffset() override;
 
+        ControlSet getControlLegendContents() override;
+
     private:
         void updateDisposition();
         void restock();

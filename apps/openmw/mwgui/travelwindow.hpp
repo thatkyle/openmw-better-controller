@@ -44,6 +44,7 @@ namespace MWGui
             void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
             std::vector<MyGUI::Widget*> mDestinationWidgets;
             unsigned int mDestinationHighlight;
+            ControlSet getControlLegendContents() override;
 
         private:
 

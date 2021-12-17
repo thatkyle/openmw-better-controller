@@ -24,6 +24,9 @@ namespace MWGui
 
         void setLoadOrSave(bool load);
 
+    protected:
+        ControlSet getControlLegendContents() override;
+
     private:
         void confirmDeleteSave();
 

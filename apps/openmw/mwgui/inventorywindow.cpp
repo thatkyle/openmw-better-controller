@@ -423,7 +423,10 @@ namespace MWGui
     void InventoryWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
     {
         gamepadHighlightSelected();
+    }
 
+    ControlSet InventoryWindow::getControlLegendContents()
+    {
         std::vector<MenuControl> leftControls, rightControls;
 
         switch (mGuiMode)
@@ -455,7 +458,7 @@ namespace MWGui
 
         rightControls.push_back(MenuControl{ MWInput::MenuAction::MA_B, "Back" });
 
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
+        return { leftControls, rightControls };
     }
 
     void InventoryWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)

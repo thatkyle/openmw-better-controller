@@ -108,25 +108,28 @@ namespace MWGui
         {
             gamepadHighlightSelected();
         }
+    }
 
-        std::vector<MenuControl> leftControls{
-            MenuControl{MWInput::MenuAction::MA_A, "Select"},
-            MenuControl{MWInput::MenuAction::MA_X, "Delete"}
+    ControlSet SpellWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"},
+                MenuControl{MWInput::MenuAction::MA_X, "Delete"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
+                MenuControl{MWInput::MenuAction::MA_RTrigger, "Map"},
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
         };
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
-            MenuControl{MWInput::MenuAction::MA_RTrigger, "Map"},
-            MenuControl{MWInput::MenuAction::MA_B, "Back"},
-        };
-
-        MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
     }
 
     void SpellWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
     {
         updateHighlightVisibility();
 
-        MWBase::Environment::get().getWindowManager()->popMenuControls();
+        //MWBase::Environment::get().getWindowManager()->popMenuControls();
 
         updateGamepadTooltip(nullptr);
     }

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <MyGUI type="Layout">
-    <Widget type="Window" skin="MW_Window_NoCaption" layer="Windows" align="Center" position="0 0 588 444" name="_Main">
+    <Widget type="Window" skin="MW_Window_NoCaption" layer="Windows" align="Center" position="0 0 588 456" name="_Main">
        <Property key="MinSize" value="425 360"/>
 
         <!-- Name -->
@@ -57,7 +57,7 @@
 
         <!-- Available Ingredients -->
 
-        <Widget type="ItemView" skin="MW_ItemView" position="10 206 552 132" name="ItemView" align="Left Top Stretch"/>
+        <Widget type="ItemView" skin="MW_ItemView" position="10 206 552 144" name="ItemView" align="Left Top Stretch"/>
 
         <!-- Created Effects -->
 
@@ -72,7 +72,7 @@
 
         <!-- Filters -->
 
-        <Widget type="HBox" skin="MW_Box" position="10 333 552 39" align="Bottom HStretch">
+        <Widget type="HBox" skin="MW_Box" position="10 348 552 39" align="Bottom HStretch">
             <Property key="Padding" value="5"/>
             <Property key="Spacing" value="10"/>
 
@@ -88,7 +88,7 @@
 
         <!-- Buttons -->
 
-        <Widget type="HBox" skin="" position="10 374 552 28" align="Bottom HStretch">
+        <Widget type="HBox" skin="" position="10 389 552 28" align="Bottom HStretch">
             <Widget type="AutoSizedButton" skin="MW_Button" name="DecreaseButton">
                 <Property key="Caption" value=" - "/>
                 <Property key="NeedKey" value="false"/>

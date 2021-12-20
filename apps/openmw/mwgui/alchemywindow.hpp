@@ -30,12 +30,15 @@ namespace MWGui
         AlchemyWindow();
 
         void onOpen() override;
-        void onClose() override;
+
+        void onFrame(float dt) override;
 
         void onResChange(int, int) override { center(); }
 
     protected:
         ControlSet getControlLegendContents() override;
+
+        MyGUI::IntCoord highlightOffset() override;
 
     private:
 
@@ -91,6 +94,15 @@ namespace MWGui
         void createPotions(int count);
 
         void update();
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        void widgetHighlight(unsigned int index);
+        // divided into three sets:
+        // 0: the spell name
+        // 1 to 4: the currently selected ingredients
+        // 5-n: the selectable ingredients
+        unsigned int mHighlight;
 
         std::unique_ptr<MWMechanics::Alchemy> mAlchemy;
 

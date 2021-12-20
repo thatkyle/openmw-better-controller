@@ -33,14 +33,25 @@ namespace MWGui
         void setCategory(int category);
         void setFilter(int filter);
 
+    protected:
+        ControlSet getControlLegendContents() override;
+
+
     private:
         ItemView* mItemView;
         SortFilterItemModel* mSortModel;
         InventoryItemModel* mModel;
+        MyGUI::Button* mCancelButton;
 
         void onSelectedItem(int index);
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        void gamepadHighlightSelected();
+        unsigned int mGamepadSelected;
+
+
     };
 
 }

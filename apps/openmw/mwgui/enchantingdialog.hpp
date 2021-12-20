@@ -21,7 +21,7 @@ namespace MWGui
 
         void onOpen() override;
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onFrame(float dt) override;
         void clear() override { resetReference(); }
 
         void setSoulGem (const MWWorld::Ptr& gem);
@@ -49,6 +49,26 @@ namespace MWGui
         void updateLabels();
         void onTypeButtonClicked(MyGUI::Widget* sender);
         void onAccept(MyGUI::EditBox* sender);
+
+        ControlSet getControlLegendContents() override;
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        MyGUI::IntCoord highlightOffset() override;
+
+        void widgetHighlight(unsigned int index);
+        // divided into three sets:
+        // 0: the spell name
+        // 1: the item slot
+        // 2: the soul gem slot
+        // 3: the type (cast once, cast when used, etc)
+        // 4 to n: the available effects
+        // n+1 to m: the spell effects added to the current enchantment
+        unsigned int mHighlight;
+
+        // allows for remembering which column was previously selected
+        bool mItemLastUsed;
+        bool mAvailableEffectColumnLastUsed;
 
         ItemSelectionDialog* mItemSelectionDialog;
 

@@ -11,6 +11,7 @@ namespace Gui
         : mScrollView(nullptr)
         , mClient(nullptr)
         , mItemHeight(0)
+        , mSpacingOverride(-1)
     {
     }
 
@@ -46,7 +47,7 @@ namespace Gui
     {
         const int _scrollBarWidth = 20; // fetch this from skin?
         const int scrollBarWidth = scrollbarShown ? _scrollBarWidth : 0;
-        const int spacing = 3;
+        const int spacing = mSpacingOverride == -1 ? 3 : mSpacingOverride;
         int viewPosition = -mScrollView->getViewOffset().top;
 
         while (mScrollView->getChildCount())

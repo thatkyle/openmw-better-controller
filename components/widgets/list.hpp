@@ -51,6 +51,8 @@ namespace Gui
 
         void setPropertyOverride(const std::string& _key, const std::string& _value) override;
 
+        void setSpacingOverride(const int spacingOverride) { mSpacingOverride = spacingOverride; };
+
     protected:
         void initialiseOverride() override;
 
@@ -67,6 +69,7 @@ namespace Gui
         std::vector<std::string> mItems;
 
         int mItemHeight; // height of all items
+        int mSpacingOverride;
     };
 }
 

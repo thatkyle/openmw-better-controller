@@ -94,18 +94,18 @@ namespace MWGui
         case MWInput::MenuAction::MA_DPadRight:
             return "(→)";
         case MWInput::MenuAction::MA_JSRightClick:
-            return "(LS-↓)";
+            return "(R3)";
         case MWInput::MenuAction::MA_JSLeftClick:
-            return "(RS-↓)";
+            return "(L3)";
         case MWInput::MenuAction::MA_Start:
             return "(START)";
         case MWInput::MenuAction::MA_Select:
             return "(SELECT)";
         case MWInput::MenuAction::MA_White:
             // we can say white and black here... but if you're playing with a modern controller it's LB and RB
-            return "(LB)";
-        case MWInput::MenuAction::MA_Black:
             return "(RB)";
+        case MWInput::MenuAction::MA_Black:
+            return "(LB)";
         default:
             // TODO: throw an exception here; we shouldn't get any unknown menu actions
             return "";

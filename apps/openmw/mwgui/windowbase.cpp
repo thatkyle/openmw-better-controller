@@ -174,7 +174,7 @@ void WindowModal::onClose()
 
     MyGUI::InputManager::getInstance ().removeWidgetModal (mMainWidget);
 
-    //MWBase::Environment::get().getWindowManager()->popMenuControls();
+    MWBase::Environment::get().getWindowManager()->clearMenuControls();
 }
 
 ControlSet WindowModal::getControlLegendContents()

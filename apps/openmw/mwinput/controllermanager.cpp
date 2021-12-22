@@ -362,11 +362,13 @@ namespace MWInput
                 key = MWInput::MenuAction::MA_A;
                 break;
             case SDL_CONTROLLER_BUTTON_B:
-                if (MyGUI::InputManager::getInstance().isModalAny())
-                    MWBase::Environment::get().getWindowManager()->exitCurrentModal();
-                else
-                    MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-                return true;
+                key = MWInput::MenuAction::MA_B;
+                break;
+                //if (MyGUI::InputManager::getInstance().isModalAny())
+                //    MWBase::Environment::get().getWindowManager()->exitCurrentModal();
+                //else
+                //    MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+                //return true;
             case SDL_CONTROLLER_BUTTON_X:
                 key = MWInput::MenuAction::MA_X;
                 break;

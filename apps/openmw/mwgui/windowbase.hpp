@@ -72,13 +72,14 @@ namespace MWGui
         /// should be overridden for any window needing control legend information
         virtual ControlSet getControlLegendContents();
 
+        MyGUI::Widget* mGamepadHighlight;
+
     private:
         void onDoubleClick(MyGUI::Widget* _sender);
 
         virtual void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus) {};
         virtual void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus) {};
 
-        MyGUI::Widget* mGamepadHighlight;
         bool mIsHighlightHidden;
     };
 
@@ -95,6 +96,10 @@ namespace MWGui
 
     protected:
         ControlSet getControlLegendContents() override;
+
+        MyGUI::IntCoord highlightOffset() override { return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8)); };
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        int mHighlight;
     };
 
     /// A window that cannot be the target of a drag&drop action.

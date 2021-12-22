@@ -125,7 +125,7 @@ namespace MWGui
   class DebugWindow;
   class JailScreen;
   class ControlLegend;
-  class OnscreenKeyboard;
+  class VirtualKeyboard;
   class KeyboardNavigation;
 
   struct MenuControl;
@@ -410,6 +410,11 @@ namespace MWGui
 
     void setHighlight(MyGUI::Widget* target);
 
+    void startVirtualKeyboard(MyGUI::EditBox* target) override;
+    void startVirtualKeyboard(MyGUI::EditBox* target, const std::function<void()> onAccept) override;
+    bool virtualKeyboardVisible() override;
+
+
   private:
     unsigned int mOldUpdateMask; unsigned int mOldCullMask;
 
@@ -470,7 +475,7 @@ namespace MWGui
     DebugWindow* mDebugWindow;
     JailScreen* mJailScreen;
     ControlLegend* mControlLegend;
-    OnscreenKeyboard* mOnscreenKeyboard;
+    VirtualKeyboard* mVirtualKeyboard;
 
     std::vector<WindowBase*> mWindows;
 

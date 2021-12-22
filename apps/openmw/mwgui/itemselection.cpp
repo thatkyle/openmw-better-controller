@@ -36,6 +36,11 @@ namespace MWGui
         center();
     }
 
+    void ItemSelectionDialog::onClose()
+    {
+        updateGamepadTooltip(nullptr);
+    }
+
     bool ItemSelectionDialog::exit()
     {
         eventDialogCanceled();

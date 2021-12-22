@@ -73,7 +73,11 @@ namespace MWGui
 
         void onMouseWheel(MyGUI::Widget* _sender, int _rel);
 
+        ControlSet getControlLegendContents() override;
+
     private:
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
         void addSkills(const SkillList &skills, const std::string &titleId, const std::string &titleDefault, MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
         void addSeparator(MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
         void addGroup(const std::string &label, MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
@@ -81,6 +85,8 @@ namespace MWGui
         void addItem(const std::string& text, MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
         void addItem(const ESM::Spell* spell, MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
         void updateSkillArea();
+
+        MyGUI::Button* mOkButton;
 
         MyGUI::TextBox *mNameWidget, *mRaceWidget, *mClassWidget, *mBirthSignWidget;
         MyGUI::ScrollView* mSkillView;

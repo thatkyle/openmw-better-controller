@@ -13,6 +13,7 @@
 #include "../mwmechanics/autocalcspell.hpp"
 
 #include "tooltips.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -93,15 +94,16 @@ namespace MWGui
         getWidget(backButton, "BackButton");
         backButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onBackClicked);
 
-        MyGUI::Button* okButton;
-        getWidget(okButton, "OKButton");
-        okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onOkClicked);
+        getWidget(mOkButton, "OKButton");
+        mOkButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onOkClicked);
+        mOkButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &ReviewDialog::onKeyButtonPressed);
     }
 
     void ReviewDialog::onOpen()
     {
         WindowModal::onOpen();
         mUpdateSkillArea = true;
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
     }
 
     void ReviewDialog::onFrame(float /*duration*/)
@@ -488,6 +490,61 @@ namespace MWGui
             mSkillView->setViewOffset(MyGUI::IntPoint(0, 0));
         else
             mSkillView->setViewOffset(MyGUI::IntPoint(0, static_cast<int>(mSkillView->getViewOffset().top + _rel*0.3)));
+    }
+
+    void ReviewDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        // TODO: Add in full functionality to this menu; adding in shortcuts to each button for now
+        switch (action)
+        {
+        case MWInput::MA_A:
+            onOkClicked(sender);
+            break;
+        case MWInput::MA_B:
+            onBackClicked(sender);
+            break;
+        case MWInput::MA_X:
+            onNameClicked(sender);
+            break;
+        case MWInput::MA_Y:
+            onRaceClicked(sender);
+            break;
+        case MWInput::MA_White:
+            onClassClicked(sender);
+            break;
+        case MWInput::MA_Black:
+            onBirthSignClicked(sender);
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
+
+
+    ControlSet ReviewDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_X, "Name"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Race"},
+                MenuControl{MWInput::MenuAction::MA_White, "Class"},
+                MenuControl{MWInput::MenuAction::MA_Black, "Sign"},
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Accept"},
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
+        };
     }
 
 }

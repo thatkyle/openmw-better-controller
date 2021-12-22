@@ -384,6 +384,10 @@ namespace MWBase
             virtual void clearMenuControls() = 0;
 
             virtual void setHighlight(MyGUI::Widget* target) = 0;
+            
+            virtual void startVirtualKeyboard(MyGUI::EditBox* target) = 0;
+            virtual void startVirtualKeyboard(MyGUI::EditBox* target, const std::function<void()> onAccept) = 0;
+            virtual bool virtualKeyboardVisible() = 0;
     };
 }
 

@@ -2,6 +2,7 @@
 #define MWGUI_MESSAGE_BOX_H
 
 #include "windowbase.hpp"
+#include "buttonmenu.hpp"
 
 #undef MessageBox
 
@@ -81,28 +82,26 @@ namespace MWGui
             int mNextBoxPadding;
     };
 
-    class InteractiveMessageBox : public WindowModal
+    class InteractiveMessageBox : public ButtonMenu
     {
-        public:
-            InteractiveMessageBox (MessageBoxManager& parMessageBoxManager, const std::string& message, const std::vector<std::string>& buttons);
-            void mousePressed (MyGUI::Widget* _widget);
-            int readPressedButton ();
+    public:
+        InteractiveMessageBox (MessageBoxManager& parMessageBoxManager, const std::string& message, const std::vector<std::string>& buttons);
+        void mousePressed (MyGUI::Widget* _widget);
+        int readPressedButton ();
 
-            MyGUI::Widget* getDefaultKeyFocus() override;
+        bool exit() override { return false; }
 
-            bool exit() override { return false; }
+        bool mMarkedToDelete;
 
-            bool mMarkedToDelete;
+    private:
+        void buttonActivated (MyGUI::Widget* _widget);
 
-        private:
-            void buttonActivated (MyGUI::Widget* _widget);
+        MessageBoxManager& mMessageBoxManager;
+        MyGUI::EditBox* mMessageWidget;
+        MyGUI::Widget* mButtonsWidget;
+        std::vector<MyGUI::Button*> mButtons;
 
-            MessageBoxManager& mMessageBoxManager;
-            MyGUI::EditBox* mMessageWidget;
-            MyGUI::Widget* mButtonsWidget;
-            std::vector<MyGUI::Button*> mButtons;
-
-            int mButtonPressed;
+        int mButtonPressed;
     };
 
 }

@@ -4,13 +4,14 @@
 #include <components/esm/attr.hpp>
 #include <components/esm/loadclas.hpp>
 #include "widgets.hpp"
+#include "buttonmenu.hpp"
 #include "windowbase.hpp"
 
 namespace MWGui
 {
     void setClassImage(MyGUI::ImageBox* imageBox, const std::string& classId);
 
-    class InfoBoxDialog : public WindowModal
+    class InfoBoxDialog : public ButtonMenu
     {
     public:
         InfoBoxDialog();
@@ -61,7 +62,7 @@ namespace MWGui
         ClassChoiceDialog();
     };
 
-    class GenerateClassResultDialog : public WindowModal
+    class GenerateClassResultDialog : public ButtonMenu
     {
     public:
         GenerateClassResultDialog();
@@ -129,6 +130,7 @@ namespace MWGui
         void onBackClicked(MyGUI::Widget* _sender);
 
     private:
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
         void updateClasses();
         void updateStats();
 

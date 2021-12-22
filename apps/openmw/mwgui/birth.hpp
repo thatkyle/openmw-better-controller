@@ -47,6 +47,7 @@ namespace MWGui
         ControlSet getControlLegendContents() override;
 
     private:
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
         void updateBirths();
         void updateSpells();
 

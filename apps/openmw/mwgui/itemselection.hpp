@@ -21,6 +21,7 @@ namespace MWGui
     public:
         ItemSelectionDialog(const std::string& label);
 
+        void onClose() override;
         bool exit() override;
 
         typedef MyGUI::delegates::CMultiDelegate0 EventHandle_Void;

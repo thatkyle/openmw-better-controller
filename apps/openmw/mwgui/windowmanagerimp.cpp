@@ -124,7 +124,7 @@
 #include "keyboardnavigation.hpp"
 #include "resourceskin.hpp"
 #include "controllegend.hpp"
-#include "onscreenkeyboard.hpp"
+#include "virtualkeyboard.hpp"
 
 namespace MWGui
 {
@@ -196,7 +196,7 @@ namespace MWGui
       , mWindowVisible(true)
       , mKeyPressConsumed(false)
       , mControlLegend(nullptr)
-      , mOnscreenKeyboard(nullptr)
+      , mVirtualKeyboard(nullptr)
       , mGamepadHighlight(nullptr)
       , mLastInventoryFocus(GW_Inventory)
     {
@@ -486,7 +486,7 @@ namespace MWGui
         mCharGen = new CharacterCreation(mViewer->getSceneData()->asGroup(), mResourceSystem);
 
         mControlLegend = new ControlLegend();
-        mOnscreenKeyboard = new OnscreenKeyboard();
+        mVirtualKeyboard = new VirtualKeyboard();
         
         mGamepadHighlight = MyGUI::Gui::getInstance().createWidgetReal<MyGUI::ImageBox>("ImageBox", 0,0,0,0, MyGUI::Align::Default, "Global_GamepadHighlight");
         mGamepadHighlight->setVisible(false);
@@ -2535,6 +2535,21 @@ namespace MWGui
 
         Log(Debug::Info) << "Set visibility: " << isGuiMode();
 
+    }
+
+    void WindowManager::startVirtualKeyboard(MyGUI::EditBox* target, const std::function<void()> onAccept)
+    {
+        mVirtualKeyboard->open(target, onAccept);
+    }
+
+    void WindowManager::startVirtualKeyboard(MyGUI::EditBox* target)
+    {
+        mVirtualKeyboard->open(target);
+    }
+
+    bool WindowManager::virtualKeyboardVisible()
+    {
+        return mVirtualKeyboard->isVisible();
     }
 
 }

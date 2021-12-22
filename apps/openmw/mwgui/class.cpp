@@ -32,7 +32,7 @@ namespace MWGui
     /* GenerateClassResultDialog */
 
     GenerateClassResultDialog::GenerateClassResultDialog()
-      : WindowModal("openmw_chargen_generate_class_result.layout")
+      : ButtonMenu("openmw_chargen_generate_class_result.layout")
     {
         setText("ReflectT", MWBase::Environment::get().getWindowManager()->getGameSettingString("sMessageQuestionAnswer1", ""));
 
@@ -42,12 +42,14 @@ namespace MWGui
         MyGUI::Button* backButton;
         getWidget(backButton, "BackButton");
         backButton->setCaptionWithReplacing("#{sMessageQuestionAnswer3}");
-        backButton->eventMouseButtonClick += MyGUI::newDelegate(this, &GenerateClassResultDialog::onBackClicked);
+        registerButtonPress(backButton, MyGUI::newDelegate(this, &GenerateClassResultDialog::onBackClicked));
 
         MyGUI::Button* okButton;
         getWidget(okButton, "OKButton");
         okButton->setCaptionWithReplacing("#{sMessageQuestionAnswer2}");
-        okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &GenerateClassResultDialog::onOkClicked);
+        registerButtonPress(okButton, MyGUI::newDelegate(this, &GenerateClassResultDialog::onOkClicked));
+
+        registerButtons({ backButton, okButton }, false);
 
         center();
     }
@@ -104,6 +106,7 @@ namespace MWGui
         mClassList->setScrollVisible(true);
         mClassList->eventListSelectAccept += MyGUI::newDelegate(this, &PickClassDialog::onAccept);
         mClassList->eventListChangePosition += MyGUI::newDelegate(this, &PickClassDialog::onSelectClass);
+        mClassList->eventKeyButtonPressed += MyGUI::newDelegate(this, &PickClassDialog::onKeyButtonPressed);
 
         getWidget(mClassImage, "ClassImage");
 
@@ -162,6 +165,47 @@ namespace MWGui
         }
 
         updateStats();
+    }
+
+    void PickClassDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        size_t currentClassIndex = mClassList->getIndexSelected();
+
+        switch (action)
+        {
+        case MWInput::MA_A:
+            PickClassDialog::onOkClicked(sender);
+            break;
+        case MWInput::MA_B:
+            PickClassDialog::onBackClicked(sender);
+            break;
+        case MWInput::MA_DPadUp:
+            if (currentClassIndex)
+            {
+                mClassList->setIndexSelected(--currentClassIndex);
+                PickClassDialog::onSelectClass(mClassList, currentClassIndex);
+                mClassList->beginToItemAt(std::max(currentClassIndex - 3, (size_t)0));
+            }
+            break;
+        case MWInput::MA_DPadDown:
+            if (currentClassIndex + 1 < mClassList->getItemCount())
+            {
+                mClassList->setIndexSelected(++currentClassIndex);
+                PickClassDialog::onSelectClass(mClassList, currentClassIndex);
+                mClassList->beginToItemAt(std::max(currentClassIndex - 3, (size_t)0));
+            }
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
     }
 
     // widget controls
@@ -296,7 +340,7 @@ namespace MWGui
         for (unsigned i = 0; i < count; ++i)
         {
             MyGUI::Widget* child = widget->getChildAt(i);
-            if (!child->getVisible())
+            if (!child->getVisible() || child == mGamepadHighlight)
                 continue;
 
             child->setPosition(child->getLeft(), pos);
@@ -308,7 +352,7 @@ namespace MWGui
     }
 
     InfoBoxDialog::InfoBoxDialog()
-        : WindowModal("openmw_infobox.layout")
+        : ButtonMenu("openmw_infobox.layout")
     {
         getWidget(mTextBox, "TextBox");
         getWidget(mText, "Text");
@@ -347,21 +391,27 @@ namespace MWGui
             button->getSubWidgetText()->setWordWrap(true);
             button->setCaption(text);
             fitToText(button);
-            button->eventMouseButtonClick += MyGUI::newDelegate(this, &InfoBoxDialog::onButtonClicked);
+
+            registerButtonPress(button, MyGUI::newDelegate(this, &InfoBoxDialog::onButtonClicked));
+
             coord.top += button->getHeight();
             this->mButtons.push_back(button);
         }
+
+        registerButtons(this->mButtons, true);
     }
 
     void InfoBoxDialog::onOpen()
     {
-        WindowModal::onOpen();
+        ButtonMenu::onOpen();
         // Fix layout
         layoutVertically(mTextBox, 4);
         layoutVertically(mButtonBar, 6);
         layoutVertically(mMainWidget, 4 + 6);
 
         center();
+
+        highlightSelectedButton();
     }
 
     void InfoBoxDialog::onButtonClicked(MyGUI::Widget* _sender)

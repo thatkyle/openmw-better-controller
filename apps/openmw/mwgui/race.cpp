@@ -1,5 +1,7 @@
 #include "race.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_ListBox.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_Gui.h>
@@ -18,6 +20,7 @@
 #include "../mwinput/actions.hpp"
 
 #include "tooltips.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -246,7 +249,7 @@ namespace MWGui
                 {
                     mRaceList->setIndexSelected(--currentRaceIndex);
                     RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
-                    mRaceList->beginToItemAt(currentRaceIndex);
+                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, (size_t) 0));
                 }
                 break;
             case MWInput::MA_DPadDown:
@@ -254,7 +257,7 @@ namespace MWGui
                 {
                     mRaceList->setIndexSelected(++currentRaceIndex);
                     RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
-                    mRaceList->beginToItemAt(currentRaceIndex);
+                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, (size_t) 0));
                 }
                 break;
             case MWInput::MA_RTrigger:
@@ -278,6 +281,22 @@ namespace MWGui
                 MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
                 break;
         }
+    }
+    
+    ControlSet RaceDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Accept"},
+                MenuControl{MWInput::MenuAction::MA_X, "Next Gender"},
+                MenuControl{MWInput::MenuAction::MA_White, "Next Hair"},
+                MenuControl{MWInput::MenuAction::MA_Black, "Next Face"},
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_LTrigger, "Rotate Head"},
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 
     void RaceDialog::onHeadRotate(MyGUI::ScrollBar* scroll, size_t _position)

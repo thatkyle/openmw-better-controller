@@ -1,5 +1,7 @@
 #include "messagebox.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_EditBox.h>
 #include <MyGUI_RenderManager.h>
@@ -12,6 +14,8 @@
 #include "../mwbase/soundmanager.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
+
+#include "controllegend.hpp"
 
 #undef MessageBox
 
@@ -217,7 +221,7 @@ namespace MWGui
     }
 
     InteractiveMessageBox::InteractiveMessageBox(MessageBoxManager& parMessageBoxManager, const std::string& message, const std::vector<std::string>& buttons)
-        : WindowModal(MWBase::Environment::get().getWindowManager()->isGuiMode() ? "openmw_interactive_messagebox_notransp.layout" : "openmw_interactive_messagebox.layout")
+        : ButtonMenu(MWBase::Environment::get().getWindowManager()->isGuiMode() ? "openmw_interactive_messagebox_notransp.layout" : "openmw_interactive_messagebox.layout")
       , mMessageBoxManager(parMessageBoxManager)
       , mButtonPressed(-1)
     {
@@ -257,7 +261,7 @@ namespace MWGui
                 MyGUI::Align::Default);
             button->setCaptionWithReplacing(buttonId);
 
-            button->eventMouseButtonClick += MyGUI::newDelegate(this, &InteractiveMessageBox::mousePressed);
+            registerButtonPress(button, MyGUI::newDelegate(this, &InteractiveMessageBox::mousePressed));
 
             mButtons.push_back(button);
 
@@ -279,8 +283,10 @@ namespace MWGui
             }
         }
 
+        bool areButtonsOnOneLine = buttonsWidth < textSize.width;
+
         MyGUI::IntSize mainWidgetSize;
-        if(buttonsWidth < textSize.width)
+        if(areButtonsOnOneLine)
         {
             // on one line
             mainWidgetSize.width = textSize.width + 3*textPadding;
@@ -370,25 +376,9 @@ namespace MWGui
             mMessageWidget->setCoord(messageWidgetCoord);
         }
 
-        setVisible(true);
-    }
+        registerButtons(mButtons, !areButtonsOnOneLine);
 
-    MyGUI::Widget* InteractiveMessageBox::getDefaultKeyFocus()
-    {
-        std::vector<std::string> keywords { "sOk", "sYes" };
-        for(MyGUI::Button* button : mButtons)
-        {
-            for (const std::string& keyword : keywords)
-            {
-                if (Misc::StringUtils::ciEqual(
-                        MyGUI::LanguageManager::getInstance().replaceTags("#{" + keyword + "}").asUTF8(),
-                        button->getCaption().asUTF8()))
-                {
-                    return button;
-                }
-            }
-        }
-        return nullptr;
+        setVisible(true);
     }
 
     void InteractiveMessageBox::mousePressed (MyGUI::Widget* pressed)

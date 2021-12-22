@@ -103,6 +103,9 @@ namespace MWGui
                 onCancelButtonClicked(mCancelButton);
             break;
         }
+        case MWInput::MA_B:
+            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            break;
         case MWInput::MA_Y:
 
             //MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget());

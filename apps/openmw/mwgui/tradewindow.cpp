@@ -616,6 +616,9 @@ namespace MWGui
             gamepadHighlightSelected();
             break;
         }
+        case MWInput::MA_B:
+            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            break;
         case MWInput::MA_X:
             // NOT in parity with xbox... requires a new confirmation window to be in parity
             mLastAction = action;

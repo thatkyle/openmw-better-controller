@@ -244,6 +244,8 @@ namespace MWGui
         {
             if (action == MWInput::MA_A)
                 onSpellButtonClick(mSpellWidgets[mSpellHighlight]);
+            else if (action == MWInput::MA_A)
+                onCancelButtonClicked(mCancelButton);
             else if (action == MWInput::MA_DPadUp && mSpellHighlight > 0)
             {
                 --mSpellHighlight;

@@ -198,6 +198,10 @@ void Repair::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI
 
         gamepadHighlightSelected();
     }
+    else if (action == MWInput::MenuAction::MA_B)
+    {
+        onCancel(sender);
+    }
     else
     {
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

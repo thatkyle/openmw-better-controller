@@ -374,6 +374,8 @@ namespace MWGui
 
             gamepadHighlightSelected();
         }
+        else if (action == MWInput::MenuAction::MA_B)
+            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
         else if (action == MWInput::MenuAction::MA_X)
         {
             const Spell& spell = mSpellView->getModel()->getItem(mGamepadSelected);

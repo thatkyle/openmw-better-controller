@@ -269,6 +269,10 @@ namespace MWGui
 
             gamepadHighlightSelected();
         }
+        else if (action == MWInput::MenuAction::MA_B)
+        {
+            onCancelButtonClicked(sender);
+        }
         else
         {
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

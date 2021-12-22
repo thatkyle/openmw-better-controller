@@ -459,7 +459,8 @@ namespace MWGui
     void AlchemyWindow::onFrame(float dt)
     {
         // we never want to focus the name edit field when using the controller
-        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed() && 
+                !MWBase::Environment::get().getWindowManager()->virtualKeyboardVisible())
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
     }
 
@@ -500,9 +501,7 @@ namespace MWGui
         else if (action == MWInput::MA_A) // select
         {
             if (mHighlight == 0)
-            {
-                //TODO: show onscreen keyboard
-            }
+                MWBase::Environment::get().getWindowManager()->startVirtualKeyboard(mNameEdit);
             else if (mHighlight < 5)
             {
                 onIngredientSelected(mIngredients[mHighlight - 1]);

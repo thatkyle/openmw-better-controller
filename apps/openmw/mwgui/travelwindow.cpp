@@ -258,6 +258,8 @@ namespace MWGui
         {
             if (action == MWInput::MA_A)
                 onTravelButtonClick(mDestinationWidgets[mDestinationHighlight]);
+            else if (action == MWInput::MA_B)
+                onCancelButtonClicked(sender);
             else if (action == MWInput::MA_DPadUp && mDestinationHighlight > 0)
             {
                 --mDestinationHighlight;

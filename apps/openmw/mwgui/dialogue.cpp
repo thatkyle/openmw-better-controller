@@ -159,8 +159,11 @@ namespace MWGui
 
         if (mWindowNavigator.processInput(action))
         {
-            widgetHighlight(mWindowNavigator.getSelectedWidget());
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mWindowNavigator.getSelectedWidget());
+            if (isVisible())
+            {
+                widgetHighlight(mWindowNavigator.getSelectedWidget());
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mWindowNavigator.getSelectedWidget());
+            }
             return;
         }
 

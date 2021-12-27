@@ -3,6 +3,7 @@
 
 #include "statswatcher.hpp"
 #include "windowpinnablebase.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
@@ -35,6 +36,8 @@ namespace MWGui
 
             void onOpen() override { onWindowResize(mMainWidget->castType<MyGUI::Window>()); }
 
+            void focus() override;
+
         private:
             void addSkills(const SkillList &skills, const std::string &titleId, const std::string &titleDefault, MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
             void addSeparator(MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
@@ -49,6 +52,12 @@ namespace MWGui
             void onWindowResize(MyGUI::Window* window);
             void onMouseWheel(MyGUI::Widget* _sender, int _rel);
 
+            void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+            void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+            ControlSet getControlLegendContents() override;
+
+            MyGUI::Widget* mHealthText;
             MyGUI::Widget* mLeftPane;
             MyGUI::Widget* mRightPane;
 
@@ -61,11 +70,15 @@ namespace MWGui
             FactionList mFactions; ///< Stores a list of factions and the current rank
             std::string mBirthSignId;
             int mReputation, mBounty;
+            std::vector<MyGUI::Widget*> mAttributeWidgets;
             std::vector<MyGUI::Widget*> mSkillWidgets; //< Skills and other information
+            std::vector<MyGUI::Widget*> mNavigableSkillWidgets; //< Skills and other information
             std::set<std::string> mExpelled;
 
             bool mChanged;
             const int mMinFullWidth;
+
+            WindowNavigator mWindowNavigator;
 
         protected:
             void onPinToggled() override;

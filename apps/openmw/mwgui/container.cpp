@@ -379,7 +379,7 @@ namespace MWGui
             break;
         }
         case MWInput::MA_B:
-            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            onCloseButtonClicked(mCloseButton);
             break;
         case MWInput::MA_X:
             onTakeAllButtonClicked(mTakeButton);

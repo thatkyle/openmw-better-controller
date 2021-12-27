@@ -2,9 +2,12 @@
 #define MWGUI_BIRTH_H
 
 #include "windowbase.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
+    class WindowNavigator;
+
     class BirthDialog : public WindowModal
     {
     public:
@@ -57,6 +60,8 @@ namespace MWGui
         std::vector<MyGUI::Widget*> mSpellItems;
 
         std::string mCurrentBirthId;
+
+        WindowNavigator mWindowNavigator;
     };
 }
 #endif

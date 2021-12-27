@@ -631,7 +631,8 @@ namespace MWGui
         checkReferenceAvailable();
 
         // we never want to focus the name edit field when using the controller
-        if (MWBase::Environment::get().getInputManager()->joystickLastUsed() && !mAddEffectDialog.isVisible())
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed() && !mAddEffectDialog.isVisible() &&
+                !MWBase::Environment::get().getWindowManager()->virtualKeyboardVisible())
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mAvailableEffectsList);
     }
 
@@ -677,9 +678,7 @@ namespace MWGui
         else if (action == MWInput::MA_A) // select
         {
             if (mHighlight == 0)
-            {
-                //TODO: show onscreen keyboard
-            }
+                MWBase::Environment::get().getWindowManager()->startVirtualKeyboard(mNameEdit);
             else if (mHighlight < mAvailableEffectsList->getItemCount() + 1)
                 onAvailableEffectClicked(mAvailableEffectsList->getItemWidget(mAvailableEffectsList->getItemNameAt(mHighlight - 1)));
             else if (mUsedEffectsView->getChildCount() > 0)

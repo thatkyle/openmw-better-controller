@@ -6,6 +6,7 @@
 #include "widgets.hpp"
 #include "buttonmenu.hpp"
 #include "windowbase.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
@@ -170,11 +171,18 @@ namespace MWGui
     protected:
         void onSpecializationClicked(MyGUI::Widget* _sender);
         void onCancelClicked(MyGUI::Widget* _sender);
+        
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
 
     private:
         MyGUI::TextBox *mSpecialization0, *mSpecialization1, *mSpecialization2;
 
         ESM::Class::Specialization mSpecializationId;
+
+        MyGUI::Widget* mCancelButton;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class SelectAttributeDialog : public WindowModal
@@ -204,8 +212,13 @@ namespace MWGui
         void onAttributeClicked(Widgets::MWAttributePtr _sender);
         void onCancelClicked(MyGUI::Widget* _sender);
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
     private:
         ESM::Attribute::AttributeID mAttributeId;
+        MyGUI::Widget* mCancelButton;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class SelectSkillDialog : public WindowModal
@@ -235,12 +248,18 @@ namespace MWGui
         void onSkillClicked(Widgets::MWSkillPtr _sender);
         void onCancelClicked(MyGUI::Widget* _sender);
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
     private:
         Widgets::MWSkillPtr mCombatSkill[9];
         Widgets::MWSkillPtr mMagicSkill[9];
         Widgets::MWSkillPtr mStealthSkill[9];
 
         ESM::Skill::SkillEnum mSkillId;
+
+        MyGUI::Widget* mCancelButton;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class DescriptionDialog : public WindowModal
@@ -262,6 +281,8 @@ namespace MWGui
 
     private:
         MyGUI::EditBox* mTextEdit;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class CreateClassDialog : public WindowModal
@@ -271,6 +292,8 @@ namespace MWGui
         virtual ~CreateClassDialog();
 
         bool exit() override { return false; }
+
+        void onFrame(float dt) override;
 
         std::string getName() const;
         std::string getDescription() const;
@@ -308,18 +331,25 @@ namespace MWGui
         void onDescriptionEntered(WindowBase* parWindow);
         void onDialogCancel();
 
+        MyGUI::IntCoord highlightOffset() override;
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        ControlSet getControlLegendContents() override;
+
         void setSpecialization(int id);
 
         void update();
 
     private:
-        MyGUI::EditBox*                   mEditName;
+        MyGUI::EditBox*                  mEditName;
         MyGUI::TextBox*                  mSpecializationName;
         Widgets::MWAttributePtr          mFavoriteAttribute0, mFavoriteAttribute1;
         Widgets::MWSkillPtr              mMajorSkill[5];
         Widgets::MWSkillPtr              mMinorSkill[5];
         std::vector<Widgets::MWSkillPtr> mSkills;
         std::string                      mDescription;
+        MyGUI::Widget*                   mOkButton;
+        MyGUI::Widget*                   mBackButton;
+
 
         SelectSpecializationDialog       *mSpecDialog;
         SelectAttributeDialog            *mAttribDialog;
@@ -330,6 +360,8 @@ namespace MWGui
 
         Widgets::MWAttributePtr              mAffectedAttribute;
         Widgets::MWSkillPtr              mAffectedSkill;
+
+        WindowNavigator mWindowNavigator;
     };
 }
 #endif

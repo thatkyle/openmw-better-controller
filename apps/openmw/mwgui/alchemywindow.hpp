@@ -23,6 +23,7 @@ namespace MWGui
     class ItemWidget;
     class InventoryItemModel;
     class SortFilterItemModel;
+    class WindowNavigator;
 
     class AlchemyWindow : public WindowBase
     {
@@ -97,17 +98,12 @@ namespace MWGui
 
         void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
 
-        void widgetHighlight(unsigned int index);
-        // divided into three sets:
-        // 0: the spell name
-        // 1 to 4: the currently selected ingredients
-        // 5-n: the selectable ingredients
-        unsigned int mHighlight;
-
         std::unique_ptr<MWMechanics::Alchemy> mAlchemy;
 
         std::vector<ItemWidget*> mApparatus;
         std::vector<ItemWidget*> mIngredients;
+
+        std::unique_ptr<WindowNavigator> mWindowNavigator;
     };
 }
 

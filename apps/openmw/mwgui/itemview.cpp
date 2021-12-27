@@ -203,6 +203,11 @@ int ItemView::getRowCount()
     return mRows;
 }
 
+int ItemView::getItemCount()
+{
+    return mModel->getItemCount();
+}
+
 void ItemView::scrollToTarget(int index)
 {
     if (mScrollView->isVisibleHScroll() && index >= 0) // -1 index is used to hide selection cursor.

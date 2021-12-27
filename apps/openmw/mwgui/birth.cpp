@@ -16,6 +16,7 @@
 
 #include "widgets.hpp"
 #include "controllegend.hpp"
+#include "windownavigator.hpp"
 
 namespace
 {
@@ -83,9 +84,9 @@ namespace MWGui
 
         if (!signId.empty())
             setBirthId(signId);
+
+        mWindowNavigator = WindowNavigator(mBirthList);
     }
-
-
 
     ControlSet BirthDialog::getControlLegendContents()
     {
@@ -289,31 +290,19 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator.processInput(action))
+            return;
+
         size_t currentBirthIndex = mBirthList->getIndexSelected();
 
         switch (action)
         {
-        case MWInput::MA_A:
-            BirthDialog::onOkClicked(sender);
-            break;
+        //case MWInput::MA_A:
+        //    BirthDialog::onOkClicked(sender);
+        //    break;
         case MWInput::MA_B:
             BirthDialog::onBackClicked(sender);
-            break;
-        case MWInput::MA_DPadUp:
-            if (currentBirthIndex)
-            {
-                mBirthList->setIndexSelected(--currentBirthIndex);
-                BirthDialog::onSelectBirth(mBirthList, currentBirthIndex);
-                mBirthList->beginToItemAt(std::max(currentBirthIndex - 3, (size_t) 0));
-            }
-            break;
-        case MWInput::MA_DPadDown:
-            if (currentBirthIndex + 1 < mBirthList->getItemCount())
-            {
-                mBirthList->setIndexSelected(++currentBirthIndex);
-                BirthDialog::onSelectBirth(mBirthList, currentBirthIndex);
-                mBirthList->beginToItemAt(std::max(currentBirthIndex - 3, (size_t) 0));
-            }
             break;
         default:
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

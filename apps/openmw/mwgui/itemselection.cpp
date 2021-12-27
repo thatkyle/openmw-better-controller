@@ -39,6 +39,7 @@ namespace MWGui
     void ItemSelectionDialog::onClose()
     {
         updateGamepadTooltip(nullptr);
+        WindowModal::onClose();
     }
 
     bool ItemSelectionDialog::exit()
@@ -104,7 +105,7 @@ namespace MWGui
             break;
         }
         case MWInput::MA_B:
-            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            onCancelButtonClicked(mCancelButton);
             break;
         case MWInput::MA_Y:
 

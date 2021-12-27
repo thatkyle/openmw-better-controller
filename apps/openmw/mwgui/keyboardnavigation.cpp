@@ -9,6 +9,7 @@
 #include <components/debug/debuglog.hpp>
 
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/environment.hpp"
 
 #include "../mwinput/actions.hpp"
@@ -174,6 +175,7 @@ bool KeyboardNavigation::injectKeyPress(MyGUI::KeyCode key, unsigned int text, b
 
     if (text == 1)  // Text is used to signal gamepad controls.
     {
+        
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
         switch (action)
         {

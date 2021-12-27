@@ -31,6 +31,7 @@
 #include "itemwidget.hpp"
 #include "widgets.hpp"
 #include "controllegend.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
@@ -42,7 +43,7 @@ namespace MWGui
         , mAlchemy(new MWMechanics::Alchemy())
         , mApparatus (4)
         , mIngredients (4)
-        , mHighlight (0)
+        , mWindowNavigator(nullptr)
     {
         getWidget(mCreateButton, "CreateButton");
         getWidget(mCancelButton, "CancelButton");
@@ -257,8 +258,6 @@ namespace MWGui
         mAlchemy->clear();
         mAlchemy->setAlchemist(MWMechanics::getPlayer());
 
-        mHighlight = 0;
-
         mModel = new InventoryItemModel(MWMechanics::getPlayer());
         mSortModel = new SortFilterItemModel(mModel);
         mSortModel->setFilter(SortFilterItemModel::Filter_OnlyIngredients);
@@ -284,7 +283,14 @@ namespace MWGui
         update();
         initFilter();
 
-        widgetHighlight(0);
+        mWindowNavigator = std::make_unique<WindowNavigator>(mNameEdit);
+        mWindowNavigator->addWidgetSet(std::vector<MyGUI::Widget*>(mIngredients.begin(), mIngredients.end()), false);
+        mWindowNavigator->addWidget(mItemView);
+
+        mWindowNavigator->addUpDownConnection(mNameEdit, mIngredients[0]);
+        mWindowNavigator->addUpDownConnection(mIngredients[0], mItemView);
+
+        widgetHighlight(mWindowNavigator->getSelectedWidget());
 
         // we never want to focus the name edit field when using the controller
         if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
@@ -467,25 +473,11 @@ namespace MWGui
     MyGUI::IntCoord AlchemyWindow::highlightOffset()
     {
         // increase the highlight size if we're targetting the spell name or ingredients
-        if (mHighlight < 5)
+        if (mWindowNavigator != nullptr && (mWindowNavigator->getSelectedWidget() == mNameEdit || 
+                std::count(mIngredients.begin(), mIngredients.end(), mWindowNavigator->getSelectedWidget())))
             return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8));
 
         return MyGUI::IntCoord();
-    }
-
-    void AlchemyWindow::widgetHighlight(unsigned int index)
-    {
-        mHighlight = index;
-
-        if (index == 0)
-            WindowBase::widgetHighlight(mNameEdit);
-        else if (index < 5)
-            WindowBase::widgetHighlight(mIngredients[index - 1]);
-        else
-        {
-            mItemView->highlightItem(index - 5);
-            WindowBase::widgetHighlight(mItemView->getHighlightWidget());
-        }
     }
 
     void AlchemyWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
@@ -496,47 +488,17 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator->processInput(action))
+        {
+            widgetHighlight(mWindowNavigator->getSelectedWidget());
+            return;
+        }
+
         if (action == MWInput::MA_B) // back
             onCancelButtonClicked(sender);
-        else if (action == MWInput::MA_A) // select
-        {
-            if (mHighlight == 0)
-                MWBase::Environment::get().getWindowManager()->startVirtualKeyboard(mNameEdit);
-            else if (mHighlight < 5)
-            {
-                onIngredientSelected(mIngredients[mHighlight - 1]);
-            }
-            else
-            {
-                onSelectedItem(mHighlight - 5);
-                if (mHighlight - 5 >= mSortModel->getItemCount())
-                    widgetHighlight(mSortModel->getItemCount() + 4);
-            }
-        }
         else if (action == MWInput::MA_X) // create
             onCreateButtonClicked(mCreateButton);
-        else if (action == MWInput::MA_DPadUp)
-        {
-            if (mHighlight == 0)
-            {
-                // do nothing
-            }
-            else if (mHighlight < 5)
-                widgetHighlight(0);
-            else
-                widgetHighlight(1);
-        }
-        else if (action == MWInput::MA_DPadDown)
-        {
-            if (mHighlight == 0 )
-                widgetHighlight(1);
-            else if (mHighlight < 5 && mModel->getItemCount() > 0)
-                widgetHighlight(5);
-        }
-        else if (action == MWInput::MA_DPadRight && mHighlight > 0 && ((mHighlight < 4 && mIngredients[mHighlight] != nullptr) || (mHighlight >= 5 && mHighlight - 5 < mSortModel->getItemCount() - 1)))
-            widgetHighlight(mHighlight + 1);
-        else if (action == MWInput::MA_DPadLeft && ((mHighlight > 1 && mHighlight < 5 && mIngredients[mHighlight - 2] != nullptr) || mHighlight > 5 ))
-            widgetHighlight(mHighlight - 1);
     }
 
     ControlSet AlchemyWindow::getControlLegendContents()

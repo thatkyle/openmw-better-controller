@@ -5,14 +5,8 @@
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
-//#include "components/widgets/virtualkeyboardmanager.hpp"
 
 #include <map>
-
-//namespace Gui
-//{
-//    class VirtualKeyboardManager;
-//}
 
 namespace MWGui
 {
@@ -42,10 +36,7 @@ namespace MWGui
 
         ControlSet getControlLegendContents() override;
         void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
-        // divided into three sets:
-        // 0: the spell name
-        // 1 to n: the available spell effects
-        // n+1 to m: the spell effects added to the current spell
+
         unsigned int mHighlightRow;
         unsigned int mHighlightColumn;
 
@@ -63,6 +54,7 @@ namespace MWGui
 
         MyGUI::Widget* mButtonBox;
         MyGUI::EditBox* mTarget;
+        MyGUI::Widget* mLastFocusedWidget;
         std::vector<std::vector<std::string>> mButtonRows;
         std::map<std::string, MyGUI::Button*> mButtons;
         bool mShift;
@@ -70,28 +62,6 @@ namespace MWGui
 
         std::function<void()> mOnAccept;
     };
-
-    //class VirtualKeyboardManager : public Gui::VirtualKeyboardManager
-    //{
-    //public:
-    //    VirtualKeyboardManager();
-
-    //    void registerEditBox(MyGUI::EditBox* editBox) override;
-    //    void unregisterEditBox(MyGUI::EditBox* editBox) override;
-    //    VirtualKeyboard& virtualKeyboard() { return *mVk; };
-
-    //private:
-    //    std::unique_ptr<VirtualKeyboard>   mVk;
-
-    //    // MyGUI deletes delegates when you remove them from an event.
-    //    // Therefore i need one pair of delegates per box instead of being able to reuse one pair.
-    //    // And i have to set them aside myself to know what to remove from each event.
-    //    // There is an IDelegateUnlink type that might simplify this, but it is poorly documented.
-    //    using IDelegate = MyGUI::EventHandle_WidgetWidget::IDelegate;
-    //    // .first = onSetFocus, .second = onLostFocus
-    //    using Delegates = std::pair<IDelegate*, IDelegate*>;
-    //    std::map<MyGUI::EditBox*, Delegates> mDelegates;
-    //};
 }
 
 #endif

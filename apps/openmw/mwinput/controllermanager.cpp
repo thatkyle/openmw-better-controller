@@ -98,9 +98,22 @@ namespace MWInput
 
     void ControllerManager::setJoystickLastUsed(bool enabled)
     {
-        mJoystickLastUsed = enabled;
+        if (mJoystickLastUsed != enabled)
+        {
+            mJoystickLastUsed = enabled;
+            if (MWBase::Environment::get().getWindowManager()->isGuiMode())
+                MWBase::Environment::get().getInputManager()->fireGamepadControlChangeEvent(
+                    enabled ? GameControl::Controller : GameControl::MouseAndKeyboard);
+        }
+
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
-            MWBase::Environment::get().getWindowManager()->toggleSelectionHighlights(enabled); // Toggle off when pc controls are used.
+        {
+            // Toggle highlights off when pc controls are used.
+            MWBase::Environment::get().getWindowManager()->toggleSelectionHighlights(enabled); 
+
+            // hide the cursor unless we've explicitly enabled it for joystick use
+            MWBase::Environment::get().getWindowManager()->setCursorActive(mGamepadGuiCursorEnabled);
+        }
     }
 
     bool ControllerManager::update(float dt)
@@ -213,7 +226,7 @@ namespace MWInput
         setJoystickLastUsed(true);
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
-            if (gamepadToGuiControl(arg))
+            if (gamepadToGuiControl(arg, true))
                 return;
 
             if (mGamepadGuiCursorEnabled)
@@ -264,6 +277,9 @@ namespace MWInput
         setJoystickLastUsed(true);
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
+            // pass the "release" to widgets
+            gamepadToGuiControl(arg, false);
+
             if (mGamepadGuiCursorEnabled)
             {
                 // Temporary mouse binding until keyboard controls are available:
@@ -285,6 +301,7 @@ namespace MWInput
         mBindingsManager->setPlayerControlsEnabled(!MyGUI::InputManager::getInstance().injectKeyRelease(kc));
 
         mBindingsManager->controllerButtonReleased(deviceID, arg);
+
     }
 
     void ControllerManager::axisMoved(int deviceID, const SDL_ControllerAxisEvent &arg)
@@ -337,7 +354,7 @@ namespace MWInput
         mBindingsManager->controllerRemoved(arg);
     }
 
-    bool ControllerManager::gamepadToGuiControl(const SDL_ControllerButtonEvent &arg)
+    bool ControllerManager::gamepadToGuiControl(const SDL_ControllerButtonEvent &arg, bool pressed)
     {
         // Presumption of GUI mode will be removed in the future.
         MWInput::MenuAction key = MWInput::MenuAction::MA_None;
@@ -388,8 +405,11 @@ namespace MWInput
                 key = MWInput::MenuAction::MA_Select;
                 break;
             case SDL_CONTROLLER_BUTTON_LEFTSTICK:
-                mGamepadGuiCursorEnabled = !mGamepadGuiCursorEnabled;
-                MWBase::Environment::get().getWindowManager()->setCursorActive(mGamepadGuiCursorEnabled);
+                if (pressed)
+                {
+                    mGamepadGuiCursorEnabled = !mGamepadGuiCursorEnabled;
+                    MWBase::Environment::get().getWindowManager()->setCursorActive(mGamepadGuiCursorEnabled);
+                }
                 return true;
             case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
                 key = MWInput::MenuAction::MA_JSRightClick;
@@ -398,7 +418,10 @@ namespace MWInput
                 return false;
         }
 
-        MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(key), 1, false); // Uses text '1' to signal a gamepad keypress.
+        if (pressed)
+            MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(key), 1, false); // Uses text '1' to signal a gamepad keypress.
+        else
+            MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(key), 2, false); // Uses text '2' to signal a gampad key release.
         return true;
     }
 

@@ -146,7 +146,7 @@ namespace MWGui
 
     MyGUI::Button* ButtonMenu::getBackOrCancelButton()
     {
-        return getButtonMatchingGmst({ "sBack", "sCancel" });
+        return getButtonMatchingGmst({ "sNo", "sBack", "sCancel" });
     }
 
     MyGUI::Button* ButtonMenu::getOkButton()

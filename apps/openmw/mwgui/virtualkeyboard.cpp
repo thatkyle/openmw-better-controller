@@ -7,6 +7,7 @@
 #include <MyGUI_RenderManager.h>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/statemanager.hpp"
@@ -76,6 +77,12 @@ namespace MWGui
 
     void VirtualKeyboard::onFrame(float dt)
     {
+        if (isVisible() && !MWBase::Environment::get().getInputManager()->joystickLastUsed())
+        {
+            // if we switched back to the keyboard, focus the edit box and exit the virtual keyboard
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTarget);
+            close();
+        }
     }
 
     void VirtualKeyboard::open(MyGUI::EditBox* target)
@@ -85,19 +92,25 @@ namespace MWGui
 
     void VirtualKeyboard::open(MyGUI::EditBox* target, const std::function<void()> onAccept)
     {
+        mLastFocusedWidget = MyGUI::InputManager::getInstance().getKeyFocusWidget();
+
         mHighlightColumn = 0;
         mHighlightRow = 0;
         mOnAccept = onAccept;
 
         updateMenu();
-
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtonBox);
-        widgetHighlight(mButtons[mButtonRows[0][0]]);
         mTarget = target;
-        
         mMainWidget->setPosition({ mTarget->getAbsolutePosition().left, mTarget->getAbsoluteRect().bottom + 2 });
 
+        const MyGUI::IntSize& viewSize = MyGUI::RenderManager::getInstance().getViewSize();
+        if (mMainWidget->getAbsoluteRect().bottom > viewSize.height)
+            mMainWidget->setPosition({ mTarget->getAbsolutePosition().left, mTarget->getAbsoluteRect().top - 2 - mMainWidget->getSize().height });
+
         setVisible(true);
+
+        widgetHighlight(mButtons[mButtonRows[0][0]]);
+
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mButtonBox);
     }
 
     void VirtualKeyboard::close()
@@ -106,6 +119,9 @@ namespace MWGui
         mMainWidget->setPosition(0, 0);
         updateMenu();
         mTarget = nullptr;
+
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mLastFocusedWidget);
+        mLastFocusedWidget = nullptr;
     }
 
     void VirtualKeyboard::delegateOnSetFocus(MyGUI::Widget* _sender, MyGUI::Widget* _old)

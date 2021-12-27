@@ -13,6 +13,8 @@ namespace ESM
 
 namespace MWGui
 {
+    class WindowNavigator;
+
     class ReviewDialog : public WindowModal
     {
     public:
@@ -74,6 +76,7 @@ namespace MWGui
         void onMouseWheel(MyGUI::Widget* _sender, int _rel);
 
         ControlSet getControlLegendContents() override;
+        MyGUI::IntCoord highlightOffset() override;
 
     private:
         void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
@@ -86,7 +89,7 @@ namespace MWGui
         void addItem(const ESM::Spell* spell, MyGUI::IntCoord &coord1, MyGUI::IntCoord &coord2);
         void updateSkillArea();
 
-        MyGUI::Button* mOkButton;
+        MyGUI::Button *mOkButton, *mNameButton, *mRaceButton, *mClassButton, *mBirthSignButton;
 
         MyGUI::TextBox *mNameWidget, *mRaceWidget, *mClassWidget, *mBirthSignWidget;
         MyGUI::ScrollView* mSkillView;
@@ -101,8 +104,11 @@ namespace MWGui
         std::string mName, mRaceId, mBirthSignId;
         ESM::Class mKlass;
         std::vector<MyGUI::Widget*> mSkillWidgets; //< Skills and other information
+        std::vector<MyGUI::Widget*> mSkillNameWidgets;
 
         bool mUpdateSkillArea;
+
+        std::unique_ptr<WindowNavigator> mWindowNavigator;
     };
 }
 #endif

@@ -1,6 +1,7 @@
 #include "review.hpp"
 
 #include <cmath>
+#include <memory>
 
 #include <MyGUI_ScrollView.h>
 #include <MyGUI_ImageBox.h>
@@ -9,11 +10,13 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwmechanics/autocalcspell.hpp"
 
 #include "tooltips.hpp"
 #include "controllegend.hpp"
+#include "windownavigator.hpp"
 
 namespace
 {
@@ -35,26 +38,25 @@ namespace MWGui
         center();
 
         // Setup static stats
-        MyGUI::Button* button;
         getWidget(mNameWidget, "NameText");
-        getWidget(button, "NameButton");
-        adjustButtonSize(button);
-        button->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onNameClicked);
+        getWidget(mNameButton, "NameButton");
+        adjustButtonSize(mNameButton);
+        mNameButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onNameClicked);
 
         getWidget(mRaceWidget, "RaceText");
-        getWidget(button, "RaceButton");
-        adjustButtonSize(button);
-        button->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onRaceClicked);
+        getWidget(mRaceButton, "RaceButton");
+        adjustButtonSize(mRaceButton);
+        mRaceButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onRaceClicked);
 
         getWidget(mClassWidget, "ClassText");
-        getWidget(button, "ClassButton");
-        adjustButtonSize(button);
-        button->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onClassClicked);
+        getWidget(mClassButton, "ClassButton");
+        adjustButtonSize(mClassButton);
+        mClassButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onClassClicked);
 
         getWidget(mBirthSignWidget, "SignText");
-        getWidget(button, "SignButton");
-        adjustButtonSize(button);
-        button->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onBirthSignClicked);
+        getWidget(mBirthSignButton, "SignButton");
+        adjustButtonSize(mBirthSignButton);
+        mBirthSignButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onBirthSignClicked);
 
         // Setup dynamic stats
         getWidget(mHealth, "Health");
@@ -97,6 +99,8 @@ namespace MWGui
         getWidget(mOkButton, "OKButton");
         mOkButton->eventMouseButtonClick += MyGUI::newDelegate(this, &ReviewDialog::onOkClicked);
         mOkButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &ReviewDialog::onKeyButtonPressed);
+
+        mUsesHighlightOffset = true;
     }
 
     void ReviewDialog::onOpen()
@@ -278,6 +282,7 @@ namespace MWGui
         skillValueWidget->eventMouseWheel += MyGUI::newDelegate(this, &ReviewDialog::onMouseWheel);
 
         mSkillWidgets.push_back(skillNameWidget);
+        mSkillNameWidgets.push_back(skillNameWidget);
         mSkillWidgets.push_back(skillValueWidget);
 
         int lineHeight = MWBase::Environment::get().getWindowManager()->getFontHeight() + 2;
@@ -311,6 +316,7 @@ namespace MWGui
         widget->eventMouseWheel += MyGUI::newDelegate(this, &ReviewDialog::onMouseWheel);
 
         mSkillWidgets.push_back(widget);
+        mSkillNameWidgets.push_back(widget);
 
         int lineHeight = MWBase::Environment::get().getWindowManager()->getFontHeight() + 2;
         coord1.top += lineHeight;
@@ -360,6 +366,7 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(skillWidget);
         }
         mSkillWidgets.clear();
+        mSkillNameWidgets.clear();
 
         const int valueSize = 40;
         MyGUI::IntCoord coord1(10, 0, mSkillView->getWidth() - (10 + valueSize) - 24, 18);
@@ -450,6 +457,37 @@ namespace MWGui
         mSkillView->setVisibleVScroll(false);
         mSkillView->setCanvasSize (mSkillView->getWidth(), std::max(mSkillView->getHeight(), coord1.top));
         mSkillView->setVisibleVScroll(true);
+
+
+        // Set up window navigation
+        auto leftWidgets = std::vector<MyGUI::Widget*>{
+            mNameButton,
+            mRaceButton,
+            mClassButton,
+            mBirthSignButton,
+            mHealth,
+            mMagicka,
+            mFatigue
+        };
+
+        for (auto widget : mAttributeWidgets)
+            leftWidgets.push_back(widget.second);
+
+        mWindowNavigator = std::make_unique<WindowNavigator>();
+        mWindowNavigator->addWidgetSet(leftWidgets, true);
+        mWindowNavigator->addWidgetSet(mSkillNameWidgets, true);
+
+        mWindowNavigator->addLeftRightConnection(mNameButton, mSkillNameWidgets[0]);
+        mWindowNavigator->onHover(mSkillNameWidgets[0], [this](MyGUI::Widget* sender) {
+            // Centers target list item
+            if (!mSkillView->isVisibleVScroll())
+                return;
+
+            int scrollPos = (sender->getCoord().top - (mSkillView->getViewCoord().height / 2)) * -1;
+            mSkillView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+        });
+
+        widgetHighlight(mWindowNavigator->getSelectedWidget());
     }
 
     // widget controls
@@ -495,33 +533,28 @@ namespace MWGui
     void ReviewDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
         // Gamepad controls only.
-        if (character != 1)
+        if (character != 1 && character != 2)
             return;
-
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
 
-        // TODO: Add in full functionality to this menu; adding in shortcuts to each button for now
+        if (character == 1 && mWindowNavigator->processInput(action))
+        {
+            widgetHighlight(mWindowNavigator->getSelectedWidget());
+            return;
+        }
+
         switch (action)
         {
-        case MWInput::MA_A:
-            onOkClicked(sender);
-            break;
-        case MWInput::MA_B:
-            onBackClicked(sender);
-            break;
-        case MWInput::MA_X:
-            onNameClicked(sender);
-            break;
         case MWInput::MA_Y:
-            onRaceClicked(sender);
+            if (character == 1)
+                MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mWindowNavigator->getSelectedWidget(), this);
+            else
+                MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
             break;
-        case MWInput::MA_White:
-            onClassClicked(sender);
-            break;
-        case MWInput::MA_Black:
-            onBirthSignClicked(sender);
+        case MWInput::MA_Start:
+            onOkClicked(mOkButton);
             break;
         default:
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
@@ -529,22 +562,37 @@ namespace MWGui
         }
     }
 
-
-
     ControlSet ReviewDialog::getControlLegendContents()
     {
         return {
             {
-                MenuControl{MWInput::MenuAction::MA_X, "Name"},
-                MenuControl{MWInput::MenuAction::MA_Y, "Race"},
-                MenuControl{MWInput::MenuAction::MA_White, "Class"},
-                MenuControl{MWInput::MenuAction::MA_Black, "Sign"},
+                MenuControl{MWInput::MenuAction::MA_A, "Select"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"}
             },
             {
-                MenuControl{MWInput::MenuAction::MA_A, "Accept"},
+                MenuControl{MWInput::MenuAction::MA_Start, "Accept"},
                 MenuControl{MWInput::MenuAction::MA_B, "Back"}
             }
         };
+    }
+
+    MyGUI::IntCoord ReviewDialog::highlightOffset()
+    {
+        auto dynamicStats = std::vector<MyGUI::Widget*>{ mHealth, mMagicka, mFatigue };
+        auto selectedWidget = mWindowNavigator->getSelectedWidget();
+        if (dynamic_cast<MyGUI::Button*>(selectedWidget) != nullptr)
+            return MyGUI::IntCoord(-4, -4, 8, 8);
+        else if (dynamic_cast<Widgets::MWAttributePtr>(selectedWidget) != nullptr)
+            return MyGUI::IntCoord(-4, -2, 8, 4);
+        else if (std::count(dynamicStats.begin(), dynamicStats.end(), selectedWidget))
+        {
+            auto attr = dynamic_cast<Widgets::MWDynamicStatPtr>(selectedWidget);
+            return MyGUI::IntCoord(-4, -2, -attr->getWidth() + attr->getTitleWidget()->getWidth(), 4);
+        }
+        else if (std::count(mSkillNameWidgets.begin(), mSkillNameWidgets.end(), selectedWidget))
+            return MyGUI::IntCoord(-2, -1, 4, 2);
+
+        return WindowBase::highlightOffset();
     }
 
 }

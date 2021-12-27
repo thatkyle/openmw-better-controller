@@ -83,6 +83,13 @@ namespace MWGui
         mBribe10Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
         mBribe100Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
         mBribe1000Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
+
+        mAdmireButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mIntimidateButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mTauntButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mBribe10Button->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mBribe100Button->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mBribe1000Button->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
     }
 
     void PersuasionDialog::onCancel(MyGUI::Widget *sender)
@@ -122,11 +129,50 @@ namespace MWGui
 
         mGoldLabel->setCaptionWithReplacing("#{sGold}: " + MyGUI::utility::toString(playerGold));
         WindowModal::onOpen();
+
+        // overwrite navigator
+        mWindowNavigator = WindowNavigator();
+        mWindowNavigator.addWidgetSet({
+            mAdmireButton,
+            mIntimidateButton,
+            mTauntButton,
+            mBribe10Button,
+            mBribe100Button,
+            mBribe1000Button
+        }, true);
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     MyGUI::Widget* PersuasionDialog::getDefaultKeyFocus()
     {
         return mAdmireButton;
+    }
+
+    void PersuasionDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        if (character != 1) // Gamepad control.
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator.processInput(action))
+        {
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mWindowNavigator.getSelectedWidget());
+            return;
+        }
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            onCancel(mCancelButton);
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
     }
 
     // --------------------------------------------------------------------------------------------------

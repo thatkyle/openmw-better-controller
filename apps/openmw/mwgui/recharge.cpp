@@ -185,6 +185,8 @@ void Recharge::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyG
 
         gamepadHighlightSelected();
     }
+    else if (action == MWInput::MenuAction::MA_B)
+        onCancel(mCancelButton);
     else
     {
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

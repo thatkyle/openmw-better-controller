@@ -330,7 +330,7 @@ namespace MWGui
         }
     }
 
-    void ToolTips::position(MyGUI::IntPoint& position, MyGUI::IntSize size, MyGUI::IntSize viewportSize)
+    void ToolTips::position(MyGUI::IntPoint& position, MyGUI::IntSize& size, MyGUI::IntSize viewportSize)
     {
         if (!mGamepadGuiFocusLayout)
         {
@@ -350,19 +350,13 @@ namespace MWGui
         {
             auto layoutCoords = mGamepadGuiFocusLayout->mMainWidget->getAbsoluteCoord();
 
-            //position = layoutCoords.point() - MyGUI::IntPoint(10 + size.width, 0);
-            //
-            //if (position.left < 0)
-            //{
-            //    position = layoutCoords.point() + MyGUI::IntPoint(10 + layoutCoords.width, 0);
-            //}
-
             position = layoutCoords.point() + MyGUI::IntPoint((layoutCoords.width / 2) - (size.width / 2), -10 - size.height);
 
-            if (position.top < 0)
-            {
-                position = MyGUI::IntPoint(position.left, layoutCoords.point().top + layoutCoords.height + 10);
-            }
+            if (position.top < 10)
+                position.top = 10;
+
+            if (position.left < 10)
+                position.left = 10;
         }
     }
 
@@ -397,6 +391,11 @@ namespace MWGui
             mFocusObject = nullptr;
 
         update(mFrameDuration);
+    }
+
+    Layout* ToolTips::getGamepadGuiFocusLayout()
+    {
+        return mGamepadGuiFocusLayout;
     }
 
     MyGUI::IntSize ToolTips::getToolTipViaPtr (int count, bool image, bool isOwned)

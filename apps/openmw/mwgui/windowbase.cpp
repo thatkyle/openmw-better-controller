@@ -5,6 +5,7 @@
 #include <tuple>
 
 #include <MyGUI_Button.h>
+#include <MyGUI_EditBox.h>
 #include <MyGUI_InputManager.h>
 #include <MyGUI_RenderManager.h>
 #include <MyGUI_Gui.h>
@@ -18,6 +19,7 @@
 #include "draganddrop.hpp"
 #include "exposedwindow.hpp"
 #include "controllegend.hpp"
+#include "itemwidget.hpp"
 
 using namespace MWGui;
 
@@ -115,6 +117,13 @@ void WindowBase::widgetHighlight(MyGUI::Widget *target)
 
         if (mUsesHighlightOffset)
             coords += highlightOffset();
+
+        //if (dynamic_cast<MyGUI::EditBox*>(target) != nullptr ||
+        //    dynamic_cast<MyGUI::Button*>(target) != nullptr ||
+        //    dynamic_cast<ItemWidget*>(target) != nullptr)
+        //{
+        //    coords += MyGUI::IntCoord(-4, -4, 8, 8);
+        //}
 
         mGamepadHighlight->setCoord(coords);
 

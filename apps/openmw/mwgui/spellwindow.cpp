@@ -28,6 +28,7 @@
 #include "confirmationdialog.hpp"
 #include "spellview.hpp"
 #include "controllegend.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
@@ -36,6 +37,7 @@ namespace MWGui
         : WindowPinnableBase("openmw_spell_window.layout")
         , NoDrop(drag, mMainWidget)
         , mSpellView(nullptr)
+        , mWindowNavigator(nullptr)
         , mUpdateTimer(0.0f)
         , mGamepadSelected(0)
     {
@@ -56,6 +58,13 @@ namespace MWGui
 
         mSpellView->eventKeySetFocus += MyGUI::newDelegate(this, &SpellWindow::onFocusGained);
         mSpellView->eventKeyLostFocus += MyGUI::newDelegate(this, &SpellWindow::onFocusLost);
+
+        mWindowNavigator = std::make_unique<WindowNavigator>();
+        mWindowNavigator->addWidget(mSpellView);
+        mWindowNavigator->onHover(mSpellView, [this](auto sender) {
+            gamepadHighlightSelected();
+        });
+        //TODO: add active effects
 
         setCoord(498, 300, 302, 300);
 
@@ -115,7 +124,9 @@ namespace MWGui
         return {
             {
                 MenuControl{MWInput::MenuAction::MA_A, "Select"},
-                MenuControl{MWInput::MenuAction::MA_X, "Delete"}
+                MenuControl{MWInput::MenuAction::MA_X, "Delete"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"},
+
             },
             {
                 MenuControl{MWInput::MenuAction::MA_LTrigger, "Inventory"},
@@ -154,7 +165,7 @@ namespace MWGui
         mSpellIcons->updateWidgets(mEffectBox, false);
 
         mSpellView->setModel(new SpellModel(MWMechanics::getPlayer(), mFilterEdit->getCaption()));
-        
+
         gamepadHighlightSelected();
     }
 
@@ -319,30 +330,13 @@ namespace MWGui
 
     void SpellWindow::gamepadHighlightSelected()
     {
-        if (mGamepadSelected > (int)mSpellView->getModel()->getItemCount() - 1)
-            mGamepadSelected = (int)mSpellView->getModel()->getItemCount() - 1;
-        if (mGamepadSelected < 0)
-            mGamepadSelected = 0;
-
-        if (mSpellView->getModel()->getItemCount())
-        {
-            mSpellView->highlightItem(mGamepadSelected);
-            widgetHighlight(mSpellView->getHighlightWidget());
-
-            updateGamepadTooltip(mSpellView->getHighlightWidget());
-        }
-        else
-        {
-            widgetHighlight(nullptr);
-        }
+        widgetHighlight(mWindowNavigator->getSelectedWidget());
     }
 
     void SpellWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        if (character != 1) // Gamepad control.
+        if (character != 1 && character != 2) // Gamepad control.
             return;
-
-        int spellCount = mSpellView->getModel()->getItemCount();
 
         if (mSpellView->getModel()->getItemCount() == 0)
             return;
@@ -350,51 +344,48 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
 
-        //TODO: support going through active effects; for now, just support spell selection
-
-        if (action == MWInput::MenuAction::MA_DPadDown)
+        if (character == 1 && mWindowNavigator->processInput(action))
         {
-            if (mGamepadSelected < spellCount - 1)
+            widgetHighlight(mWindowNavigator->getSelectedWidget());
+            return;
+        }
+
+        if (character == 2 && action == MWInput::MenuAction::MA_Y)
+        {
+            updateGamepadTooltip(nullptr);
+            return;
+        }
+
+        if (character == 1)
+        {
+            if (action == MWInput::MenuAction::MA_B)
+                MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            else if (action == MWInput::MenuAction::MA_Y)
+                updateGamepadTooltip(mWindowNavigator->getSelectedWidget());
+            else if (action == MWInput::MenuAction::MA_X)
             {
-                mGamepadSelected++;
+                auto spellModelIndex = mSpellView->getSpellModelIndex(mWindowNavigator->getSelectedWidget());
+                if (spellModelIndex != -1)
+                {
+                    const Spell& spell = mSpellView->getModel()->getItem(spellModelIndex);
+                    if (spell.mType != Spell::Type_EnchantedItem)
+                        askDeleteSpell(spell.mId);
+                }
+
                 gamepadHighlightSelected();
             }
-        }
-        else if (action == MWInput::MenuAction::MA_DPadUp)
-        {
-            if (mGamepadSelected > 0)
+            else if (action == MWInput::MenuAction::MA_LTrigger || action == MWInput::MenuAction::MA_RTrigger)
             {
-                mGamepadSelected--;
-                gamepadHighlightSelected();
+                if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Magic))
+                {
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+                    updateHighlightVisibility();
+                }
             }
-        }
-        else if (action == MWInput::MenuAction::MA_A)
-        {
-            onModelIndexSelected(mGamepadSelected);
-
-            gamepadHighlightSelected();
-        }
-        else if (action == MWInput::MenuAction::MA_B)
-            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
-        else if (action == MWInput::MenuAction::MA_X)
-        {
-            const Spell& spell = mSpellView->getModel()->getItem(mGamepadSelected);
-            if (spell.mType != Spell::Type_EnchantedItem)
-                askDeleteSpell(spell.mId);
-
-            gamepadHighlightSelected();
-        }
-        else if (action == MWInput::MenuAction::MA_LTrigger || action == MWInput::MenuAction::MA_RTrigger)
-        {
-            if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Magic))
+            else
             {
-                MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
-                updateHighlightVisibility();
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
             }
-        }
-        else
-        {
-            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
         }
     }
 

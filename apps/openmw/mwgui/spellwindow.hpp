@@ -9,6 +9,7 @@ namespace MWGui
 {
     class SpellIcons;
     class SpellView;
+    class WindowNavigator;
 
     class SpellWindow : public WindowPinnableBase, public NoDrop
     {
@@ -62,6 +63,8 @@ namespace MWGui
 
         float mUpdateTimer;
         int mGamepadSelected;
+
+        std::unique_ptr<WindowNavigator> mWindowNavigator;
     };
 }
 

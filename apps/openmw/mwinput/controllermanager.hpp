@@ -49,7 +49,7 @@ namespace MWInput
 
     private:
         // Return true if GUI consumes input.
-        bool gamepadToGuiControl(const SDL_ControllerButtonEvent &arg);
+        bool gamepadToGuiControl(const SDL_ControllerButtonEvent& arg, bool pressed);
         bool gamepadToGuiControl(const SDL_ControllerAxisEvent &arg);
 
         void processCurrentJoystickRatiosForGui();

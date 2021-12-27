@@ -32,6 +32,8 @@ namespace MWGui
 
         void resetScrollBars();
 
+        int getItemCount();
+
         // Gamepad control functions:
         void highlightItem(int index);
         MyGUI::Widget* getHighlightWidget();

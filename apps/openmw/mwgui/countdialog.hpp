@@ -23,6 +23,9 @@ namespace MWGui
             */
             EventHandle_WidgetInt eventOkClicked;
 
+        protected:
+            MyGUI::IntCoord highlightOffset() override { return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8)); };
+
         private:
             MyGUI::ScrollBar* mSlider;
             Gui::NumericEditBox* mItemEdit;

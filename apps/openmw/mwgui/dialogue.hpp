@@ -10,6 +10,8 @@
 
 #include <MyGUI_Delegate.h>
 
+#include "windownavigator.hpp"
+
 namespace Gui
 {
     class MWList;
@@ -18,6 +20,7 @@ namespace Gui
 namespace MWGui
 {
     class ResponseCallback;
+    class WindowNavigator;
 
     class PersuasionDialog : public WindowModal
     {
@@ -42,6 +45,10 @@ namespace MWGui
 
         void onCancel (MyGUI::Widget* sender);
         void onPersuade (MyGUI::Widget* sender);
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        WindowNavigator mWindowNavigator;
     };
 
 

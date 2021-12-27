@@ -617,7 +617,7 @@ namespace MWGui
             break;
         }
         case MWInput::MA_B:
-            MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            onCancelButtonClicked(mCancelButton);
             break;
         case MWInput::MA_X:
             // NOT in parity with xbox... requires a new confirmation window to be in parity

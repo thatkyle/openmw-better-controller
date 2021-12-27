@@ -64,6 +64,7 @@ namespace MWGui
             SaveGameDialog* mSaveGameDialog;
 
             void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
     };
 
 }

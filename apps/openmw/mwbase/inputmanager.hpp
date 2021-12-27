@@ -19,8 +19,17 @@ namespace ESM
     class ESMWriter;
 }
 
+namespace MWInput
+{
+    enum class GameControl {
+        MouseAndKeyboard,
+        Controller
+    };
+}
+
 namespace MWBase
 {
+
     /// \brief Interface for input manager (implemented in MWInput)
     class InputManager
     {
@@ -92,6 +101,11 @@ namespace MWBase
             virtual void executeAction(int action) = 0;
 
             virtual bool controlsDisabled() = 0;
+
+            /// Fires each event when the game control changes between mouse and keyboard
+            /// Lambda listener takes a GameControl to indicate which mode we're switching to
+            virtual void registerGamepadControlChangeEvent(std::function<void(MWInput::GameControl)> listener) = 0;
+            virtual void fireGamepadControlChangeEvent(MWInput::GameControl gameControlMode) = 0;
     };
 }
 

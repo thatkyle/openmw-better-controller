@@ -196,6 +196,8 @@ void MerchantRepair::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode ke
 
         gamepadHighlightSelected();
     }
+    else if (action == MWInput::MenuAction::MA_B)
+        onOkButtonClick(mOkButton);
     else
     {
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

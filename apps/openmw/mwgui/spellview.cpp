@@ -304,7 +304,10 @@ namespace MWGui
 
     SpellModel::ModelIndex SpellView::getSpellModelIndex(MyGUI::Widget* widget)
     {
-        return MyGUI::utility::parseInt(widget->getUserString(sSpellModelIndex));
+        if (widget->isUserString(sSpellModelIndex))
+            return MyGUI::utility::parseInt(widget->getUserString(sSpellModelIndex));
+        else
+            return -1;
     }
 
     void SpellView::onSpellSelected(MyGUI::Widget* _sender)
@@ -323,6 +326,11 @@ namespace MWGui
     void SpellView::resetScrollbars()
     {
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
+    }
+
+    int SpellView::getItemCount()
+    {
+        return mModel->getItemCount();
     }
 
     void SpellView::highlightItem(int index)

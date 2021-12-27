@@ -15,6 +15,7 @@ namespace MyGUI
 
 namespace MWGui
 {
+    class WindowNavigator;
 
     class SpellModel;
 
@@ -53,6 +54,10 @@ namespace MWGui
         void setCoord(const MyGUI::IntCoord& _value) override;
 
         void resetScrollbars();
+
+        int getItemCount();
+
+        SpellModel::ModelIndex getSpellModelIndex(MyGUI::Widget* _sender);
 
         // Gamepad control functions:
         void highlightItem(int index);
@@ -93,8 +98,6 @@ namespace MWGui
 
         void onSpellSelected(MyGUI::Widget* _sender);
         void onMouseWheelMoved(MyGUI::Widget* _sender, int _rel);
-
-        SpellModel::ModelIndex getSpellModelIndex(MyGUI::Widget* _sender);
 
         static const char* sSpellModelIndex;
 

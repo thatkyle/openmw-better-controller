@@ -706,20 +706,31 @@ namespace MWGui
             break;
         }
 
-        if (mode == GM_Inventory)
-        {
-            if (mLastInventoryFocus == GW_Inventory)
-                mInventoryWindow->focus();
-            else if (mLastInventoryFocus == GW_Magic)
-                mSpellWindow->focus();
-            //TODO: map and stats
-        }
-        else if (mode != GM_None && !mGuiModeStates[mode].mWindows.empty())
-        {
-            // focus the first window in the list
-            mGuiModeStates[mode].mWindows.front()->focus();
-            
-        }
+        std::function< void(MWInput::GameControl) > gameControlChangeListener = [this, mode](MWInput::GameControl controlMode) {
+            if (controlMode == MWInput::GameControl::Controller)
+            {
+                if (mode == GM_Inventory)
+                {
+                    if (mLastInventoryFocus == GW_Inventory)
+                        mInventoryWindow->focus();
+                    else if (mLastInventoryFocus == GW_Magic)
+                        mSpellWindow->focus();
+                    else if (mLastInventoryFocus == GW_Stats)
+                        mStatsWindow->focus();
+                    //TODO: map and stats
+                }
+                else if (mode != GM_None && !mGuiModeStates[mode].mWindows.empty())
+                {
+                    // focus the first window in the list
+                    mGuiModeStates[mode].mWindows.front()->focus();
+
+                }
+            }
+        };
+
+        gameControlChangeListener(MWInput::GameControl::Controller);
+
+        MWBase::Environment::get().getInputManager()->registerGamepadControlChangeEvent(gameControlChangeListener);
     }
 
     void WindowManager::setDrowningTimeLeft (float time, float maxTime)
@@ -1168,7 +1179,8 @@ namespace MWGui
                 case GuiWindow::GW_Inventory:
                     if (GuiWindow::GW_Stats & eff)
                     {
-                        //mStatsWindow->focus();
+                        mStatsWindow->focus();
+                        mLastInventoryFocus = GuiWindow::GW_Stats;
                         break;
                     }
                 case  GuiWindow::GW_Magic:
@@ -1189,6 +1201,7 @@ namespace MWGui
                     if (GuiWindow::GW_Map & eff)
                     {
                         //mMap->focus();
+                        //mLastInventoryFocus = GuiWindow::GW_Map;
                         break;
                     }
                 default:
@@ -2079,6 +2092,7 @@ namespace MWGui
 
     void WindowManager::exitCurrentModal()
     {
+        std::cout << "Current modal count: " << mCurrentModals.size() << std::endl;
         if (!mCurrentModals.empty())
         {
             WindowModal* window = mCurrentModals.back();
@@ -2444,7 +2458,9 @@ namespace MWGui
             if (!mKeyPressConsumed)
                 ret = mKeyboardNavigation->injectKeyPress(key, text, repeat);
             else
+            {
                 ret = true;
+            }
         }
 
         mKeyPressConsumed = false;

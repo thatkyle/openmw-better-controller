@@ -106,7 +106,7 @@ namespace MWGui
         mItemView->eventKeyButtonPressed += MyGUI::newDelegate(this, &InventoryWindow::onKeyButtonPressed);
         mItemView->eventKeySetFocus += MyGUI::newDelegate(this, &InventoryWindow::onFocusGained);
         mItemView->eventKeyLostFocus += MyGUI::newDelegate(this, &InventoryWindow::onFocusLost);
-
+        
         mFilterAll->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
         mFilterWeapon->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
         mFilterApparel->eventMouseButtonClick += MyGUI::newDelegate(this, &InventoryWindow::onFilterChanged);
@@ -927,7 +927,7 @@ namespace MWGui
     void InventoryWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
         mLastAction = MWInput::MA_None;
-        if (character != 1) // Gamepad control.
+        if (character != 1 && character != 2) // Gamepad control.
             return;
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
@@ -936,6 +936,13 @@ namespace MWGui
 
         if (mSortModel->getItemCount() == 0)
             isFilterCycleMode = true; // Highlight filter selection if current sort has no elements (shortcut useful for selling all goods under a sort).
+
+        if (character == 2)
+        {
+            //if (action == MWInput::MA_Y)
+            //    updateGamepadTooltip(nullptr);
+            return;
+        }
 
         switch (action)
         {
@@ -985,7 +992,7 @@ namespace MWGui
                 if (isFilterCycleMode)
                     break;
 
-                //MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mItemView->getHighlightWidget());
+                //updateGamepadTooltip(mItemView->getHighlightWidget());
                 // TODO: Actually make the tooltip; will need to create a new static window at top of screen
                 break;
             case MWInput::MA_LTrigger: // Trigger for menu cycling (inventory stats map magic) should be handled by upper window function.

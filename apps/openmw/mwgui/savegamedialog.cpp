@@ -392,8 +392,8 @@ namespace MWGui
             timeStream << std::put_time(&tm, "%Y/%m/%d at %H:%M:%S");
             mSaveNameEdit->setCaption(timeStream.str());
 
-            // submit!
-            onOkButtonClicked(_sender);
+            // open the virtual keyboard to allow the user to change the caption, then save the game if they hit start
+            MWBase::Environment::get().getWindowManager()->startVirtualKeyboard(mSaveNameEdit, [this, _sender] { onOkButtonClicked(_sender); });
         }
         else if (action == MWInput::MA_LTrigger)
         {

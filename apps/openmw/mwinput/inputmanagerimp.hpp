@@ -1,6 +1,8 @@
 #ifndef MWINPUT_MWINPUTMANAGERIMP_H
 #define MWINPUT_MWINPUTMANAGERIMP_H
 
+#include <vector>
+
 #include <osg/ref_ptr>
 #include <osgViewer/ViewerEventHandlers>
 
@@ -107,6 +109,11 @@ namespace MWInput
 
         bool controlsDisabled() override { return mControlsDisabled; }
 
+        void registerGamepadControlChangeEvent(std::function<void(GameControl)> listener) override;
+        void fireGamepadControlChangeEvent(GameControl gameControlMode) override;
+
+
+
     private:
         void convertMousePosForMyGUI(int& x, int& y);
 
@@ -130,6 +137,8 @@ namespace MWInput
         KeyboardManager* mKeyboardManager;
         MouseManager* mMouseManager;
         SensorManager* mSensorManager;
+
+        std::vector< std::function<void(GameControl)> > mGameControlChangeListeners;
     };
 }
 #endif

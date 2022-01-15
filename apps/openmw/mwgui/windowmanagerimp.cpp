@@ -2455,7 +2455,8 @@ namespace MWGui
             ret = true; // Don't repeat activation keys to windows. Stops double selections.
         else if (MyGUI::InputManager::getInstance().injectKeyPress(key, text)) // True if there is a key focus widget.
         {
-            if (!mKeyPressConsumed)
+            // injected controller _releases_ are always consumed
+            if (text != 2 && !mKeyPressConsumed)
                 ret = mKeyboardNavigation->injectKeyPress(key, text, repeat);
             else
             {

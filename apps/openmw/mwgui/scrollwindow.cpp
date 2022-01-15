@@ -43,24 +43,24 @@ namespace MWGui
         center();
     }
 
-    void ScrollWindow::onOpen()
-    {
-        //std::vector<MenuControl> leftControls;
-        //std::vector<MenuControl> rightControls{
-        //    MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        //};
-
-        //MWBase::Environment::get().getWindowManager()->pushMenuControls(leftControls, rightControls);
-    }
-
-    void ScrollWindow::onClose()
-    {
-        //MWBase::Environment::get().getWindowManager()->popMenuControls();
-    }
-
     ControlSet ScrollWindow::getControlLegendContents()
     {
-        return { {}, { MenuControl{MWInput::MenuAction::MA_B, "Back"} } };
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        bool showTakeButton = mScroll.getContainerStore() != &player.getClass().getContainerStore(player);
+
+        std::vector<MenuControl> leftControls;
+        std::vector<MenuControl> rightControls{
+            MenuControl{MWInput::MenuAction::MA_B, "Back"}
+        };
+
+        if (showTakeButton)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Take" });
+        if (mTextView->getViewOffset().top > 0)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_LTrigger, "Scroll Up" });
+        if (mTextView->getViewOffset().top < mTextView->getChildAt(0)->getSize().height)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Scroll Down" });
+
+        return { leftControls, rightControls };
     }
 
     void ScrollWindow::setPtr (const MWWorld::Ptr& scroll)
@@ -89,23 +89,7 @@ namespace MWGui
         setTakeButtonShow(showTakeButton);
 
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCloseButton);
-
-
-
-        // \todo: move this to new method
-        std::vector<MenuControl> leftControls;
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
-
-        if (showTakeButton)
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Take" });
-        if (mTextView->getViewOffset().top > 0)
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_LTrigger, "Scroll Up" });
-        if (mTextView->getViewOffset().top < mTextView->getChildAt(0)->getSize().height)
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Scroll Down" });
-
-        MWBase::Environment::get().getWindowManager()->setMenuControls(ControlSet{ leftControls, rightControls });
+        MWBase::Environment::get().getWindowManager()->setMenuControls(getControlLegendContents());
     }
 
     void ScrollWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
@@ -131,28 +115,21 @@ namespace MWGui
         bool showTakeButton = mScroll.getContainerStore() != &player.getClass().getContainerStore(player);
 
         if (action == MWInput::MenuAction::MA_A && showTakeButton)
+        {
             onTakeButtonClicked(sender);
+            return;
+        }
         else if (action == MWInput::MenuAction::MA_B)
-            onCloseButtonClicked(sender); 
+        {
+            onCloseButtonClicked(sender);
+            return;
+        }
         else if (action == MWInput::MA_LTrigger)
             mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, 40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))));
         else if (action == MWInput::MA_RTrigger)
             mTextView->setViewOffset(mTextView->getViewOffset() + MyGUI::IntPoint(0, -40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))));
 
-
-        std::vector<MenuControl> leftControls;
-        std::vector<MenuControl> rightControls{
-            MenuControl{MWInput::MenuAction::MA_B, "Back"}
-        };
-
-        if (showTakeButton)
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_A, "Take" });
-        if (mTextView->getViewOffset().top > 0)
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_LTrigger, "Scroll Up" });
-        if (mTextView->getViewOffset().top < mTextView->getChildAt(0)->getSize().height)
-            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_RTrigger, "Scroll Down" });
-
-        MWBase::Environment::get().getWindowManager()->setMenuControls(ControlSet{ leftControls, rightControls });
+        MWBase::Environment::get().getWindowManager()->setMenuControls(getControlLegendContents());
     }
 
     void ScrollWindow::setTakeButtonShow(bool show)

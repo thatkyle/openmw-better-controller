@@ -22,9 +22,6 @@ namespace MWGui
 
             void onResChange(int, int) override { center(); }
 
-            void onOpen() override;
-            void onClose() override;
-
         protected:
             void onCloseButtonClicked (MyGUI::Widget* _sender);
             void onTakeButtonClicked (MyGUI::Widget* _sender);

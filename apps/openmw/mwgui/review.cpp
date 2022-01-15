@@ -554,7 +554,8 @@ namespace MWGui
                 MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
             break;
         case MWInput::MA_Start:
-            onOkClicked(mOkButton);
+            if (character == 1)
+                onOkClicked(mOkButton);
             break;
         default:
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

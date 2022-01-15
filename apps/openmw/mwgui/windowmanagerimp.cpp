@@ -637,6 +637,7 @@ namespace MWGui
         {
             setKeyFocusWidget(nullptr);
             mGamepadToolTips->setGamepadGuiFocusWidget(nullptr, nullptr);
+            mControlLegend->clearControls();
         }
 
         // Icons of forced hidden windows are displayed

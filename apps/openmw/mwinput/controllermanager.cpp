@@ -96,23 +96,23 @@ namespace MWInput
         }
     }
 
-    void ControllerManager::setJoystickLastUsed(bool enabled)
+    void ControllerManager::setJoystickLastUsed(bool joystickLastUsed)
     {
-        if (mJoystickLastUsed != enabled)
+        if (mJoystickLastUsed != joystickLastUsed)
         {
-            mJoystickLastUsed = enabled;
+            mJoystickLastUsed = joystickLastUsed;
             if (MWBase::Environment::get().getWindowManager()->isGuiMode())
                 MWBase::Environment::get().getInputManager()->fireGamepadControlChangeEvent(
-                    enabled ? GameControl::Controller : GameControl::MouseAndKeyboard);
+                    joystickLastUsed ? GameControl::Controller : GameControl::MouseAndKeyboard);
         }
 
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
-            // Toggle highlights off when pc controls are used.
-            MWBase::Environment::get().getWindowManager()->toggleSelectionHighlights(enabled); 
+            // Toggle highlights off when pc controls are used or we've enabled the gamepad cursor.
+            MWBase::Environment::get().getWindowManager()->toggleSelectionHighlights(joystickLastUsed && !mGamepadGuiCursorEnabled);
 
             // hide the cursor unless we've explicitly enabled it for joystick use
-            MWBase::Environment::get().getWindowManager()->setCursorActive(mGamepadGuiCursorEnabled);
+            MWBase::Environment::get().getWindowManager()->setCursorActive(!joystickLastUsed || mGamepadGuiCursorEnabled);
         }
     }
 
@@ -226,6 +226,7 @@ namespace MWInput
         setJoystickLastUsed(true);
         if (MWBase::Environment::get().getWindowManager()->isGuiMode())
         {
+
             if (gamepadToGuiControl(arg, true))
                 return;
 
@@ -520,14 +521,16 @@ namespace MWInput
                 resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadLeft);
 
                 mLStickPressedLeftInGui = true;
-                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft), 1, true);
+                if (!mGamepadGuiCursorEnabled)
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadLeft), 1, true);
             }
             else if (mLStickXAxisVal > 0 && !mLStickPressedRightInGui)
             {
                 resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadRight);
 
                 mLStickPressedRightInGui = true;
-                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight), 1, true);
+                if (!mGamepadGuiCursorEnabled)
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadRight), 1, true);
             }
         }
         else
@@ -537,14 +540,16 @@ namespace MWInput
                 resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadUp);
 
                 mLStickPressedUpInGui = true;
-                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp), 1, true);
+                if (!mGamepadGuiCursorEnabled)
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadUp), 1, true);
             }
             else if (mLStickYAxisVal > 0 && !mLStickPressedDownInGui)
             {
                 resetJoystickStatesForGui(MWInput::MenuAction::MA_DPadDown);
 
                 mLStickPressedDownInGui = true;
-                MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown), 1, true);
+                if (!mGamepadGuiCursorEnabled)
+                    MWBase::Environment::get().getWindowManager()->injectKeyPress(menuActionToKeyCode(MWInput::MenuAction::MA_DPadDown), 1, true);
             }
         }
     }

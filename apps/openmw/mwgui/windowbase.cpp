@@ -34,6 +34,8 @@ WindowBase::WindowBase(const std::string& parLayout)
     mGamepadHighlight = mMainWidget->createWidget<MyGUI::Widget>("MW_Highlight_Frame", 0, 0, 0, 0, MyGUI::Align::Default, mPrefix + "GamepadHighlight");
     mGamepadHighlight->setVisible(false);
     mGamepadHighlight->setDepth(INT_MAX);
+    mGamepadHighlight->setNeedMouseFocus(false);
+    mGamepadHighlight->setNeedKeyFocus(false);
 
     Window* window = mMainWidget->castType<Window>(false);
     if (!window)
@@ -126,6 +128,7 @@ void WindowBase::widgetHighlight(MyGUI::Widget *target)
         //}
 
         mGamepadHighlight->setCoord(coords);
+        mLastHighlightCoord = coords;
 
         Log(Debug::Info) << "Highlight coords for layout " << mLayoutName << ": " << coords;
     }
@@ -139,13 +142,22 @@ void WindowBase::updateHighlightVisibility()
 {
     // only turn it on if the key focus widget is in this layout; this allows us to update widget positions without
     // actually turning it on.
-    bool shouldTurnOn = !mIsHighlightHidden && MWBase::Environment::get().getInputManager()->joystickLastUsed() &&
-        isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget());
+    bool shouldTurnOn = !mIsHighlightHidden && MWBase::Environment::get().getInputManager()->joystickLastUsed()
+        && !MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled()
+        && isWidgetInLayout(MyGUI::InputManager::getInstance().getKeyFocusWidget());
 
     mGamepadHighlight->setVisible(shouldTurnOn);
 
     if (shouldTurnOn)
+    {
+        mGamepadHighlight->setCoord(mLastHighlightCoord);
         MWBase::Environment::get().getWindowManager()->setMenuControls(getControlLegendContents());
+    }
+    else
+    {
+        mLastHighlightCoord = mGamepadHighlight->getCoord();
+        mGamepadHighlight->setCoord(MyGUI::IntCoord());
+    }
 }
 
 ControlSet WindowBase::getControlLegendContents()

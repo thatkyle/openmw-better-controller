@@ -73,6 +73,7 @@ namespace MWGui
         virtual ControlSet getControlLegendContents();
 
         MyGUI::Widget* mGamepadHighlight;
+        MyGUI::IntCoord mLastHighlightCoord;
 
     private:
         void onDoubleClick(MyGUI::Widget* _sender);

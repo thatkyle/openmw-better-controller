@@ -143,6 +143,8 @@ namespace MWGui
         Widgets::MWSkillPtr   mMinorSkill[5];
 
         std::string mCurrentClassId;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class SelectSpecializationDialog : public WindowModal

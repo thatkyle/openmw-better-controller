@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "windowbase.hpp"
+#include "windownavigator.hpp"
 
 namespace MWState
 {
@@ -70,6 +71,8 @@ namespace MWGui
 
         const MWState::Character* mCurrentCharacter;
         const MWState::Slot* mCurrentSlot;
+
+        WindowNavigator mWindowNavigator;
 
     };
 

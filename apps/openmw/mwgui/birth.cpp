@@ -294,13 +294,8 @@ namespace MWGui
         if (mWindowNavigator.processInput(action))
             return;
 
-        size_t currentBirthIndex = mBirthList->getIndexSelected();
-
         switch (action)
         {
-        //case MWInput::MA_A:
-        //    BirthDialog::onOkClicked(sender);
-        //    break;
         case MWInput::MA_B:
             BirthDialog::onBackClicked(sender);
             break;

@@ -150,6 +150,8 @@ namespace MWGui
 
         if (!classId.empty())
             setClassId(classId);
+
+        mWindowNavigator = WindowNavigator(mClassList);
     }
 
     void PickClassDialog::setClassId(const std::string &classId)
@@ -178,31 +180,14 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
-        size_t currentClassIndex = mClassList->getIndexSelected();
+
+        if (mWindowNavigator.processInput(action))
+            return;
 
         switch (action)
         {
-        case MWInput::MA_A:
-            PickClassDialog::onOkClicked(sender);
-            break;
         case MWInput::MA_B:
             PickClassDialog::onBackClicked(sender);
-            break;
-        case MWInput::MA_DPadUp:
-            if (currentClassIndex)
-            {
-                mClassList->setIndexSelected(--currentClassIndex);
-                PickClassDialog::onSelectClass(mClassList, currentClassIndex);
-                mClassList->beginToItemAt(std::max(currentClassIndex - 3, (size_t)0));
-            }
-            break;
-        case MWInput::MA_DPadDown:
-            if (currentClassIndex + 1 < mClassList->getItemCount())
-            {
-                mClassList->setIndexSelected(++currentClassIndex);
-                PickClassDialog::onSelectClass(mClassList, currentClassIndex);
-                mClassList->beginToItemAt(std::max(currentClassIndex - 3, (size_t)0));
-            }
             break;
         default:
             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);

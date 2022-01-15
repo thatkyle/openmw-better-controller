@@ -214,6 +214,8 @@ namespace MWGui
             mCharacterSelection->setCaption("Select Character ...");
 
         fillSaveList();
+
+        mWindowNavigator = WindowNavigator(mSaveList);
     }
 
     ControlSet SaveGameDialog::getControlLegendContents()
@@ -349,29 +351,11 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true); // Set to false if not consumed.
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
-        if (action == MWInput::MA_DPadUp)
-        {
-            int index = mSaveList->getIndexSelected();
-            if (mSaveList->getItemCount() > 1 && index > 0)
-            {
-                mSaveList->setIndexSelected(index - 1);
-                onSlotSelected(mSaveList, index - 1);
-            }
-        }
-        else if (action == MWInput::MA_DPadDown)
-        {
-            int index = mSaveList->getIndexSelected();
-            if (mSaveList->getItemCount() > 1 && index < mSaveList->getItemCount() - 1)
-            {
-                mSaveList->setIndexSelected(index + 1);
-                onSlotSelected(mSaveList, index + 1);
-            }
-        }
-        else if (action == MWInput::MA_A)
-        {
-            onOkButtonClicked(_sender);
-        }
-        else if (action == MWInput::MA_B)
+
+        if (mWindowNavigator.processInput(action))
+            return;
+
+        if (action == MWInput::MA_B)
         {
             onCancelButtonClicked(_sender);
         }

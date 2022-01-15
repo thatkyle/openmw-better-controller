@@ -225,7 +225,7 @@ namespace MWGui
 
         MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
         MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
-        size_t currentRaceIndex = mRaceList->getIndexSelected();
+        int currentRaceIndex = mRaceList->getIndexSelected();
 
         switch (action)
         {
@@ -249,7 +249,7 @@ namespace MWGui
                 {
                     mRaceList->setIndexSelected(--currentRaceIndex);
                     RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
-                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, (size_t) 0));
+                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, 0));
                 }
                 break;
             case MWInput::MA_DPadDown:
@@ -257,7 +257,7 @@ namespace MWGui
                 {
                     mRaceList->setIndexSelected(++currentRaceIndex);
                     RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
-                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, (size_t) 0));
+                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, 0));
                 }
                 break;
             case MWInput::MA_RTrigger:

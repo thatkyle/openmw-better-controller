@@ -718,7 +718,7 @@ namespace MWGui
                         mSpellWindow->focus();
                     else if (mLastInventoryFocus == GW_Stats)
                         mStatsWindow->focus();
-                    //TODO: map and stats
+                    //TODO: map
                 }
                 else if (mode != GM_None && !mGuiModeStates[mode].mWindows.empty())
                 {

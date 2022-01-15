@@ -55,8 +55,9 @@ namespace MWGui
         ItemModel* mModel;
         MyGUI::ScrollView* mScrollView;
         int mRows;
+
         int mHighlight;
-        MyGUI::Widget *mHighlightWidget;
+        std::vector<MyGUI::Widget*> mItemWidgets;
 
     };
 

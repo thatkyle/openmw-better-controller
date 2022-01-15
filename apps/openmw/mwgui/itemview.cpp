@@ -20,7 +20,6 @@ ItemView::ItemView()
     , mScrollView(nullptr)
     , mRows(0)
     , mHighlight(0)
-    , mHighlightWidget(nullptr)
 {
 }
 
@@ -114,7 +113,7 @@ void ItemView::update()
     dragArea->setNeedMouseFocus(true);
     dragArea->eventMouseButtonClick += MyGUI::newDelegate(this, &ItemView::onSelectedBackground);
     dragArea->eventMouseWheel += MyGUI::newDelegate(this, &ItemView::onMouseWheelMoved);
-    mHighlightWidget = nullptr;
+    mItemWidgets.clear();
 
     for (ItemModel::ModelIndex i=0; i<static_cast<int>(mModel->getItemCount()); ++i)
     {
@@ -134,8 +133,7 @@ void ItemView::update()
 
         itemWidget->eventMouseButtonClick += MyGUI::newDelegate(this, &ItemView::onSelectedItem);
         itemWidget->eventMouseWheel += MyGUI::newDelegate(this, &ItemView::onMouseWheelMoved);
-        if (i == mHighlight)
-            mHighlightWidget = itemWidget;
+        mItemWidgets.push_back(itemWidget);
     }
 
     layoutWidgets();
@@ -189,13 +187,12 @@ void ItemView::registerComponents()
 void ItemView::highlightItem(int index)
 {
     mHighlight = index;
-    update();
     scrollToTarget(mHighlight);
 }
 
 MyGUI::Widget* ItemView::getHighlightWidget()
 {
-    return mHighlightWidget;
+    return mItemWidgets.size() == 0 ? nullptr : mItemWidgets[mHighlight];
 }
 
 int ItemView::getRowCount()

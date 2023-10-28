@@ -1,5 +1,7 @@
 #include "race.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ListBox.h>
@@ -15,11 +17,14 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwrender/characterpreview.hpp"
 #include "../mwworld/esmstore.hpp"
+#include "../mwinput/actions.hpp"
 
 #include "tooltips.hpp"
 #include "ustring.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -100,6 +105,7 @@ namespace MWGui
         mRaceList->setScrollVisible(true);
         mRaceList->eventListSelectAccept += MyGUI::newDelegate(this, &RaceDialog::onAccept);
         mRaceList->eventListChangePosition += MyGUI::newDelegate(this, &RaceDialog::onSelectRace);
+        mRaceList->eventKeyButtonPressed += MyGUI::newDelegate(this, &RaceDialog::onKeyButtonPressed);
 
         setText("SkillsT",
             MWBase::Environment::get().getWindowManager()->getGameSettingString("sBonusSkillTitle", "Skill Bonus"));
@@ -236,6 +242,89 @@ namespace MWGui
             mHeadRotate->setScrollPosition(oldPos - std::min(oldPos, scrollPage));
 
         onHeadRotate(mHeadRotate, mHeadRotate->getScrollPosition());
+    }
+
+    void RaceDialog::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        int currentRaceIndex = mRaceList->getIndexSelected();
+
+        switch (action)
+        {
+            case MWInput::MA_A:
+                RaceDialog::onOkClicked(sender);
+                break;
+            case MWInput::MA_B:
+                onBackClicked(sender);
+                break;
+            case MWInput::MA_X:
+                RaceDialog::onSelectNextGender(sender);
+                break;
+            case MWInput::MA_Black:
+                RaceDialog::onSelectNextFace(sender);
+                break;
+            case MWInput::MA_White:
+                RaceDialog::onSelectNextHair(sender);
+                break;
+            case MWInput::MA_DPadUp:
+                if (currentRaceIndex)
+                {
+                    mRaceList->setIndexSelected(--currentRaceIndex);
+                    RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
+                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, 0));
+                }
+                break;
+            case MWInput::MA_DPadDown:
+                if (currentRaceIndex + 1 < mRaceList->getItemCount())
+                {
+                    mRaceList->setIndexSelected(++currentRaceIndex);
+                    RaceDialog::onSelectRace(mRaceList, currentRaceIndex);
+                    mRaceList->beginToItemAt(std::max(currentRaceIndex - 3, 0));
+                }
+                break;
+            case MWInput::MA_RTrigger:
+                // Pressure sensitive scrolling:
+                mHeadRotate->setScrollPosition(std::min(static_cast<int>(mHeadRotate->getScrollRange()-1),
+                                               std::max(0, static_cast<int>(
+                                               mHeadRotate->getScrollPosition() - (-40.f *
+                                               MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))) * 0.3))));
+
+                RaceDialog::onHeadRotate(mHeadRotate, mHeadRotate->getScrollPosition());
+                break;
+            case MWInput::MA_LTrigger:
+                // Pressure sensitive scrolling:
+                mHeadRotate->setScrollPosition(std::min(static_cast<int>(mHeadRotate->getScrollRange()-1),
+                                               std::max(0, static_cast<int>(
+                                               mHeadRotate->getScrollPosition() - (40.f *
+                                               MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action))) * 0.3))));
+                RaceDialog::onHeadRotate(mHeadRotate, mHeadRotate->getScrollPosition());
+                break;
+            default:
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+                break;
+        }
+    }
+    
+    ControlSet RaceDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Accept"},
+                MenuControl{MWInput::MenuAction::MA_X, "Next Gender"},
+                MenuControl{MWInput::MenuAction::MA_White, "Next Hair"},
+                MenuControl{MWInput::MenuAction::MA_Black, "Next Face"},
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_LTrigger, "Rotate Head"},
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 
     void RaceDialog::onHeadRotate(MyGUI::ScrollBar* scroll, size_t _position)

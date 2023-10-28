@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Layout">
+    <Widget type="Window" skin="MW_Dialog" layer="Windows" position="0 0 900 30" align="Bottom" name="_Main">
+        <Property key="Padding" value="10"/>
+
+        <Widget type="AutoSizedEditBox" skin="MW_TextEditClient" position="6 1 900 0" name="LeftControls" align="Left VStretch">
+            <Property key="FontName" value="Default"/>
+            <Property key="TextAlign" value="Left"/>
+            <Property key="Static" value="true"/>
+        </Widget>
+
+        <Widget type="AutoSizedEditBox" skin="MW_TextEditClient" position="6 1 882 0" name="RightControls" align="Right VStretch">
+            <Property key="FontName" value="Default"/>
+            <Property key="TextAlign" value="Right"/>
+            <Property key="Static" value="true"/>
+        </Widget>
+    </Widget>
+</MyGUI>

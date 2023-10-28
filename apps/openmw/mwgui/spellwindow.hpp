@@ -10,6 +10,7 @@
 namespace MWGui
 {
     class SpellView;
+    class WindowNavigator;
 
     class SpellWindow : public WindowPinnableBase, public NoDrop
     {
@@ -24,6 +25,8 @@ namespace MWGui
         void cycle(bool next);
 
         std::string_view getWindowIdForLua() const override { return "Magic"; }
+
+        void focus();
 
     protected:
         MyGUI::Widget* mEffectBox;
@@ -42,12 +45,28 @@ namespace MWGui
         void onTitleDoubleClicked() override;
         void onOpen() override;
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
         SpellView* mSpellView;
         std::unique_ptr<SpellIcons> mSpellIcons;
         MyGUI::EditBox* mFilterEdit;
 
+    protected:
+
+        MyGUI::IntSize highlightSizeOverride() override;
+        MyGUI::IntCoord highlightOffset() override;
+
+        ControlSet getControlLegendContents() override;
+
     private:
+        void gamepadHighlightSelected();
+        void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+        void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+
         float mUpdateTimer;
+        int mGamepadSelected;
+
+        std::unique_ptr<WindowNavigator> mWindowNavigator;
     };
 }
 

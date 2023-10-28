@@ -26,6 +26,10 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/npcstats.hpp"
 
+#include "../mwstate/charactermanager.hpp"
+
+#include "../mwinput/actions.hpp"
+
 namespace MWGui
 {
 
@@ -170,6 +174,8 @@ namespace MWGui
         std::string dateTimeText
             = Misc::StringUtils::format("%i %s %s %i %s", currentDate.mDay, month, daysPassed, hour, formattedHour);
         mDateTimeText->setCaptionWithReplacing(dateTimeText);
+
+        //widgetHighlight(mHourSlider);
     }
 
     void WaitDialog::onUntilHealedButtonClicked(MyGUI::Widget* sender)
@@ -243,13 +249,46 @@ namespace MWGui
 
     void WaitDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        if (key == MyGUI::KeyCode::ArrowUp)
-            mHourSlider->setScrollPosition(
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        if (character == 1) { // Gamepad control.
+            MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+            switch (action)
+            {
+                case MWInput::MA_A:
+                    onWaitButtonClicked(sender);
+                    break;
+                case MWInput::MA_X:
+                    if (mUntilHealedButton->getVisible())
+                        onUntilHealedButtonClicked(sender);
+                    break;
+                case MWInput::MA_B:
+                    onCancelButtonClicked(sender);
+                    break;
+                case MWInput::MA_DPadLeft:
+                    mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition())-1, 0));
+                    break;
+                case MWInput::MA_DPadRight:
+                    mHourSlider->setScrollPosition(std::min(mHourSlider->getScrollPosition()+1, mHourSlider->getScrollRange()-1));
+                    break;
+                default:
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+                    break;
+            }
+        }
+        else {
+
+            if (key == MyGUI::KeyCode::ArrowUp)
+                mHourSlider->setScrollPosition(
                 std::min(mHourSlider->getScrollPosition() + 1, mHourSlider->getScrollRange() - 1));
-        else if (key == MyGUI::KeyCode::ArrowDown)
-            mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition()) - 1, 0));
-        else
-            return;
+            else if (key == MyGUI::KeyCode::ArrowDown)
+                mHourSlider->setScrollPosition(std::max(static_cast<int>(mHourSlider->getScrollPosition()) - 1, 0));
+            else
+            {
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+                return;
+            }
+        }
+
         onHourSliderChangedPosition(mHourSlider, mHourSlider->getScrollPosition());
     }
 

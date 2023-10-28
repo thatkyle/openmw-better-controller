@@ -68,15 +68,23 @@ namespace MWGui
     {
         std::string target = mPrefix;
         target += _name;
+        return getWidgetByFullName(mPrefix + _name);
+    }
+
+    MyGUI::Widget* Layout::getWidgetByFullName(const std::string& _name) {
         for (MyGUI::Widget* widget : mListWindowRoot)
         {
             MyGUI::Widget* find = widget->findWidget(target);
             if (nullptr != find)
             {
-                return find;
+                return findResult;
             }
         }
-        MYGUI_EXCEPT("widget name '" << _name << "' in layout '" << mLayoutName << "' not found.");
+        return nullptr;
+    }
+
+    bool Layout::isWidgetInLayout(const MyGUI::Widget* target) {
+        return target && (target == mMainWidget || isWidgetInLayout(target->getParent()));
     }
 
 }

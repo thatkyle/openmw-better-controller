@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Layout">
+    <Widget type="Window" skin="MW_Dialog" layer="MessageBox" position="0 0 510 200" align="Center Stretch" name="_Main">
+        <Widget type="Widget" position="25 25 850 400" name="ButtonBox">
+        </Widget>
+    </Widget>
+</MyGUI>

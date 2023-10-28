@@ -13,6 +13,8 @@
 
 #include "../mwgui/mode.hpp"
 
+#include "../mwinput/actions.hpp"
+
 #include <components/sdlutil/events.hpp>
 
 namespace ESM
@@ -77,6 +79,8 @@ namespace MWGui
     class JailScreen;
     class MessageBox;
     class PostProcessorHud;
+    class ControlLegend;
+    class OnscreenKeyboard;
 
     enum ShowInDialogueMode
     {
@@ -86,6 +90,8 @@ namespace MWGui
     };
 
     struct TextColours;
+    struct MenuControl;
+    struct ControlSet;
 }
 
 namespace SFO
@@ -156,6 +162,7 @@ namespace MWBase
         virtual MWGui::ConfirmationDialog* getConfirmationDialog() = 0;
         virtual MWGui::TradeWindow* getTradeWindow() = 0;
         virtual MWGui::PostProcessorHud* getPostProcessorHud() = 0;
+            virtual MWGui::ContainerWindow* getContainerWindow() = 0;
 
         /// Make the player use an item, while updating GUI state accordingly
         virtual void useItem(const MWWorld::Ptr& item, bool force = false) = 0;
@@ -182,6 +189,7 @@ namespace MWBase
 
         virtual void setFocusObject(const MWWorld::Ptr& focus) = 0;
         virtual void setFocusObjectScreenCoords(float min_x, float min_y, float max_x, float max_y) = 0;
+            virtual void setGamepadGuiFocusWidget(MyGUI::Widget* target, MWGui::Layout* layout) = 0;
 
         virtual void setCursorVisible(bool visible) = 0;
         virtual void setCursorActive(bool active) = 0;
@@ -275,6 +283,17 @@ namespace MWBase
 
         virtual void processChangedSettings(const std::set<std::pair<std::string, std::string>>& changed) = 0;
 
+            /**
+            * Processes a trigger press in an inventory menu (could be the regular inventory, or barter, or container)
+            * 
+            * @param action The menu action (should be a trigger) that invoked this function
+            * @param caller The calling GUI mode (inventory, container, barter, etc)
+            * @param window The specific window in the case that `caller` is GM_Inventory
+            */
+            virtual bool processInventoryTrigger(MWInput::MenuAction action, 
+                                                 MWGui::GuiMode caller, 
+                                                 MWGui::GuiWindow window = MWGui::GuiWindow::GW_None) = 0;
+
         virtual void executeInConsole(const std::filesystem::path& path) = 0;
 
         virtual void enableRest() = 0;
@@ -301,6 +320,7 @@ namespace MWBase
 
         /// Should the cursor be visible?
         virtual bool getCursorVisible() = 0;
+            virtual void toggleSelectionHighlights(bool toggle) = 0;
 
         /// Clear all savegame-specific data
         virtual void clear() = 0;
@@ -358,6 +378,7 @@ namespace MWBase
 
         virtual bool injectKeyPress(MyGUI::KeyCode key, unsigned int text, bool repeat) = 0;
         virtual bool injectKeyRelease(MyGUI::KeyCode key) = 0;
+            virtual void consumeKeyPress(bool consume = true) = 0;
 
         void windowVisibilityChange(bool visible) override = 0;
         void windowResized(int x, int y) override = 0;
@@ -385,6 +406,15 @@ namespace MWBase
         virtual void setDisabledByLua(std::string_view windowId, bool disabled) = 0;
         virtual std::vector<std::string_view> getAllWindowIds() const = 0;
         virtual std::vector<std::string_view> getAllowedWindowIds(MWGui::GuiMode mode) const = 0;
+
+            virtual void setMenuControls(MWGui::ControlSet& controlSet) = 0;
+            virtual void clearMenuControls() = 0;
+
+            virtual void setHighlight(MyGUI::Widget* target) = 0;
+            
+            virtual void startVirtualKeyboard(MyGUI::EditBox* target) = 0;
+            virtual void startVirtualKeyboard(MyGUI::EditBox* target, const std::function<void()> onAccept) = 0;
+            virtual bool virtualKeyboardVisible() = 0;
     };
 }
 

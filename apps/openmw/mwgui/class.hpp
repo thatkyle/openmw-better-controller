@@ -11,13 +11,15 @@
 #include <components/esm3/loadclas.hpp>
 
 #include "widgets.hpp"
+#include "buttonmenu.hpp"
 #include "windowbase.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
     void setClassImage(MyGUI::ImageBox* imageBox, const ESM::RefId& classId);
 
-    class InfoBoxDialog : public WindowModal
+    class InfoBoxDialog : public ButtonMenu
     {
     public:
         InfoBoxDialog();
@@ -67,7 +69,7 @@ namespace MWGui
         ClassChoiceDialog();
     };
 
-    class GenerateClassResultDialog : public WindowModal
+    class GenerateClassResultDialog : public ButtonMenu
     {
     public:
         GenerateClassResultDialog();
@@ -134,6 +136,7 @@ namespace MWGui
         void onBackClicked(MyGUI::Widget* _sender);
 
     private:
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
         void updateClasses();
         void updateStats();
 
@@ -145,6 +148,8 @@ namespace MWGui
         Widgets::MWSkillPtr mMinorSkill[5];
 
         ESM::RefId mCurrentClassId;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class SelectSpecializationDialog : public WindowModal
@@ -173,11 +178,18 @@ namespace MWGui
     protected:
         void onSpecializationClicked(MyGUI::Widget* _sender);
         void onCancelClicked(MyGUI::Widget* _sender);
+        
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
 
     private:
         MyGUI::TextBox *mSpecialization0, *mSpecialization1, *mSpecialization2;
 
         ESM::Class::Specialization mSpecializationId;
+
+        MyGUI::Widget* mCancelButton;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class SelectAttributeDialog : public WindowModal
@@ -207,8 +219,13 @@ namespace MWGui
         void onAttributeClicked(Widgets::MWAttributePtr _sender);
         void onCancelClicked(MyGUI::Widget* _sender);
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
     private:
         ESM::RefId mAttributeId;
+        MyGUI::Widget* mCancelButton;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class SelectSkillDialog : public WindowModal
@@ -238,8 +255,14 @@ namespace MWGui
         void onSkillClicked(Widgets::MWSkillPtr _sender);
         void onCancelClicked(MyGUI::Widget* _sender);
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
     private:
         ESM::RefId mSkillId;
+
+        MyGUI::Widget* mCancelButton;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class DescriptionDialog : public WindowModal
@@ -261,6 +284,8 @@ namespace MWGui
 
     private:
         MyGUI::EditBox* mTextEdit;
+
+        WindowNavigator mWindowNavigator;
     };
 
     class CreateClassDialog : public WindowModal
@@ -270,6 +295,8 @@ namespace MWGui
         virtual ~CreateClassDialog();
 
         bool exit() override { return false; }
+
+        void onFrame(float dt) override;
 
         std::string getName() const;
         std::string getDescription() const;
@@ -307,6 +334,10 @@ namespace MWGui
         void onDescriptionEntered(WindowBase* parWindow);
         void onDialogCancel();
 
+        MyGUI::IntCoord highlightOffset() override;
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        ControlSet getControlLegendContents() override;
+
         void setSpecialization(int id);
 
         void update();
@@ -319,6 +350,9 @@ namespace MWGui
         std::array<Widgets::MWSkillPtr, 5> mMinorSkill;
         std::vector<Widgets::MWSkillPtr> mSkills;
         std::string mDescription;
+        MyGUI::Widget*                   mOkButton;
+        MyGUI::Widget*                   mBackButton;
+
 
         std::unique_ptr<SelectSpecializationDialog> mSpecDialog;
         std::unique_ptr<SelectAttributeDialog> mAttribDialog;
@@ -329,6 +363,10 @@ namespace MWGui
 
         Widgets::MWAttributePtr mAffectedAttribute;
         Widgets::MWSkillPtr mAffectedSkill;
+        MyGUI::Widget*                   mOkButton;
+        MyGUI::Widget*                   mBackButton;
+
+        WindowNavigator mWindowNavigator;
     };
 }
 #endif

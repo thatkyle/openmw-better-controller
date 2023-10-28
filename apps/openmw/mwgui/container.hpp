@@ -1,6 +1,8 @@
 #ifndef MGUI_CONTAINER_H
 #define MGUI_CONTAINER_H
 
+#include "../mwinput/actions.hpp"
+
 #include "referenceinterface.hpp"
 #include "windowbase.hpp"
 
@@ -40,6 +42,13 @@ namespace MWGui
 
         std::string_view getWindowIdForLua() const override { return "Container"; }
 
+
+        void focus() override;
+        void onBackgroundSelected();
+
+    protected:
+        ControlSet getControlLegendContents() override;
+
     private:
         DragAndDrop* mDragAndDrop;
 
@@ -53,7 +62,6 @@ namespace MWGui
         MyGUI::Button* mCloseButton;
 
         void onItemSelected(int index);
-        void onBackgroundSelected();
         void dragItem(MyGUI::Widget* sender, int count);
         void dropItem();
         void onCloseButtonClicked(MyGUI::Widget* _sender);
@@ -64,6 +72,17 @@ namespace MWGui
         bool onTakeItem(const ItemStack& item, int count);
 
         void onReferenceUnavailable() override;
+        
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+        void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+        void gamepadDelayedAction();
+        void gamepadHighlightSelected();
+        //void gamepadCycleFilter(MWInput::MenuAction action);
+        int mGamepadSelected;
+        int mGamepadFilterSelected;
+        bool isFilterCycleMode;
+        MWInput::MenuAction mLastAction;
     };
 }
 #endif // CONTAINER_H

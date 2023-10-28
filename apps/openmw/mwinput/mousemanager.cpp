@@ -50,7 +50,7 @@ namespace MWInput
 
         if (mGuiCursorEnabled)
         {
-            input->setGamepadGuiCursorEnabled(true);
+            //input->setGamepadGuiCursorEnabled(true);
 
             // We keep track of our own mouse position, so that moving the mouse while in
             // game mode does not move the position of the GUI cursor

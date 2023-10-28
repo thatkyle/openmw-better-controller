@@ -64,6 +64,8 @@ namespace MWGui
 
         void setFocusObject(const MWWorld::Ptr& focus);
         void setFocusObjectScreenCoords(float min_x, float min_y, float max_x, float max_y);
+        void setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout);
+        Layout* getGamepadGuiFocusLayout();
         ///< set the screen-space position of the tooltip for focused object
 
         static std::string getWeightString(const float weight, const std::string& prefix);
@@ -118,7 +120,7 @@ namespace MWGui
         float mFocusToolTipY;
 
         /// Adjust position for a tooltip so that it doesn't leave the screen and does not obscure the mouse cursor
-        void position(MyGUI::IntPoint& position, MyGUI::IntSize size, MyGUI::IntSize viewportSize);
+        void position(MyGUI::IntPoint& position, MyGUI::IntSize& size, MyGUI::IntSize viewportSize);
 
         int mHorizontalScrollIndex;
 
@@ -132,6 +134,9 @@ namespace MWGui
         bool mFullHelp;
 
         float mFrameDuration;
+
+        MyGUI::Widget* mGamepadGuiFocusWidget;
+        Layout* mGamepadGuiFocusLayout;
     };
 }
 #endif

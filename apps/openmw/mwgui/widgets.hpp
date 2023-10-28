@@ -285,6 +285,8 @@ namespace MWGui
             int getValue() const { return mValue; }
             int getMax() const { return mMax; }
 
+            MyGUI::Widget* getTitleWidget() { return mTextWidget; }
+
         protected:
             virtual ~MWDynamicStat();
 

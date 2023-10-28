@@ -1,5 +1,7 @@
 #include "spellcreationdialog.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
@@ -12,21 +14,24 @@
 #include <components/esm3/loadgmst.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
-#include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
+#include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
 #include "../mwworld/store.hpp"
 
-#include "../mwmechanics/actorutil.hpp"
+#include "../mwmechanics/spells.hpp"
 #include "../mwmechanics/creaturestats.hpp"
+#include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/spellutil.hpp"
 
-#include "class.hpp"
 #include "tooltips.hpp"
+#include "class.hpp"
 #include "widgets.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -61,6 +66,7 @@ namespace MWGui
         , mEditing(false)
         , mMagicEffect(nullptr)
         , mConstantEffect(false)
+        , mHighlight(0)
     {
         init(mEffect);
         init(mOldEffect);
@@ -95,6 +101,10 @@ namespace MWGui
             += MyGUI::newDelegate(this, &EditEffectDialog::onMagnitudeMaxChanged);
         mDurationSlider->eventScrollChangePosition += MyGUI::newDelegate(this, &EditEffectDialog::onDurationChanged);
         mAreaSlider->eventScrollChangePosition += MyGUI::newDelegate(this, &EditEffectDialog::onAreaChanged);
+
+        mRangeButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &EditEffectDialog::onKeyButtonPressed);
+
+        mUsesHighlightOffset = true;
     }
 
     void EditEffectDialog::setConstantEffect(bool constant)
@@ -106,6 +116,8 @@ namespace MWGui
     {
         WindowModal::onOpen();
         center();
+
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mRangeButton);
     }
 
     bool EditEffectDialog::exit()
@@ -231,6 +243,8 @@ namespace MWGui
             mAreaBox->setVisible(true);
             // curY += mAreaBox->getSize().height;
         }
+
+        widgetHighlight(0);
     }
 
     void EditEffectDialog::onRangeButtonClicked(MyGUI::Widget* sender)
@@ -340,11 +354,130 @@ namespace MWGui
         eventEffectModified(mEffect);
     }
 
+    void EditEffectDialog::changeHighlight(int amount)
+    {
+        int index = mHighlight + amount;
+
+        while (!widgetHighlight(index) && index > 0 && index <= 4)
+        {
+            index += amount;
+        }
+    }
+
+    bool EditEffectDialog::widgetHighlight(int index)
+    {
+        if (index < 0)
+            index = 0;
+
+        if (index == 0)
+            WindowBase::widgetHighlight(mRangeButton);
+        else if (index == 1 && mMagnitudeBox->isVisible())
+            WindowBase::widgetHighlight(mMagnitudeMinSlider);
+        else if (index == 2 && mMagnitudeBox->isVisible())
+            WindowBase::widgetHighlight(mMagnitudeMaxSlider);
+        else if (index == 3 && mDurationBox->isVisible())
+            WindowBase::widgetHighlight(mDurationSlider);
+        else if (index == 4 && mAreaBox->isVisible())
+            WindowBase::widgetHighlight(mAreaSlider);
+        else
+            return false;
+
+        mHighlight = index;
+        return true;
+    }
+
+    MyGUI::Widget* EditEffectDialog::getHighlightedWidget()
+    {
+        if (mHighlight == 0)
+            return mRangeButton;
+        else if (mHighlight == 1)
+            return mMagnitudeMinSlider;
+        else if (mHighlight == 2)
+            return mMagnitudeMaxSlider;
+        else if (mHighlight == 3)
+            return mDurationSlider;
+        else if (mHighlight == 4)
+            return mAreaSlider;
+    }
+
+    void EditEffectDialog::changeSlider(int amount)
+    {
+        if (mHighlight == 0)
+            return;
+
+        MyGUI::ScrollBar* target = (MyGUI::ScrollBar*) getHighlightedWidget();
+
+        int targetValue = target->getScrollPosition() + amount;
+        if (targetValue < 0)
+            targetValue = 0;
+        else if (targetValue >= target->getScrollRange())
+            targetValue = target->getScrollRange() - 1;
+
+        target->setScrollPosition(targetValue);
+
+        if (mHighlight == 1)
+            onMagnitudeMinChanged(target, targetValue);
+        else if (mHighlight == 2)
+            onMagnitudeMaxChanged(target, targetValue);
+        else if (mHighlight == 3)
+            onDurationChanged(target, targetValue);
+        else if (mHighlight == 4)
+            onAreaChanged(target, targetValue);
+    }
+
+    void EditEffectDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B) // back
+            onCancelButtonClicked(sender);
+        else if (action == MWInput::MA_A) // select
+        {
+            if (mHighlight == 0)
+                onRangeButtonClicked(mRangeButton);
+        }
+        else if (action == MWInput::MA_X) // buy
+            onOkButtonClicked(mOkButton);
+        else if (action == MWInput::MA_Y && mEditing) // buy
+            onDeleteButtonClicked(mDeleteButton);
+        else if (action == MWInput::MA_DPadUp)
+            changeHighlight(-1);
+        else if (action == MWInput::MA_DPadDown)
+            changeHighlight(1);
+        else if (action == MWInput::MA_DPadRight && mHighlight > 0)
+            changeSlider(1);
+        else if (action == MWInput::MA_DPadLeft && mHighlight > 0)
+            changeSlider(-1);
+    }
+
+    ControlSet EditEffectDialog::getControlLegendContents()
+    {
+        std::vector<MenuControl> leftControls = {
+            MenuControl{MWInput::MenuAction::MA_A, "Select"},
+            MenuControl{MWInput::MenuAction::MA_X, "OK"}
+        };
+
+        if (mEditing)
+            leftControls.push_back(MenuControl{ MWInput::MenuAction::MA_Y, "Delete" });
+
+        return {
+            leftControls,
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
+    }
+
     // ------------------------------------------------------------------------------------------------
 
     SpellCreationDialog::SpellCreationDialog()
         : WindowBase("openmw_spellcreation_dialog.layout")
         , EffectEditorBase(EffectEditorBase::Spellmaking)
+        , mHighlight(0)
     {
         getWidget(mNameEdit, "NameEdit");
         getWidget(mMagickaCost, "MagickaCost");
@@ -359,7 +492,11 @@ namespace MWGui
         mBuyButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellCreationDialog::onBuyButtonClicked);
         mNameEdit->eventEditSelectAccept += MyGUI::newDelegate(this, &SpellCreationDialog::onAccept);
 
+        mAvailableEffectsList->eventKeyButtonPressed += MyGUI::newDelegate(this, &SpellCreationDialog::onKeyButtonPressed);
+
         setWidgets(mAvailableEffectsList, mUsedEffectsView);
+
+        mUsesHighlightOffset = true;
     }
 
     void SpellCreationDialog::setPtr(const MWWorld::Ptr& actor)
@@ -369,6 +506,8 @@ namespace MWGui
 
         mPtr = actor;
         mNameEdit->setCaption({});
+
+        widgetHighlight(0);
 
         startEditing();
     }
@@ -438,7 +577,10 @@ namespace MWGui
     void SpellCreationDialog::onOpen()
     {
         center();
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mAvailableEffectsList);
+        else
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
     }
 
     void SpellCreationDialog::onReferenceUnavailable()
@@ -493,6 +635,7 @@ namespace MWGui
     }
 
     // ------------------------------------------------------------------------------------------------
+
 
     EffectEditorBase::EffectEditorBase(Type type)
         : mAvailableEffectsList(nullptr)

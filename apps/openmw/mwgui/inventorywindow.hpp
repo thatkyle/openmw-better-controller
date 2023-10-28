@@ -6,6 +6,7 @@
 
 #include "../mwrender/characterpreview.hpp"
 #include "../mwworld/ptr.hpp"
+#include "../mwinput/actions.hpp"
 
 namespace osg
 {
@@ -29,6 +30,8 @@ namespace MWGui
     class TradeItemModel;
     class DragAndDrop;
     class ItemModel;
+
+    struct MenuControl;
 
     class InventoryWindow : public WindowPinnableBase
     {
@@ -67,8 +70,14 @@ namespace MWGui
 
         std::string_view getWindowIdForLua() const override { return "Inventory"; }
 
+            void focus() override;
+
+            void onBackgroundSelected();
+
     protected:
         void onTitleDoubleClicked() override;
+
+            ControlSet getControlLegendContents() override;
 
     private:
         DragAndDrop* mDragAndDrop;
@@ -114,6 +123,7 @@ namespace MWGui
         void onItemSelectedFromSourceModel(int index);
 
         void onBackgroundSelected();
+        std::string getModeSetting() const;
 
         void sellItem(MyGUI::Widget* sender, int count);
         void dragItem(MyGUI::Widget* sender, int count);
@@ -138,6 +148,18 @@ namespace MWGui
         /// Unequips count items from mSelectedItem, if it is equipped, and then updates mSelectedItem in case the items
         /// were re-stacked
         void ensureSelectedItemUnequipped(int count);
+
+            // Gamepad Menu Controls:
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+            void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+            void gamepadDelayedAction();
+            void gamepadHighlightSelected();
+            void gamepadCycleFilter(MWInput::MenuAction action);
+            int mGamepadSelected;
+            int mGamepadFilterSelected;
+            bool isFilterCycleMode;
+            MWInput::MenuAction mLastAction;
     };
 }
 

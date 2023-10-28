@@ -1,5 +1,7 @@
 #include "messagebox.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
 #include <MyGUI_LanguageManager.h>
@@ -11,6 +13,8 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
+
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -202,7 +206,7 @@ namespace MWGui
 
     InteractiveMessageBox::InteractiveMessageBox(
         MessageBoxManager& parMessageBoxManager, const std::string& message, const std::vector<std::string>& buttons)
-        : WindowModal(MWBase::Environment::get().getWindowManager()->isGuiMode()
+        : ButtonMenu(MWBase::Environment::get().getWindowManager()->isGuiMode()
                 ? "openmw_interactive_messagebox_notransp.layout"
                 : "openmw_interactive_messagebox.layout")
         , mMessageBoxManager(parMessageBoxManager)
@@ -240,7 +244,7 @@ namespace MWGui
                 MyGUI::WidgetStyle::Child, std::string("MW_Button"), dummyCoord, MyGUI::Align::Default);
             button->setCaptionWithReplacing(buttonId);
 
-            button->eventMouseButtonClick += MyGUI::newDelegate(this, &InteractiveMessageBox::mousePressed);
+            registerButtonPress(button, MyGUI::newDelegate(this, &InteractiveMessageBox::mousePressed));
 
             mButtons.push_back(button);
 
@@ -262,8 +266,10 @@ namespace MWGui
             }
         }
 
+        bool areButtonsOnOneLine = buttonsWidth < textSize.width;
+
         MyGUI::IntSize mainWidgetSize;
-        if (buttonsWidth < textSize.width)
+        if (areButtonsOnOneLine)
         {
             // on one line
             mainWidgetSize.width = textSize.width + 3 * textPadding;
@@ -356,6 +362,8 @@ namespace MWGui
             messageWidgetCoord.height = textSize.height;
             mMessageWidget->setCoord(messageWidgetCoord);
         }
+
+        registerButtons(mButtons, !areButtonsOnOneLine);
 
         setVisible(true);
     }

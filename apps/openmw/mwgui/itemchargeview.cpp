@@ -24,7 +24,7 @@ namespace MWGui
 {
     ItemChargeView::ItemChargeView()
         : mScrollView(nullptr)
-        , mDisplayMode(DisplayMode_Health)
+      , mDisplayMode(DisplayMode_Health)
     {
     }
 
@@ -53,6 +53,29 @@ namespace MWGui
     {
         mDisplayMode = type;
         update();
+    }
+
+    MyGUI::Widget* ItemChargeView::getItemWidget(int index)
+    {
+        if (mLines.size())
+            return mLines[index].mIcon;
+        else
+            return nullptr;
+    }
+
+    size_t ItemChargeView::getItemCount()
+    {
+        return mLines.size();
+    }
+
+    void ItemChargeView::scrollToTarget(int index)
+    {
+        if (mScrollView->isVisibleVScroll() && index >= 0)
+        {
+            int scrollTargetOffset = 36 * index;
+
+            mScrollView->setViewOffset(MyGUI::IntPoint(scrollTargetOffset, 0));
+        }
     }
 
     void ItemChargeView::update()

@@ -23,6 +23,7 @@ namespace MWGui
         Recharge();
 
         void onOpen() override;
+    void onClose() override;
 
         void setPtr(const MWWorld::Ptr& gem) override;
 
@@ -51,7 +52,13 @@ namespace MWGui
         void onItemClicked(MyGUI::Widget* sender, const MWWorld::Ptr& item);
         void onCancel(MyGUI::Widget* sender);
         void onMouseWheel(MyGUI::Widget* _sender, int _rel);
-    };
+        // gamepad functions
+    void gamepadHighlightSelected();
+    void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+    int mGamepadSelected;
+
+};
 
 }
 

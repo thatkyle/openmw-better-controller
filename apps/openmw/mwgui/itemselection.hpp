@@ -20,6 +20,7 @@ namespace MWGui
     public:
         ItemSelectionDialog(const std::string& label);
 
+        void onClose() override;
         bool exit() override;
 
         typedef MyGUI::delegates::MultiDelegate<> EventHandle_Void;
@@ -32,13 +33,24 @@ namespace MWGui
         void setCategory(int category);
         void setFilter(int filter);
 
+    protected:
+        ControlSet getControlLegendContents() override;
+
+
     private:
         ItemView* mItemView;
         SortFilterItemModel* mSortModel;
+        MyGUI::Button* mCancelButton;
 
         void onSelectedItem(int index);
 
         void onCancelButtonClicked(MyGUI::Widget* sender);
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        void gamepadHighlightSelected();
+        unsigned int mGamepadSelected;
+
+
     };
 
 }

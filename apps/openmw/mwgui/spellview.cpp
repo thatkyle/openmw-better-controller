@@ -28,6 +28,8 @@ namespace MWGui
         : mScrollView(nullptr)
         , mShowCostColumn(true)
         , mHighlightSelected(true)
+        , mHighlight(0)
+        , mHighlightWidget(nullptr)
     {
     }
 
@@ -135,6 +137,9 @@ namespace MWGui
                 mLines.emplace_back(t, (MyGUI::Widget*)nullptr, i);
 
             t->setStateSelected(spell.mSelected);
+
+            if (mHighlight == i)
+                mHighlightWidget = t;
         }
 
         layoutWidgets();
@@ -295,7 +300,10 @@ namespace MWGui
 
     SpellModel::ModelIndex SpellView::getSpellModelIndex(MyGUI::Widget* widget)
     {
-        return MyGUI::utility::parseInt(widget->getUserString(sSpellModelIndex));
+        if (widget->isUserString(sSpellModelIndex))
+            return MyGUI::utility::parseInt(widget->getUserString(sSpellModelIndex));
+        else
+            return -1;
     }
 
     void SpellView::onSpellSelected(MyGUI::Widget* _sender)
@@ -315,5 +323,40 @@ namespace MWGui
     void SpellView::resetScrollbars()
     {
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
+    }
+
+    int SpellView::getItemCount()
+    {
+        return mModel->getItemCount();
+    }
+
+    void SpellView::highlightItem(int index)
+    {
+        mHighlight = index;
+        update();
+        scrollToTarget();
+    }
+
+    MyGUI::Widget* SpellView::getHighlightWidget()
+    {
+        return mHighlightWidget;
+    }
+
+    void SpellView::scrollToTarget()
+    {
+        // Centers target list item in mScrollView.
+        if (!mScrollView->isVisibleVScroll())
+            return;
+
+        if (mHighlightWidget != NULL)
+        {
+            int scrollPos = (mHighlightWidget->getCoord().top - (mScrollView->getViewCoord().height / 2)) * -1;
+            mScrollView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+        }
+    }
+
+    int SpellView::getScrollViewWidth()
+    {
+        return mScrollView->getWidth() - (mScrollView->isVisibleVScroll() ? 18 : 0);
     }
 }

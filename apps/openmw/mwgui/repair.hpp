@@ -20,6 +20,7 @@ namespace MWGui
         Repair();
 
         void onOpen() override;
+    void onClose() override;
 
         void setPtr(const MWWorld::Ptr& item) override;
 
@@ -50,7 +51,13 @@ namespace MWGui
 
         void onRepairItem(MyGUI::Widget* sender, const MWWorld::Ptr& ptr);
         void onCancel(MyGUI::Widget* sender);
-    };
+        // gamepad functions
+    void gamepadHighlightSelected();
+    void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+    int mGamepadSelected;
+
+};
 
 }
 

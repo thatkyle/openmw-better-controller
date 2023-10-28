@@ -1,11 +1,11 @@
 #ifndef MWGUI_CONFIRMATIONDIALOG_H
 #define MWGUI_CONFIRMATIONDIALOG_H
 
-#include "windowbase.hpp"
+#include "buttonmenu.hpp"
 
 namespace MWGui
 {
-    class ConfirmationDialog : public WindowModal
+    class ConfirmationDialog : public ButtonMenu
     {
     public:
         ConfirmationDialog();

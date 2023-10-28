@@ -23,6 +23,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/esmstore.hpp"
@@ -33,6 +34,7 @@
 
 #include "tooltips.hpp"
 #include "ustring.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -45,6 +47,8 @@ namespace MWGui
         , mChanged(true)
         , mMinFullWidth(mMainWidget->getSize().width)
     {
+        getWidget(mHealthText, "Health");
+        mHealthText->eventKeyButtonPressed += MyGUI::newDelegate(this, &StatsWindow::onKeyButtonPressed);
 
         const MWWorld::ESMStore& store = *MWBase::Environment::get().getESMStore();
         MyGUI::Widget* attributeView = getWidget("AttributeView");
@@ -66,6 +70,10 @@ namespace MWGui
                 "SandTextRight", { 160, 0, 44, 18 }, MyGUI::Align::Right | MyGUI::Align::Top);
             value->setNeedMouseFocus(false);
             mAttributeWidgets.emplace(attribute.mId, value);
+
+            MyGUI::Widget* ptr;
+            getWidget(ptr, names[i][0]);
+            mAttributeWidgets.push_back(ptr);
         }
 
         getWidget(mSkillView, "SkillView");
@@ -84,14 +92,30 @@ namespace MWGui
         onWindowResize(t);
     }
 
+    void StatsWindow::focus()
+    {
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mHealthText);
+    }
+
     void StatsWindow::onMouseWheel(MyGUI::Widget* _sender, int _rel)
     {
         if (mSkillView->getViewOffset().top + _rel * 0.3 > 0)
             mSkillView->setViewOffset(MyGUI::IntPoint(0, 0));
         else
-            mSkillView->setViewOffset(
-                MyGUI::IntPoint(0, static_cast<int>(mSkillView->getViewOffset().top + _rel * 0.3)));
+            mSkillView->setViewOffset(MyGUI::IntPoint(0, static_cast<int>(mSkillView->getViewOffset().top + _rel * 0.3)));
     }
+
+    void StatsWindow::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        if (!MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+    }
+
+	void StatsWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+	{
+        updateHighlightVisibility();
+        updateGamepadTooltip(nullptr);
+	}
 
     void StatsWindow::onWindowResize(MyGUI::Window* window)
     {
@@ -455,6 +479,8 @@ namespace MWGui
         coord1.top += lineHeight;
         coord2.top += lineHeight;
 
+        mNavigableSkillWidgets.push_back(skillNameWidget);
+
         return std::make_pair(skillNameWidget, skillValueWidget);
     }
 
@@ -471,6 +497,7 @@ namespace MWGui
         skillNameWidget->setSize(textWidth, skillNameWidget->getHeight());
 
         mSkillWidgets.push_back(skillNameWidget);
+        mNavigableSkillWidgets.push_back(skillNameWidget);
 
         const int lineHeight = Settings::gui().mFontSize + 2;
         coord1.top += lineHeight;
@@ -539,6 +566,7 @@ namespace MWGui
             MyGUI::Gui::getInstance().destroyWidget(widget);
         }
         mSkillWidgets.clear();
+        mNavigableSkillWidgets.clear();
 
         const int valueSize = 40;
         MyGUI::IntCoord coord1(10, 0, mSkillView->getWidth() - (10 + valueSize) - 24, 18);
@@ -705,6 +733,42 @@ namespace MWGui
         mSkillView->setVisibleVScroll(false);
         mSkillView->setCanvasSize(mSkillView->getWidth(), std::max(mSkillView->getHeight(), coord1.top));
         mSkillView->setVisibleVScroll(true);
+
+
+        // Set up window navigation
+        mWindowNavigator = WindowNavigator();
+
+        MyGUI::Widget* health, * magicka, * fatigue, * level, * race, * clazz;
+        getWidget(health, "Health");
+        getWidget(magicka, "Magicka");
+        getWidget(fatigue, "Fatigue");
+        getWidget(level, "LevelText");
+        getWidget(race, "RaceText");
+        getWidget(clazz, "ClassText");
+
+        std::vector<MyGUI::Widget*> leftWidgets{ health, magicka, fatigue, level, race, clazz };
+        std::vector<MyGUI::Widget*> rightWidgets;
+
+        for (auto widget : mAttributeWidgets)
+            leftWidgets.push_back(widget);
+
+        for (auto i = 1; i < mSkillWidgets.size(); i += 2)
+            rightWidgets.push_back(mSkillWidgets[i]);
+
+        mWindowNavigator.addWidgetSet(leftWidgets, true);
+        mWindowNavigator.addWidgetSet(mNavigableSkillWidgets, true);
+
+        mWindowNavigator.addLeftRightConnection(health, rightWidgets[0]);
+        mWindowNavigator.onHover(rightWidgets[0], [this](MyGUI::Widget* sender) {
+            // Centers target list item
+            if (!mSkillView->isVisibleVScroll())
+                return;
+
+            int scrollPos = (sender->getCoord().top - (mSkillView->getViewCoord().height / 2)) * -1;
+            mSkillView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+        });
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     void StatsWindow::onPinToggled()
@@ -725,4 +789,63 @@ namespace MWGui
         else if (!mPinned)
             MWBase::Environment::get().getWindowManager()->toggleVisible(GW_Stats);
     }
+
+
+
+    void StatsWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        if (character != 1 && character != 2) // Gamepad control.
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (character == 1 && mWindowNavigator.processInput(action))
+        {
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+            return;
+        }
+
+        if (character == 2 && action == MWInput::MenuAction::MA_Y)
+        {
+            updateGamepadTooltip(nullptr);
+            return;
+        }
+
+        if (character == 1)
+        {
+            if (action == MWInput::MenuAction::MA_B)
+                MWBase::Environment::get().getWindowManager()->exitCurrentGuiMode();
+            else if (action == MWInput::MenuAction::MA_Y)
+                updateGamepadTooltip(mWindowNavigator.getSelectedWidget());
+            else if (action == MWInput::MenuAction::MA_LTrigger || action == MWInput::MenuAction::MA_RTrigger)
+            {
+                if (MWBase::Environment::get().getWindowManager()->processInventoryTrigger(action, GM_Inventory, GW_Stats))
+                {
+                    MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+                    updateHighlightVisibility();
+                }
+            }
+            else
+            {
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            }
+        }
+    }
+
+    ControlSet StatsWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_LTrigger, "Map"},
+                MenuControl{MWInput::MenuAction::MA_RTrigger, "Inventory"},
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
+    }
 }
+
+

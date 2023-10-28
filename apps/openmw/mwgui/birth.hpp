@@ -3,9 +3,12 @@
 
 #include "windowbase.hpp"
 #include <components/esm/refid.hpp>
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
+    class WindowNavigator;
+
     class BirthDialog : public WindowModal
     {
     public:
@@ -45,7 +48,10 @@ namespace MWGui
         void onOkClicked(MyGUI::Widget* _sender);
         void onBackClicked(MyGUI::Widget* _sender);
 
+        ControlSet getControlLegendContents() override;
+
     private:
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
         void updateBirths();
         void updateSpells();
 
@@ -55,6 +61,8 @@ namespace MWGui
         std::vector<MyGUI::Widget*> mSpellItems;
 
         ESM::RefId mCurrentBirthId;
+
+        WindowNavigator mWindowNavigator;
     };
 }
 #endif

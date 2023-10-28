@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MyGUI type="Resource" version="1.1">
+
+    <!-- Highlight frame definition -->
+    <Resource type="ResourceSkin" name="MW_Highlight_Frame" size="516 516">
+        <Child type="Widget" skin="IB_T" offset="2 0 8 2" align="Top Left"/>
+        <Child type="Widget" skin="IB_T" offset="506 0 8 2" align="Top Right"/>
+        <Child type="Widget" skin="IB_B" offset="2 514 8 2" align="Bottom Left"/>
+        <Child type="Widget" skin="IB_B" offset="506 514 8 2" align="Bottom Right"/>
+        <Child type="Widget" skin="IB_L" offset="0 2 2 8" align="Top Left"/>
+        <Child type="Widget" skin="IB_L" offset="0 506 2 8" align="Bottom Left"/>
+        <Child type="Widget" skin="IB_R" offset="514 2 2 8" align="Top Right"/>
+        <Child type="Widget" skin="IB_R" offset="514 506 2 8" align="Bottom Right"/>
+        <Child type="Widget" skin="IB_TL" offset="0 0 2 2" align="Top Left"/>
+        <Child type="Widget" skin="IB_TR" offset="514 0 2 2" align="Top Right"/>
+        <Child type="Widget" skin="IB_BL" offset="0 514 2 2" align="Bottom Left"/>
+        <Child type="Widget" skin="IB_BR" offset="514 514 2 2" align="Bottom Right"/>
+    </Resource>
+
+    <Resource type="ImageBox" name="MW_Blue_Border" texture="blue">
+        <BasisSkin type="MainSkin">
+            <State name="normal"/>
+        </BasisSkin>
+    </Resource>
+
+    <Resource type="ResourceSkin" name="MW_Highlight_Frame_Blue" size="516 516">
+        <Child type="Widget" skin="MW_Blue_Border" offset="2 0 8 2" align="Top Left"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="506 0 8 2" align="Top Right"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="2 514 8 2" align="Bottom Left"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="506 514 8 2" align="Bottom Right"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="0 2 2 8" align="Top Left"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="0 506 2 8" align="Bottom Left"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="514 2 2 8" align="Top Right"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="514 506 2 8" align="Bottom Right"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="0 0 2 2" align="Top Left"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="514 0 2 2" align="Top Right"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="0 514 2 2" align="Bottom Left"/>
+        <Child type="Widget" skin="MW_Blue_Border" offset="514 514 2 2" align="Bottom Right"/>
+    </Resource>
+
+
+
+    <Resource type="ResourceSkin" name="MW_Highlight_Frame_Trans" size="40 40">
+        <Child type="Widget" skin="MW_Box" offset="0 0 40 40" align="Left Stretch"/>
+    </Resource>
+
+
+</MyGUI>

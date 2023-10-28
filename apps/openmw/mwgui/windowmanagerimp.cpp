@@ -74,6 +74,8 @@
 
 #include "../mwrender/postprocessor.hpp"
 
+#include "../mwinput/actions.hpp"
+
 #include "alchemywindow.hpp"
 #include "backgroundimage.hpp"
 #include "bookpage.hpp"
@@ -120,6 +122,8 @@
 #include "ustring.hpp"
 #include "videowidget.hpp"
 #include "waitdialog.hpp"
+#include "controllegend.hpp"
+#include "virtualkeyboard.hpp"
 
 namespace MWGui
 {
@@ -157,7 +161,8 @@ namespace MWGui
         , mCurrentModals()
         , mHud(nullptr)
         , mMap(nullptr)
-        , mStatsWindow(nullptr)
+        , mGamepadToolTips(nullptr)
+      , mStatsWindow(nullptr)
         , mConsole(nullptr)
         , mDialogueWindow(nullptr)
         , mInventoryWindow(nullptr)
@@ -165,7 +170,8 @@ namespace MWGui
         , mBookWindow(nullptr)
         , mCountDialog(nullptr)
         , mTradeWindow(nullptr)
-        , mSettingsWindow(nullptr)
+        , mContainerWindow(nullptr)
+      , mSettingsWindow(nullptr)
         , mConfirmationDialog(nullptr)
         , mSpellWindow(nullptr)
         , mQuickKeysMenu(nullptr)
@@ -180,8 +186,7 @@ namespace MWGui
         , mDebugWindow(nullptr)
         , mPostProcessorHud(nullptr)
         , mJailScreen(nullptr)
-        , mContainerWindow(nullptr)
-        , mTranslationDataStorage(translationDataStorage)
+          , mTranslationDataStorage(translationDataStorage)
         , mInputBlocker(nullptr)
         , mHudEnabled(true)
         , mCursorVisible(true)
@@ -197,6 +202,11 @@ namespace MWGui
         , mVersionDescription(versionDescription)
         , mWindowVisible(true)
         , mCfgMgr(cfgMgr)
+      , mKeyPressConsumed(false)
+      , mControlLegend(nullptr)
+      , mVirtualKeyboard(nullptr)
+      , mGamepadHighlight(nullptr)
+      , mLastInventoryFocus(GW_Inventory)
     {
         int w, h;
         SDL_GetWindowSize(window, &w, &h);
@@ -343,14 +353,14 @@ namespace MWGui
         mWindows.push_back(std::move(spellWindow));
         trackWindow(mSpellWindow, makeSpellsWindowSettingValues());
 
-        mGuiModeStates[GM_Inventory] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
-        mGuiModeStates[GM_None] = GuiModeState({ mMap, mInventoryWindow, mSpellWindow, mStatsWindow });
+        mGuiModeStates[GM_Inventory] = GuiModeState({ mInventoryWindow, mMap, mSpellWindow, mStatsWindow });
+        mGuiModeStates[GM_None] = GuiModeState({ mInventoryWindow, mMap, mSpellWindow, mStatsWindow });
 
         auto tradeWindow = std::make_unique<TradeWindow>();
         mTradeWindow = tradeWindow.get();
         mWindows.push_back(std::move(tradeWindow));
         trackWindow(mTradeWindow, makeBarterWindowSettingValues());
-        mGuiModeStates[GM_Barter] = GuiModeState({ mInventoryWindow, mTradeWindow });
+        mGuiModeStates[GM_Barter] = GuiModeState({ mTradeWindow, mInventoryWindow });
 
         auto console = std::make_unique<Console>(w, h, mConsoleOnlyScripts, mCfgMgr);
         mConsole = console.get();
@@ -391,6 +401,7 @@ namespace MWGui
         mWindows.push_back(std::move(hud));
 
         mToolTips = std::make_unique<ToolTips>();
+        mGamepadToolTips = new ToolTips();
 
         auto scrollWindow = std::make_unique<ScrollWindow>();
         mScrollWindow = scrollWindow.get();
@@ -511,6 +522,14 @@ namespace MWGui
         mHud->setVisible(true);
 
         mCharGen = std::make_unique<CharacterCreation>(mViewer->getSceneData()->asGroup(), mResourceSystem);
+
+        mControlLegend = new ControlLegend();
+        mVirtualKeyboard = new VirtualKeyboard();
+        
+        mGamepadHighlight = MyGUI::Gui::getInstance().createWidgetReal<MyGUI::ImageBox>("ImageBox", 0,0,0,0, MyGUI::Align::Default, "Global_GamepadHighlight");
+        mGamepadHighlight->setVisible(false);
+        mGamepadHighlight->setImageTexture("grey");
+        mGamepadHighlight->setDepth(INT_MAX);
 
         updatePinnedWindows();
 
@@ -640,7 +659,11 @@ namespace MWGui
             setCursorVisible(!gameMode);
 
         if (gameMode)
+        {
             setKeyFocusWidget(nullptr);
+            mGamepadToolTips->setGamepadGuiFocusWidget(nullptr, nullptr);
+            mControlLegend->clearControls();
+        }
 
         // Icons of forced hidden windows are displayed
         setMinimapVisibility((mAllowed & GW_Map) && (!mMap->pinned() || (mForceHidden & GW_Map)));
@@ -650,6 +673,12 @@ namespace MWGui
         setHMSVisibility((mAllowed & GW_Stats) && (!mStatsWindow->pinned() || (mForceHidden & GW_Stats)));
 
         mInventoryWindow->setGuiMode(getMode());
+
+        // Rebuild current highlights. This prevents a requirement on windows to manage their own highlights onclose().
+        for (WindowBase *window : mWindows)
+            window->updateHighlightVisibility();
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            toggleSelectionHighlights(true); // Avoid double-labor in hiding if joystickLastUsed = false.
 
         // If in game mode (or interactive messagebox), show the pinned windows
         if (mGuiModes.empty())
@@ -661,6 +690,7 @@ namespace MWGui
                 && !(mForceHidden & GW_Inventory) && (mAllowed & GW_Inventory));
             mSpellWindow->setVisible(
                 mSpellWindow->pinned() && !isConsoleMode() && !(mForceHidden & GW_Magic) && (mAllowed & GW_Magic));
+            mControlLegend->setVisible(false);
             return;
         }
         else if (getMode() != GM_Inventory)
@@ -706,6 +736,32 @@ namespace MWGui
             default:
                 break;
         }
+
+        std::function< void(MWInput::GameControl) > gameControlChangeListener = [this, mode](MWInput::GameControl controlMode) {
+            if (controlMode == MWInput::GameControl::Controller)
+            {
+                if (mode == GM_Inventory)
+                {
+                    if (mLastInventoryFocus == GW_Inventory)
+                        mInventoryWindow->focus();
+                    else if (mLastInventoryFocus == GW_Magic)
+                        mSpellWindow->focus();
+                    else if (mLastInventoryFocus == GW_Stats)
+                        mStatsWindow->focus();
+                    //TODO: map
+                }
+                else if (mode != GM_None && !mGuiModeStates[mode].mWindows.empty())
+                {
+                    // focus the first window in the list
+                    mGuiModeStates[mode].mWindows.front()->focus();
+
+                }
+            }
+        };
+
+        gameControlChangeListener(MWInput::GameControl::Controller);
+
+        MWBase::Environment::get().getInputManager()->registerGamepadControlChangeEvent(gameControlChangeListener);
     }
 
     void WindowManager::setDrowningTimeLeft(float time, float maxTime)
@@ -1044,6 +1100,11 @@ namespace MWGui
         mToolTips->setFocusObjectScreenCoords(min_x, min_y, max_x, max_y);
     }
 
+    void WindowManager::setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout)
+    {
+        mGamepadToolTips->setGamepadGuiFocusWidget(target, layout);
+    }
+
     bool WindowManager::toggleFullHelp()
     {
         return mToolTips->toggleFullHelp();
@@ -1170,6 +1231,154 @@ namespace MWGui
                 static_cast<Settings::WindowMode>(Settings::Manager::getInt("window mode", "Video")),
                 Settings::Manager::getBool("window border", "Video"));
         }
+    }
+
+    bool WindowManager::processInventoryTrigger(MWInput::MenuAction action,
+                                                MWGui::GuiMode caller,
+                                                MWGui::GuiWindow window)
+    {
+        int eff = mShown & mAllowed & ~mForceHidden;
+
+        switch (action)
+        {
+        case MWInput::MenuAction::MA_LTrigger:
+            if (caller == GM_Inventory)
+            {
+                switch (window)
+                {
+                case GuiWindow::GW_Inventory:
+                    if (GuiWindow::GW_Stats & eff)
+                    {
+                        mStatsWindow->focus();
+                        mLastInventoryFocus = GuiWindow::GW_Stats;
+                        break;
+                    }
+                case  GuiWindow::GW_Magic:
+                    if (GuiWindow::GW_Inventory & eff)
+                    {
+                        mInventoryWindow->focus();
+                        mLastInventoryFocus = GuiWindow::GW_Inventory;
+                        break;
+                    }
+                case  GuiWindow::GW_Map:
+                    if (GuiWindow::GW_Magic & eff)
+                    {
+                        mSpellWindow->focus();
+                        mLastInventoryFocus = GuiWindow::GW_Magic;
+                        break;
+                    }
+                case  GuiWindow::GW_Stats:
+                    if (GuiWindow::GW_Map & eff)
+                    {
+                        //mMap->focus();
+                        //mLastInventoryFocus = GuiWindow::GW_Map;
+                        break;
+                    }
+                default:
+                    return false;
+                }
+            }
+            else if (caller == GM_Barter)
+            {
+                if (window == GW_Inventory)
+                {
+                    mTradeWindow->focus();
+                    break;
+                }
+                else
+                {
+                    mInventoryWindow->focus();
+                    break;
+                }
+            }
+            else if (caller == GM_Container)
+            {
+                if (window == GW_Inventory)
+                {
+                    mContainerWindow->focus();
+                    break;
+                }
+                else
+                {
+                    mInventoryWindow->focus();
+                    break;
+                }
+            }
+            else
+            {
+                return false;
+            }
+            break;
+        case MWInput::MenuAction::MA_RTrigger:
+            if (caller == GM_Inventory)
+            {
+                switch (window)
+                {
+                case GuiWindow::GW_Inventory:
+                    if (GuiWindow::GW_Magic & eff)
+                    {
+                        mLastInventoryFocus = GW_Magic;
+                        mSpellWindow->focus();
+                        break;
+                    }
+                case  GuiWindow::GW_Magic:
+                    if (GuiWindow::GW_Map & eff)
+                    {
+                        //mMap->focus();
+                        break;
+                    }
+                case  GuiWindow::GW_Map:
+                    if (GuiWindow::GW_Stats & eff)
+                    {
+                        //mStatsWindow->focus();
+                        break;
+                    }
+                case  GuiWindow::GW_Stats:
+                    if (GuiWindow::GW_Inventory & eff)
+                    {
+                        mLastInventoryFocus = GW_Inventory;
+                        mInventoryWindow->focus();
+                        break;
+                    }
+                default:
+                    return false;
+                }
+            }
+            else if (caller == GM_Barter)
+            {
+                if (window == GW_Inventory)
+                {
+                    mTradeWindow->focus();
+                    break;
+                }
+                else
+                {
+                    mInventoryWindow->focus();
+                    break;
+                }
+            }
+            else if (caller == GM_Container)
+            {
+                if (window == GW_Inventory)
+                {
+                    mContainerWindow->focus();
+                    break;
+                }
+                else
+                {
+                    mInventoryWindow->focus();
+                    break;
+                }
+            }
+            else
+            {
+                return false;
+            }
+            break;
+        default:
+            return false;
+        }
+        return true;
     }
 
     void WindowManager::windowResized(int x, int y)
@@ -1478,6 +1687,7 @@ namespace MWGui
     {
         return mPostProcessorHud;
     }
+    MWGui::ContainerWindow* WindowManager::getContainerWindow() { return mContainerWindow; }
 
     void WindowManager::useItem(const MWWorld::Ptr& item, bool bypassBeastRestrictions)
     {
@@ -1676,7 +1886,18 @@ namespace MWGui
     void WindowManager::onKeyFocusChanged(MyGUI::Widget* widget)
     {
         if (widget && widget->castType<MyGUI::EditBox>(false))
-            SDL_StartTextInput();
+        {
+            if (MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
+            {
+                SDL_StartTextInput();
+            }
+            else
+            {
+                SDL_StartTextInput();
+                // TODO: enable the on-screen keyboard
+                //mOnscreenKeyboard->setVisible(true);
+            }
+        }
         else
             SDL_StopTextInput();
     }
@@ -1703,6 +1924,26 @@ namespace MWGui
     bool WindowManager::getCursorVisible()
     {
         return mCursorVisible && mCursorActive;
+    }
+
+    void WindowManager::toggleSelectionHighlights(bool toggle)
+    {
+        for (WindowBase *window : mWindows)
+        {
+            if (window->isVisible())
+                window->updateHighlightVisibility();
+        }
+
+        for (WindowModal *modal : mCurrentModals)
+        {
+            if (modal->isVisible())
+                modal->updateHighlightVisibility();
+        }
+
+        if (!toggle)
+        {
+            mGamepadToolTips->setGamepadGuiFocusWidget(nullptr, nullptr);
+        }
     }
 
     void WindowManager::trackWindow(Layout* layout, const WindowSettingValues& settings)
@@ -1928,12 +2169,14 @@ namespace MWGui
 
     void WindowManager::exitCurrentModal()
     {
+        std::cout << "Current modal count: " << mCurrentModals.size() << std::endl;
         if (!mCurrentModals.empty())
         {
             WindowModal* window = mCurrentModals.back();
             if (!window->exit())
                 return;
             window->setVisible(false);
+            window->updateHighlightVisibility();
         }
     }
 
@@ -1947,12 +2190,15 @@ namespace MWGui
 
         mKeyboardNavigation->setModalWindow(input->mMainWidget);
         mKeyboardNavigation->setDefaultFocus(input->mMainWidget, input->getDefaultKeyFocus());
+        input->updateHighlightVisibility();
     }
 
     void WindowManager::removeCurrentModal(WindowModal* input)
     {
         if (!mCurrentModals.empty())
         {
+            if (input)
+                input->updateHighlightVisibility();
             if (input == mCurrentModals.back())
             {
                 mCurrentModals.pop_back();
@@ -2236,6 +2482,14 @@ namespace MWGui
         }
 
         {
+            MyGUI::ITexture* tex = MyGUI::RenderManager::getInstance().createTexture("grey");
+            tex->createManual(8, 8, MyGUI::TextureUsage::Write, MyGUI::PixelFormat::R8G8B8);
+            unsigned char* data = reinterpret_cast<unsigned char*>(tex->lock(MyGUI::TextureUsage::Write));
+            std::fill_n(data, 8 * 8 * 3, 127);
+            tex->unlock();
+        }
+
+        {
             MyGUI::ITexture* tex = MyGUI::RenderManager::getInstance().createTexture("transparent");
             tex->createManual(8, 8, MyGUI::TextureUsage::Write, MyGUI::PixelFormat::R8G8B8A8);
             setMenuTransparency(Settings::gui().mMenuTransparency);
@@ -2313,10 +2567,45 @@ namespace MWGui
         return MyGUI::InputManager::getInstance().injectKeyRelease(key);
     }
 
+    void WindowManager::consumeKeyPress(bool consume)
+    {
+        mKeyPressConsumed = consume;
+    }
+
     void WindowManager::GuiModeState::update(bool visible)
     {
         for (const auto& window : mWindows)
             window->setVisible(visible);
+    }
+
+    bool WindowManager::noRepeatKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat)
+    {
+        // Text == 1 is used to signal gamepad controls.
+        if (text == 1)
+        {
+            MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+            if (!(action >= MWInput::MA_RTrigger && action <= MWInput::MA_DPadRight)) // DPad and triggers are repeatable.
+                return true;
+        }
+        else if (key == MyGUI::KeyCode::Return || key == MyGUI::KeyCode::Space || key == MyGUI::KeyCode::NumpadEnter)
+            return true;
+
+        return false;
+    }
+
+    bool WindowManager::noRepeatKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat)
+    {
+        // Text == 1 is used to signal gamepad controls.
+        if (text == 1)
+        {
+            MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+            if (!(action >= MWInput::MA_RTrigger && action <= MWInput::MA_DPadRight)) // DPad and triggers are repeatable.
+                return true;
+        }
+        else if (key == MyGUI::KeyCode::Return || key == MyGUI::KeyCode::Space || key == MyGUI::KeyCode::NumpadEnter)
+            return true;
+
+        return false;
     }
 
     void WindowManager::watchActor(const MWWorld::Ptr& ptr)
@@ -2393,4 +2682,44 @@ namespace MWGui
         }
         return res;
     }
+
+    void WindowManager::setMenuControls(ControlSet& controlSet) 
+    {
+        mControlLegend->setControls(controlSet);
+    }
+
+    void WindowManager::clearMenuControls()
+    {
+        mControlLegend->clearControls();
+    }
+
+    void WindowManager::setHighlight(MyGUI::Widget* target)
+    {
+        if (target)
+        {
+            mGamepadHighlight->setCoord(target->getAbsoluteCoord());
+            Log(Debug::Info) << "Set coords: " << target->getAbsoluteCoord();
+        }
+
+        mGamepadHighlight->setVisible(isGuiMode());
+
+        Log(Debug::Info) << "Set visibility: " << isGuiMode();
+
+    }
+
+    void WindowManager::startVirtualKeyboard(MyGUI::EditBox* target, const std::function<void()> onAccept)
+    {
+        mVirtualKeyboard->open(target, onAccept);
+    }
+
+    void WindowManager::startVirtualKeyboard(MyGUI::EditBox* target)
+    {
+        mVirtualKeyboard->open(target);
+    }
+
+    bool WindowManager::virtualKeyboardVisible()
+    {
+        return mVirtualKeyboard->isVisible();
+    }
+
 }

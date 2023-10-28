@@ -48,8 +48,11 @@ namespace Gui
         ///< get widget for an item name, useful to set up tooltip
 
         void scrollToTop();
+        void scrollToTarget(const std::string name);
 
         void setPropertyOverride(std::string_view _key, std::string_view _value) override;
+
+        void setSpacingOverride(const int spacingOverride) { mSpacingOverride = spacingOverride; };
 
     protected:
         void initialiseOverride() override;
@@ -67,6 +70,7 @@ namespace Gui
         std::vector<std::string> mItems;
 
         int mItemHeight; // height of all items
+        int mSpacingOverride;
     };
 }
 

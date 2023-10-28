@@ -13,6 +13,7 @@ namespace Gui
         : mScrollView(nullptr)
         , mClient(nullptr)
         , mItemHeight(0)
+        , mSpacingOverride(-1)
     {
     }
 
@@ -48,13 +49,14 @@ namespace Gui
     {
         constexpr int _scrollBarWidth = 20; // fetch this from skin?
         const int scrollBarWidth = scrollbarShown ? _scrollBarWidth : 0;
-        constexpr int spacing = 3;
+        constexpr int spacing = mSpacingOverride == -1 ? 3 : mSpacingOverride;
         int viewPosition = -mScrollView->getViewOffset().top;
 
         while (mScrollView->getChildCount())
         {
             MyGUI::Gui::getInstance().destroyWidget(mScrollView->getChildAt(0));
         }
+
 
         mItemHeight = 0;
         int i = 0;
@@ -172,5 +174,19 @@ namespace Gui
     void MWList::scrollToTop()
     {
         mScrollView->setViewOffset(MyGUI::IntPoint(0, 0));
+    }
+
+    void MWList::scrollToTarget(const std::string name)
+    {
+        // Centers target list item in mScrollView.
+        if (!mScrollView->isVisibleVScroll() || name.empty())
+            return; // Gamepad doesn't select separators so scrolling to them is pointless.
+
+        MyGUI::Button *target = getItemWidget(name);
+        if (target != NULL)
+        {
+            int scrollPos = (target->getCoord().top - (mScrollView->getViewCoord().height / 2)) * -1;
+            mScrollView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+        }
     }
 }

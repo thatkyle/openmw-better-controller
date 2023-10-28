@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "windowbase.hpp"
+#include "windownavigator.hpp"
 
 namespace MWState
 {
@@ -23,6 +24,9 @@ namespace MWGui
         void onClose() override;
 
         void setLoadOrSave(bool load);
+
+    protected:
+        ControlSet getControlLegendContents() override;
 
     private:
         void confirmDeleteSave();
@@ -66,6 +70,8 @@ namespace MWGui
 
         const MWState::Character* mCurrentCharacter;
         const MWState::Slot* mCurrentSlot;
+        WindowNavigator mWindowNavigator;
+
     };
 
 }

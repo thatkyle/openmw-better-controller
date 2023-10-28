@@ -20,6 +20,7 @@ namespace MWGui
 {
     class ItemModel;
     class ItemWidget;
+    class ItemStack;
 
     class ItemChargeView final : public MyGUI::Widget
     {
@@ -37,6 +38,11 @@ namespace MWGui
         static void registerComponents();
 
         void initialiseOverride() override;
+
+            MyGUI::Widget* getItemWidget(int index);
+            size_t getItemCount();
+
+            void scrollToTarget(int index);
 
         /// Takes ownership of \a model
         void setModel(ItemModel* model);

@@ -20,6 +20,7 @@
 #include <components/settings/values.hpp>
 
 #include "tooltips.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -27,6 +28,7 @@ namespace MWGui
     TrainingWindow::TrainingWindow()
         : WindowBase("openmw_trainingwindow.layout")
         , mTimeAdvancer(0.05f)
+        , mGamepadSelected(0)
     {
         getWidget(mTrainingOptions, "TrainingOptions");
         getWidget(mCancelButton, "CancelButton");
@@ -36,6 +38,8 @@ namespace MWGui
 
         mTimeAdvancer.eventProgressChanged += MyGUI::newDelegate(this, &TrainingWindow::onTrainingProgressChanged);
         mTimeAdvancer.eventFinished += MyGUI::newDelegate(this, &TrainingWindow::onTrainingFinished);
+
+        mTrainingOptions->eventKeyButtonPressed += MyGUI::newDelegate(this, &TrainingWindow::onKeyButtonPressed);
     }
 
     void TrainingWindow::onOpen()
@@ -48,7 +52,20 @@ namespace MWGui
         else
             mProgressBar.setVisible(false);
 
+        mGamepadSelected = 0;
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTrainingOptions);
+
         center();
+    }
+
+    void TrainingWindow::onClose()
+    {
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+    }
+
+    void TrainingWindow::onClose()
+    {
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
     }
 
     void TrainingWindow::setPtr(const MWWorld::Ptr& actor)
@@ -128,6 +145,8 @@ namespace MWGui
 
             ToolTips::createSkillToolTip(button, skill->mId);
         }
+
+        gamepadHighlightSelected();
 
         center();
     }
@@ -229,6 +248,87 @@ namespace MWGui
     bool TrainingWindow::exit()
     {
         return !mTimeAdvancer.isRunning();
+    }
+
+    void TrainingWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        if (character != 1) // Gamepad control.
+            return;
+
+        int trainingCount = mTrainingOptions->getChildCount();
+
+        if (trainingCount == 0)
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        //TODO: support going through active effects; for now, just support spell selection
+
+        if (action == MWInput::MenuAction::MA_DPadDown)
+        {
+            if (mGamepadSelected < trainingCount - 1)
+            {
+                mGamepadSelected++;
+                gamepadHighlightSelected();
+            }
+        }
+        else if (action == MWInput::MenuAction::MA_DPadUp)
+        {
+            if (mGamepadSelected > 0)
+            {
+                mGamepadSelected--;
+                gamepadHighlightSelected();
+            }
+        }
+        else if (action == MWInput::MenuAction::MA_A)
+        {
+            onTrainingSelected(mTrainingOptions->getChildAt(mGamepadSelected));
+
+            gamepadHighlightSelected();
+        }
+        else if (action == MWInput::MenuAction::MA_B)
+        {
+            onCancelButtonClicked(sender);
+        }
+        else
+        {
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+        }
+    }
+
+    void TrainingWindow::gamepadHighlightSelected()
+    {
+        int trainingCount = mTrainingOptions->getChildCount();
+
+        if (mGamepadSelected > trainingCount - 1)
+            mGamepadSelected = trainingCount - 1;
+        if (mGamepadSelected < 0)
+            mGamepadSelected = 0;
+
+        if (trainingCount)
+        {
+            widgetHighlight(mTrainingOptions->getChildAt(mGamepadSelected));
+
+            updateGamepadTooltip(mTrainingOptions->getChildAt(mGamepadSelected));
+        }
+        else
+        {
+            widgetHighlight(nullptr);
+        }
+    }
+
+    ControlSet TrainingWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 
 }

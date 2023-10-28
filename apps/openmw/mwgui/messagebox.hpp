@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "windowbase.hpp"
+#include "buttonmenu.hpp"
 
 namespace MyGUI
 {
@@ -84,7 +85,7 @@ namespace MWGui
         int mNextBoxPadding;
     };
 
-    class InteractiveMessageBox : public WindowModal
+    class InteractiveMessageBox : public ButtonMenu
     {
     public:
         InteractiveMessageBox(MessageBoxManager& parMessageBoxManager, const std::string& message,

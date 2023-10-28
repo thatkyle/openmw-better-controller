@@ -13,6 +13,8 @@
 
 #include <MyGUI_Delegate.h>
 
+#include "windownavigator.hpp"
+
 namespace Gui
 {
     class AutoSizedTextBox;
@@ -39,6 +41,7 @@ namespace MWGui
 
         void updateTopics() const;
     };
+    class WindowNavigator;
 
     class PersuasionDialog : public WindowModal
     {
@@ -69,6 +72,10 @@ namespace MWGui
 
         void onCancel(MyGUI::Widget* sender);
         void onPersuade(MyGUI::Widget* sender);
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        WindowNavigator mWindowNavigator;
     };
 
     struct Link
@@ -163,6 +170,7 @@ namespace MWGui
 
         void updateTopics();
 
+        void onOpen() override;
         void onClose() override;
 
         std::string_view getWindowIdForLua() const override { return "Dialogue"; }
@@ -185,6 +193,11 @@ namespace MWGui
         void updateHistory(bool scrollbar = false);
 
         void onReferenceUnavailable() override;
+        void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        MyGUI::IntCoord highlightOffset() override;
+
+        ControlSet getControlLegendContents() override;
 
     private:
         void updateDisposition();
@@ -220,6 +233,13 @@ namespace MWGui
         std::unique_ptr<ResponseCallback> mGreetingCallback;
 
         void updateTopicFormat();
+        void updateHighlightAndCaptionList();
+
+        std::vector<MyGUI::Button*> mTopicWidgets;
+        unsigned int mTopicHighlight;
+        int mChoiceHighlight;
+        int mChoiceToRealVal;
+        std::string mCurrentTopic;
     };
 }
 #endif

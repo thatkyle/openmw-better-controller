@@ -5,6 +5,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 
@@ -63,8 +64,11 @@ namespace MWGui
             mSourceSortModel = playerFilterModel;
         }
 
+    if (!MWBase::Environment::get().getInputManager()->joystickLastUsed()) {
+        // we only play drag sounds if we're using a mouse and keyboard 
         const ESM::RefId& sound = mItem.mBase.getClass().getUpSoundId(mItem.mBase);
         MWBase::Environment::get().getWindowManager()->playSound(sound);
+    }
 
         if (mSourceSortModel)
         {

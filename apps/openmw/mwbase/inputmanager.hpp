@@ -19,8 +19,17 @@ namespace ESM
     class ESMWriter;
 }
 
+namespace MWInput
+{
+    enum class GameControl {
+        MouseAndKeyboard,
+        Controller
+    };
+}
+
 namespace MWBase
 {
+
     /// \brief Interface for input manager (implemented in MWInput)
     class InputManager
     {
@@ -46,6 +55,7 @@ namespace MWBase
 
         virtual void setDragDrop(bool dragDrop) = 0;
         virtual void setGamepadGuiCursorEnabled(bool enabled) = 0;
+            virtual bool isGamepadGuiCursorEnabled() = 0;
 
         virtual void toggleControlSwitch(std::string_view sw, bool value) = 0;
         virtual bool getControlSwitch(std::string_view sw) = 0;
@@ -77,6 +87,9 @@ namespace MWBase
         virtual bool joystickLastUsed() = 0;
         virtual void setJoystickLastUsed(bool enabled) = 0;
 
+            /// Returns a ratio 0 - 1 of the given gamepad axis pressure, 0 is none.
+            virtual float getAxisRatio(int action) = 0;
+
         virtual int countSavedGameRecords() const = 0;
         virtual void write(ESM::ESMWriter& writer, Loading::Listener& progress) = 0;
         virtual void readRecord(ESM::ESMReader& reader, uint32_t type) = 0;
@@ -87,6 +100,11 @@ namespace MWBase
         virtual void executeAction(int action) = 0;
 
         virtual bool controlsDisabled() = 0;
+
+            /// Fires each event when the game control changes between mouse and keyboard
+            /// Lambda listener takes a GameControl to indicate which mode we're switching to
+            virtual void registerGamepadControlChangeEvent(std::function<void(MWInput::GameControl)> listener) = 0;
+            virtual void fireGamepadControlChangeEvent(MWInput::GameControl gameControlMode) = 0;
     };
 }
 

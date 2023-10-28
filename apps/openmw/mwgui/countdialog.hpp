@@ -23,6 +23,9 @@ namespace MWGui
         */
         EventHandle_WidgetInt eventOkClicked;
 
+        protected:
+            MyGUI::IntCoord highlightOffset() override { return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8)); };
+
     private:
         MyGUI::ScrollBar* mSlider;
         Gui::NumericEditBox* mItemEdit;
@@ -36,6 +39,9 @@ namespace MWGui
         void onEditValueChanged(int value);
         void onSliderMoved(MyGUI::ScrollBar* _sender, size_t _position);
         void onEnterKeyPressed(MyGUI::EditBox* _sender);
+
+            // Gamepad Menu Controls:  
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
     };
 
 }

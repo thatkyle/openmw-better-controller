@@ -3,6 +3,30 @@
 
 namespace MWInput
 {
+    enum MenuAction
+    {
+        // Used for gamepad GUI controls. Mimics original XBox button mappings.
+        MA_None,
+        MA_A,
+        MA_B,
+        MA_X,
+        MA_Y,
+        MA_RTrigger,
+        MA_LTrigger,
+        MA_DPadUp,
+        MA_DPadDown,
+        MA_DPadLeft,
+        MA_DPadRight,
+        MA_JSRightClick,
+        MA_JSLeftClick,
+        MA_Start,
+        MA_Select,
+        MA_White,
+        MA_Black,
+        // Specialized actions for menu use.
+        MA_Unequip
+    };
+
     enum Actions
     {
         // Action IDs are used in the configuration file input_v3.xml

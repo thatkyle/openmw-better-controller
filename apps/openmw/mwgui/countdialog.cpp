@@ -8,6 +8,7 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwinput/actions.hpp"
 
 namespace MWGui
 {
@@ -27,6 +28,10 @@ namespace MWGui
         mSlider->eventScrollChangePosition += MyGUI::newDelegate(this, &CountDialog::onSliderMoved);
         // make sure we read the enter key being pressed to accept multiple items
         mItemEdit->eventEditSelectAccept += MyGUI::newDelegate(this, &CountDialog::onEnterKeyPressed);
+        mItemEdit->eventKeyButtonPressed += MyGUI::newDelegate(this, &CountDialog::onKeyButtonPressed);
+
+        mUsesHighlightOffset = true;
+        widgetHighlight(mSlider);
     }
 
     void CountDialog::openCountDialog(const std::string& item, const std::string& message, const int maxCount)
@@ -85,5 +90,35 @@ namespace MWGui
     void CountDialog::onSliderMoved(MyGUI::ScrollBar* _sender, size_t _position)
     {
         mItemEdit->setValue(_position + 1);
+    }
+
+    void CountDialog::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        if (character != 1) // Gamepad control.
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        switch (action)
+        {
+            case MWInput::MA_A:
+                onOkButtonClicked(mOkButton);
+                break;
+            case MWInput::MA_B:
+                onCancelButtonClicked(mCancelButton);
+                break;
+            case MWInput::MA_DPadLeft:
+                mSlider->setScrollPosition(mSlider->getScrollPosition() - 1);
+                onSliderMoved(mSlider, mSlider->getScrollPosition());
+                break;
+            case MWInput::MA_DPadRight:
+                if (mSlider->getScrollPosition() < mSlider->getScrollRange() - 1)
+                    mSlider->setScrollPosition(mSlider->getScrollPosition() + 1);
+                onSliderMoved(mSlider, mSlider->getScrollPosition());
+                break;
+            default:
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+                break;
+        }
     }
 }

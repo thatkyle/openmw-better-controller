@@ -20,6 +20,10 @@
 #include "../mwmechanics/creaturestats.hpp"
 #include "../mwmechanics/spells.hpp"
 
+#include "../mwinput/actions.hpp"
+
+#include "controllegend.hpp"
+
 namespace MWGui
 {
     SpellBuyingWindow::SpellBuyingWindow()
@@ -31,6 +35,8 @@ namespace MWGui
         getWidget(mSpellsView, "SpellsView");
 
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SpellBuyingWindow::onCancelButtonClicked);
+        mSpellsView->eventKeyButtonPressed += MyGUI::newDelegate(this, &SpellBuyingWindow::onKeyButtonPressed);
+        mSpellsView->eventKeyLostFocus += MyGUI::newDelegate(this, &SpellBuyingWindow::onFocusLost);
     }
 
     bool SpellBuyingWindow::sortSpells(const ESM::Spell* left, const ESM::Spell* right)
@@ -79,6 +85,8 @@ namespace MWGui
         while (mSpellsView->getChildCount())
             MyGUI::Gui::getInstance().destroyWidget(mSpellsView->getChildAt(0));
         mSpellsWidgetMap.clear();
+        mSpellWidgets.clear();
+        mSpellHighlight = 0;
     }
 
     void SpellBuyingWindow::setPtr(const MWWorld::Ptr& actor)
@@ -136,6 +144,25 @@ namespace MWGui
             MyGUI::IntSize(mSpellsView->getWidth(), std::max(mSpellsView->getHeight(), mCurrentY)));
         mSpellsView->setVisibleVScroll(true);
         mSpellsView->setViewOffset(MyGUI::IntPoint(0, startOffset));
+
+        // Gamepad controls, currently jumps to top whenever a spell is purchased.
+        MWWorld::Ptr player = MWMechanics::getPlayer();
+        int playerGold = player.getClass().getContainerStore(player).count(MWWorld::ContainerStore::sGoldId);
+        MyGUI::EnumeratorWidgetPtr spellList = mSpellsView->getEnumerator();
+        while (spellList.next())
+        {
+            // Must use price to determine if a spell is enabled due to setEnabled removing tooltip. Price is stored in UserData in addSpell.
+            if (*spellList.current()->getUserData<int>() <= playerGold)
+                mSpellWidgets.push_back(spellList.current());
+        }
+
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSpellsView);
+
+        if (!mSpellWidgets.empty())
+        {
+            widgetHighlight(mSpellWidgets[mSpellHighlight]);
+            updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
+        }
     }
 
     bool SpellBuyingWindow::playerHasSpell(const ESM::RefId& id)
@@ -198,5 +225,68 @@ namespace MWGui
         else
             mSpellsView->setViewOffset(
                 MyGUI::IntPoint(0, static_cast<int>(mSpellsView->getViewOffset().top + _rel * 0.3f)));
+    }
+
+    void SpellBuyingWindow::onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus)
+    {
+        updateGamepadTooltip(nullptr);
+    }
+
+
+    void SpellBuyingWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B || (mSpellWidgets.empty() && action == MWInput::MA_A))
+            onCancelButtonClicked(sender);
+        else if (!mSpellWidgets.empty()) // Only control spell options if there are any.
+        {
+            if (action == MWInput::MA_A)
+                onSpellButtonClick(mSpellWidgets[mSpellHighlight]);
+            else if (action == MWInput::MA_A)
+                onCancelButtonClicked(mCancelButton);
+            else if (action == MWInput::MA_DPadUp && mSpellHighlight > 0)
+            {
+                --mSpellHighlight;
+                scrollToTarget();
+                widgetHighlight(mSpellWidgets[mSpellHighlight]);
+                updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
+            }
+            else if (action == MWInput::MA_DPadDown && mSpellHighlight < mSpellWidgets.size() - 1)
+            {
+                ++mSpellHighlight;
+                scrollToTarget();
+                widgetHighlight(mSpellWidgets[mSpellHighlight]);
+                updateGamepadTooltip(mSpellWidgets[mSpellHighlight]);
+            }
+        }
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+
+    void SpellBuyingWindow::scrollToTarget()
+    {
+        // Centers target list item in mScrollView.
+        if (!mSpellsView->isVisibleVScroll())
+            return;
+
+        int scrollPos = (mSpellWidgets[mSpellHighlight]->getCoord().top - (mSpellsView->getViewCoord().height / 2)) * -1;
+        mSpellsView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+    }
+
+    ControlSet SpellBuyingWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 }

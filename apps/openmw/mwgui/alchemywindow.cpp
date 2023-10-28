@@ -1,16 +1,19 @@
 #include "alchemywindow.hpp"
 
+#include <vector>
+#include <string>
+#include <MyGUI_Gui.h>
 #include <MyGUI_Button.h>
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_ControllerManager.h>
 #include <MyGUI_ControllerRepeatClick.h>
 #include <MyGUI_EditBox.h>
-#include <MyGUI_Gui.h>
 
 #include <components/esm3/loadingr.hpp>
 #include <components/esm3/loadmgef.hpp>
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 
@@ -29,6 +32,8 @@
 #include "sortfilteritemmodel.hpp"
 #include "ustring.hpp"
 #include "widgets.hpp"
+#include "controllegend.hpp"
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
@@ -40,6 +45,7 @@ namespace MWGui
         , mAlchemy(std::make_unique<MWMechanics::Alchemy>())
         , mApparatus(4)
         , mIngredients(4)
+        , mWindowNavigator(nullptr)
     {
         getWidget(mCreateButton, "CreateButton");
         getWidget(mCancelButton, "CancelButton");
@@ -72,6 +78,8 @@ namespace MWGui
 
         mItemView->eventItemClicked += MyGUI::newDelegate(this, &AlchemyWindow::onSelectedItem);
 
+        mItemView->eventKeyButtonPressed += MyGUI::newDelegate(this, &AlchemyWindow::onKeyButtonPressed);
+
         mIngredients[0]->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::onIngredientSelected);
         mIngredients[1]->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::onIngredientSelected);
         mIngredients[2]->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::onIngredientSelected);
@@ -84,6 +92,8 @@ namespace MWGui
         mFilterValue->eventComboChangePosition += MyGUI::newDelegate(this, &AlchemyWindow::onFilterChanged);
         mFilterValue->eventEditTextChange += MyGUI::newDelegate(this, &AlchemyWindow::onFilterEdited);
         mFilterType->eventMouseButtonClick += MyGUI::newDelegate(this, &AlchemyWindow::switchFilterType);
+
+        mUsesHighlightOffset = true;
 
         center();
     }
@@ -255,6 +265,7 @@ namespace MWGui
     {
         mAlchemy->clear();
         mAlchemy->setAlchemist(MWMechanics::getPlayer());
+        mAlchemy->setAlchemist(MWMechanics::getPlayer());
 
         auto model = std::make_unique<InventoryItemModel>(MWMechanics::getPlayer());
         mModel = model.get();
@@ -284,7 +295,20 @@ namespace MWGui
         update();
         initFilter();
 
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
+        mWindowNavigator = std::make_unique<WindowNavigator>(mNameEdit);
+        mWindowNavigator->addWidgetSet(std::vector<MyGUI::Widget*>(mIngredients.begin(), mIngredients.end()), false);
+        mWindowNavigator->addWidget(mItemView);
+
+        mWindowNavigator->addUpDownConnection(mNameEdit, mIngredients[0]);
+        mWindowNavigator->addUpDownConnection(mIngredients[0], mItemView);
+
+        widgetHighlight(mWindowNavigator->getSelectedWidget());
+
+        // we never want to focus the name edit field when using the controller
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
+        else
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mNameEdit);
     }
 
     void AlchemyWindow::onIngredientSelected(MyGUI::Widget* _sender)
@@ -449,6 +473,59 @@ namespace MWGui
     {
         int currentCount = mBrewCountEdit->getValue();
         if (currentCount > 1)
-            mBrewCountEdit->setValue(currentCount - 1);
+            mBrewCountEdit->setValue(currentCount-1);
+    }
+
+    void AlchemyWindow::onFrame(float dt)
+    {
+        // we never want to focus the name edit field when using the controller
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed() && 
+                !MWBase::Environment::get().getWindowManager()->virtualKeyboardVisible())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mItemView);
+    }
+
+    MyGUI::IntCoord AlchemyWindow::highlightOffset()
+    {
+        // increase the highlight size if we're targetting the spell name or ingredients
+        if (mWindowNavigator != nullptr && (mWindowNavigator->getSelectedWidget() == mNameEdit || 
+                std::count(mIngredients.begin(), mIngredients.end(), mWindowNavigator->getSelectedWidget())))
+            return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8));
+
+        return MyGUI::IntCoord();
+    }
+
+    void AlchemyWindow::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator->processInput(action))
+        {
+            widgetHighlight(mWindowNavigator->getSelectedWidget());
+            return;
+        }
+
+        if (action == MWInput::MA_B) // back
+            onCancelButtonClicked(sender);
+        else if (action == MWInput::MA_X) // create
+            onCreateButtonClicked(mCreateButton);
+    }
+
+    ControlSet AlchemyWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Inventory"},
+                MenuControl{MWInput::MenuAction::MA_X, "Create"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
+        };
     }
 }

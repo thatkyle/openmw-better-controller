@@ -5,6 +5,7 @@
 #include "windowpinnablebase.hpp"
 #include <components/esm/attr.hpp>
 #include <components/esm/refid.hpp>
+#include "windownavigator.hpp"
 
 namespace MWGui
 {
@@ -47,6 +48,8 @@ namespace MWGui
 
         std::string_view getWindowIdForLua() const override { return "Stats"; }
 
+            void focus() override;
+
     private:
         void addSkills(const std::vector<ESM::RefId>& skills, const std::string& titleId,
             const std::string& titleDefault, MyGUI::IntCoord& coord1, MyGUI::IntCoord& coord2);
@@ -63,6 +66,12 @@ namespace MWGui
         void onWindowResize(MyGUI::Window* window);
         void onMouseWheel(MyGUI::Widget* _sender, int _rel);
 
+            void onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus);
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
+            void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+            ControlSet getControlLegendContents() override;
+
+            MyGUI::Widget* mHealthText;
         MyGUI::Widget* mLeftPane;
         MyGUI::Widget* mRightPane;
 
@@ -76,11 +85,15 @@ namespace MWGui
         FactionList mFactions; ///< Stores a list of factions and the current rank
         ESM::RefId mBirthSignId;
         int mReputation, mBounty;
+            std::vector<MyGUI::Widget*> mAttributeWidgets;
         std::vector<MyGUI::Widget*> mSkillWidgets; //< Skills and other information
+            std::vector<MyGUI::Widget*> mNavigableSkillWidgets; //< Skills and other information
         std::set<ESM::RefId> mExpelled;
 
         bool mChanged;
         const int mMinFullWidth;
+
+            WindowNavigator mWindowNavigator;
 
     protected:
         void onPinToggled() override;

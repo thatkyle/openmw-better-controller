@@ -8,6 +8,7 @@
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwmechanics/actorutil.hpp"
 
@@ -21,6 +22,7 @@
 
 #include "tooltips.hpp"
 #include "ustring.hpp"
+#include "controllegend.hpp"
 
 namespace
 {
@@ -38,7 +40,7 @@ namespace MWGui
     /* GenerateClassResultDialog */
 
     GenerateClassResultDialog::GenerateClassResultDialog()
-        : WindowModal("openmw_chargen_generate_class_result.layout")
+        : ButtonMenu("openmw_chargen_generate_class_result.layout")
     {
         setText("ReflectT",
             MWBase::Environment::get().getWindowManager()->getGameSettingString("sMessageQuestionAnswer1", {}));
@@ -49,12 +51,14 @@ namespace MWGui
         MyGUI::Button* backButton;
         getWidget(backButton, "BackButton");
         backButton->setCaptionWithReplacing("#{sMessageQuestionAnswer3}");
-        backButton->eventMouseButtonClick += MyGUI::newDelegate(this, &GenerateClassResultDialog::onBackClicked);
+        registerButtonPress(backButton, MyGUI::newDelegate(this, &GenerateClassResultDialog::onBackClicked));
 
         MyGUI::Button* okButton;
         getWidget(okButton, "OKButton");
         okButton->setCaptionWithReplacing("#{sMessageQuestionAnswer2}");
-        okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &GenerateClassResultDialog::onOkClicked);
+        registerButtonPress(okButton, MyGUI::newDelegate(this, &GenerateClassResultDialog::onOkClicked));
+
+        registerButtons({ backButton, okButton }, false);
 
         center();
     }
@@ -107,6 +111,7 @@ namespace MWGui
         mClassList->setScrollVisible(true);
         mClassList->eventListSelectAccept += MyGUI::newDelegate(this, &PickClassDialog::onAccept);
         mClassList->eventListChangePosition += MyGUI::newDelegate(this, &PickClassDialog::onSelectClass);
+        mClassList->eventKeyButtonPressed += MyGUI::newDelegate(this, &PickClassDialog::onKeyButtonPressed);
 
         getWidget(mClassImage, "ClassImage");
 
@@ -149,6 +154,8 @@ namespace MWGui
 
         if (!classId.empty())
             setClassId(classId);
+
+        mWindowNavigator = WindowNavigator(mClassList);
     }
 
     void PickClassDialog::setClassId(const ESM::RefId& classId)
@@ -166,6 +173,30 @@ namespace MWGui
         }
 
         updateStats();
+    }
+
+    void PickClassDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator.processInput(action))
+            return;
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            PickClassDialog::onBackClicked(sender);
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
     }
 
     // widget controls
@@ -299,7 +330,7 @@ namespace MWGui
         for (unsigned i = 0; i < count; ++i)
         {
             MyGUI::Widget* child = widget->getChildAt(i);
-            if (!child->getVisible())
+            if (!child->getVisible() || child == mGamepadHighlight)
                 continue;
 
             child->setPosition(child->getLeft(), pos);
@@ -311,7 +342,7 @@ namespace MWGui
     }
 
     InfoBoxDialog::InfoBoxDialog()
-        : WindowModal("openmw_infobox.layout")
+        : ButtonMenu("openmw_infobox.layout")
     {
         getWidget(mTextBox, "TextBox");
         getWidget(mText, "Text");
@@ -351,21 +382,27 @@ namespace MWGui
             button->getSubWidgetText()->setWordWrap(true);
             button->setCaption(text);
             fitToText(button);
-            button->eventMouseButtonClick += MyGUI::newDelegate(this, &InfoBoxDialog::onButtonClicked);
+
+            registerButtonPress(button, MyGUI::newDelegate(this, &InfoBoxDialog::onButtonClicked));
+
             coord.top += button->getHeight();
             this->mButtons.push_back(button);
         }
+
+        registerButtons(this->mButtons, true);
     }
 
     void InfoBoxDialog::onOpen()
     {
-        WindowModal::onOpen();
+        ButtonMenu::onOpen();
         // Fix layout
         layoutVertically(mTextBox, 4);
         layoutVertically(mButtonBar, 6);
         layoutVertically(mMainWidget, 4 + 6);
 
         center();
+
+        highlightSelectedButton();
     }
 
     void InfoBoxDialog::onButtonClicked(MyGUI::Widget* _sender)
@@ -444,20 +481,22 @@ namespace MWGui
         setText("LabelT", MWBase::Environment::get().getWindowManager()->getGameSettingString("sName", {}));
         getWidget(mEditName, "EditName");
 
-        // Make sure the edit box has focus
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mEditName);
-
         MyGUI::Button* descriptionButton;
         getWidget(descriptionButton, "DescriptionButton");
         descriptionButton->eventMouseButtonClick += MyGUI::newDelegate(this, &CreateClassDialog::onDescriptionClicked);
 
-        MyGUI::Button* backButton;
-        getWidget(backButton, "BackButton");
-        backButton->eventMouseButtonClick += MyGUI::newDelegate(this, &CreateClassDialog::onBackClicked);
+        getWidget(mBackButton, "BackButton");
+        mBackButton->eventMouseButtonClick += MyGUI::newDelegate(this, &CreateClassDialog::onBackClicked);
 
-        MyGUI::Button* okButton;
-        getWidget(okButton, "OKButton");
-        okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &CreateClassDialog::onOkClicked);
+        getWidget(mOkButton, "OKButton");
+        mOkButton->eventMouseButtonClick += MyGUI::newDelegate(this, &CreateClassDialog::onOkClicked);
+        mOkButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &CreateClassDialog::onKeyButtonPressed);
+
+        // Make sure the edit box has focus
+        if (!MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mEditName);
+        else
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
 
         // Set default skills, attributes
 
@@ -476,11 +515,67 @@ namespace MWGui
         mMinorSkill[3]->setSkillId(ESM::Skill::Athletics);
         mMinorSkill[4]->setSkillId(ESM::Skill::Enchant);
 
+        // set up window navigator
+        mWindowNavigator.addWidget(mEditName);
+
+        mWindowNavigator.addWidget(mSpecializationName);
+        mWindowNavigator.addWidget(mFavoriteAttribute0);
+        mWindowNavigator.addWidget(mFavoriteAttribute1);
+
+        mWindowNavigator.addWidget(mMajorSkill[0]);
+        mWindowNavigator.addWidget(mMajorSkill[1]);
+        mWindowNavigator.addWidget(mMajorSkill[2]);
+        mWindowNavigator.addWidget(mMajorSkill[3]);
+        mWindowNavigator.addWidget(mMajorSkill[4]);
+
+        mWindowNavigator.addWidget(mMinorSkill[0]);
+        mWindowNavigator.addWidget(mMinorSkill[1]);
+        mWindowNavigator.addWidget(mMinorSkill[2]);
+        mWindowNavigator.addWidget(mMinorSkill[3]);
+        mWindowNavigator.addWidget(mMinorSkill[4]);
+
+        mWindowNavigator.addUpDownConnection(mEditName, mMinorSkill[0]);
+        mWindowNavigator.addUpDownConnection(mEditName, mMajorSkill[0]);
+        mWindowNavigator.addUpDownConnection(mEditName, mSpecializationName);
+
+        mWindowNavigator.addUpDownConnection(mSpecializationName, mFavoriteAttribute0);
+        mWindowNavigator.addUpDownConnection(mFavoriteAttribute0, mFavoriteAttribute1);
+
+        for (auto i = 0; i < 4; i++)
+        {
+            mWindowNavigator.addUpDownConnection(mMajorSkill[i], mMajorSkill[i + 1]);
+            mWindowNavigator.addUpDownConnection(mMinorSkill[i], mMinorSkill[i + 1]);
+        }
+
+        mWindowNavigator.addLeftRightConnection(mFavoriteAttribute1, mMajorSkill[4]);
+        mWindowNavigator.addLeftRightConnection(mFavoriteAttribute1, mMajorSkill[3]);
+        mWindowNavigator.addLeftRightConnection(mFavoriteAttribute0, mMajorSkill[2]);
+        mWindowNavigator.addLeftRightConnection(mSpecializationName, mMajorSkill[1]);
+        mWindowNavigator.addLeftRightConnection(mSpecializationName, mMajorSkill[0]);
+
+        mWindowNavigator.addLeftRightConnection(mMajorSkill[0], mMinorSkill[0]);
+        mWindowNavigator.addLeftRightConnection(mMajorSkill[1], mMinorSkill[1]);
+        mWindowNavigator.addLeftRightConnection(mMajorSkill[2], mMinorSkill[2]);
+        mWindowNavigator.addLeftRightConnection(mMajorSkill[3], mMinorSkill[3]);
+        mWindowNavigator.addLeftRightConnection(mMajorSkill[4], mMinorSkill[4]);
+
         setSpecialization(0);
         update();
+
+        mUsesHighlightOffset = true;
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     CreateClassDialog::~CreateClassDialog() = default;
+
+    void CreateClassDialog::onFrame(float dt)
+    {
+        // we never want to focus the name edit field when using the controller
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed() &&
+                !MWBase::Environment::get().getWindowManager()->virtualKeyboardVisible())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
+    }
 
     void CreateClassDialog::update()
     {
@@ -492,6 +587,8 @@ namespace MWGui
 
         ToolTips::createAttributeToolTip(mFavoriteAttribute0, mFavoriteAttribute0->getAttributeId());
         ToolTips::createAttributeToolTip(mFavoriteAttribute1, mFavoriteAttribute1->getAttributeId());
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     std::string CreateClassDialog::getName() const
@@ -672,6 +769,69 @@ namespace MWGui
         eventBack();
     }
 
+    void CreateClassDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1 && character != 2)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (character == 2)
+        {
+            if (action == MWInput::MA_Y)
+                updateGamepadTooltip(nullptr);
+            return;
+        }
+
+        if (mWindowNavigator.processInput(action))
+        {
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+            return;
+        }
+
+        switch (action)
+        {
+        case MWInput::MA_Start:
+            mOkButton->eventMouseButtonClick(mOkButton);
+            break;
+        case MWInput::MA_B:
+            mBackButton->eventMouseButtonClick(mBackButton);
+            break;
+        case MWInput::MA_Y:
+            updateGamepadTooltip(mWindowNavigator.getSelectedWidget());
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
+    ControlSet CreateClassDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"},
+                MenuControl{MWInput::MenuAction::MA_Y, "Info"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_Start, "Accept"},
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
+        };
+    }
+
+    MyGUI::IntCoord CreateClassDialog::highlightOffset()
+    { 
+        if (dynamic_cast<MyGUI::EditBox*>(mWindowNavigator.getSelectedWidget()) != nullptr)
+            return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8));
+        else
+            return MyGUI::IntCoord(MyGUI::IntPoint(-2, -2), MyGUI::IntSize(-16, 4));
+    }
+
+
     /* SelectSpecializationDialog */
 
     SelectSpecializationDialog::SelectSpecializationDialog()
@@ -703,11 +863,16 @@ namespace MWGui
 
         ToolTips::createSpecializationToolTip(mSpecialization0, combat, ESM::Class::Combat);
         ToolTips::createSpecializationToolTip(mSpecialization1, magic, ESM::Class::Magic);
-        ToolTips::createSpecializationToolTip(mSpecialization2, stealth, ESM::Class::Stealth);
-
+        ToolTips::createSpecializationToolTip(mSpecialization2, stealth, ESM::Class::Stealth);        
+        
         MyGUI::Button* cancelButton;
-        getWidget(cancelButton, "CancelButton");
         cancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SelectSpecializationDialog::onCancelClicked);
+        cancelButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &SelectSpecializationDialog::onKeyButtonPressed);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(cancelButton);
+
+        mWindowNavigator.addWidgetSet({ mSpecialization0, mSpecialization1, mSpecialization2 }, true);
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     SelectSpecializationDialog::~SelectSpecializationDialog() {}
@@ -739,6 +904,43 @@ namespace MWGui
         return true;
     }
 
+    void SelectSpecializationDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1 && character != 2)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (character == 2)
+        {
+            if (action == MWInput::MA_Y)
+                updateGamepadTooltip(nullptr);
+            return;
+        }
+
+        if (mWindowNavigator.processInput(action))
+        {
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+            return;
+        }
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            mCancelButton->eventMouseButtonClick(mCancelButton);
+            break;
+        case MWInput::MA_Y:
+            updateGamepadTooltip(mWindowNavigator.getSelectedWidget());
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
     /* SelectAttributeDialog */
 
     SelectAttributeDialog::SelectAttributeDialog()
@@ -748,28 +950,26 @@ namespace MWGui
         // Centre dialog
         center();
 
-        const auto& store = MWBase::Environment::get().getWorld()->getStore().get<ESM::Attribute>();
-        MyGUI::ScrollView* attributes;
-        getWidget(attributes, "Attributes");
-        MyGUI::IntCoord coord{ 0, 0, attributes->getWidth(), 18 };
-        for (const ESM::Attribute& attribute : store)
+        for (int i = 0; i < 8; ++i)
         {
-            auto* widget
-                = attributes->createWidget<Widgets::MWAttribute>("MW_StatNameButtonC", coord, MyGUI::Align::Default);
-            coord.top += coord.height;
-            widget->setAttributeId(attribute.mId);
-            widget->eventClicked += MyGUI::newDelegate(this, &SelectAttributeDialog::onAttributeClicked);
-            ToolTips::createAttributeToolTip(widget, attribute.mId);
-        }
+            Widgets::MWAttributePtr attribute;
+            char theIndex = '0'+i;
 
-        attributes->setVisibleVScroll(false);
-        attributes->setCanvasSize(MyGUI::IntSize(attributes->getWidth(), std::max(attributes->getHeight(), coord.top)));
-        attributes->setVisibleVScroll(true);
-        attributes->setViewOffset(MyGUI::IntPoint());
+            getWidget(attribute,  std::string("Attribute").append(1, theIndex));
+            attribute->setAttributeId(ESM::Attribute::sAttributeIds[i]);
+            attribute->eventClicked += MyGUI::newDelegate(this, &SelectAttributeDialog::onAttributeClicked);
+            ToolTips::createAttributeToolTip(attribute, attribute->getAttributeId());
+        }
 
         MyGUI::Button* cancelButton;
         getWidget(cancelButton, "CancelButton");
         cancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SelectAttributeDialog::onCancelClicked);
+        cancelButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &SelectAttributeDialog::onKeyButtonPressed);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(cancelButton);
+
+        mWindowNavigator.addWidgetSet(attributes, true);
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     // widget controls
@@ -790,6 +990,43 @@ namespace MWGui
         eventCancel();
         return true;
     }
+    void SelectAttributeDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1 && character != 2)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (character == 2)
+        {
+            if (action == MWInput::MA_Y)
+                updateGamepadTooltip(nullptr);
+            return;
+        }
+
+        if (mWindowNavigator.processInput(action))
+        {
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+            return;
+        }
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            mCancelButton->eventMouseButtonClick(mCancelButton);
+            break;
+        case MWInput::MA_Y:
+            updateGamepadTooltip(mWindowNavigator.getSelectedWidget());
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
 
     /* SelectSkillDialog */
 
@@ -829,9 +1066,23 @@ namespace MWGui
             widget->setViewOffset(MyGUI::IntPoint());
         }
 
-        MyGUI::Button* cancelButton;
+        for (int spec = 0; spec < 3; ++spec)
+        {
+            for (int i = 0; i < 9; ++i)
+            {
+                if (spec < 2)
+                    mWindowNavigator.addLeftRightConnection(mSkills[spec][i].widget, mSkills[spec + 1][i].widget);
+                if (i < 8)
+                    mWindowNavigator.addUpDownConnection(mSkills[spec][i].widget, mSkills[spec][i + 1].widget);
+            }
+        }
+
+MyGUI::Button* cancelButton;
         getWidget(cancelButton, "CancelButton");
-        cancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SelectSkillDialog::onCancelClicked);
+        cancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &SelectSpecializationDialog::onCancelClicked);        mCancelButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &SelectSkillDialog::onKeyButtonPressed);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mCancelButton);
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     SelectSkillDialog::~SelectSkillDialog() {}
@@ -853,6 +1104,43 @@ namespace MWGui
     {
         eventCancel();
         return true;
+    }
+
+    void SelectSkillDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1 && character != 2)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (character == 2)
+        {
+            if (action == MWInput::MA_Y)
+                updateGamepadTooltip(nullptr);
+            return;
+        }
+
+        if (mWindowNavigator.processInput(action))
+        {
+            widgetHighlight(mWindowNavigator.getSelectedWidget());
+            return;
+        }
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            mCancelButton->eventMouseButtonClick(mCancelButton);
+            break;
+        case MWInput::MA_Y:
+            updateGamepadTooltip(mWindowNavigator.getSelectedWidget());
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
     }
 
     /* DescriptionDialog */

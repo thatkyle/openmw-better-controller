@@ -10,6 +10,7 @@
         <List file="openmw_edit.skin.xml"/>
         <List file="openmw_box.skin.xml"/>
         <List file="openmw_progress.skin.xml"/>
+        <List file="openmw_highlight_frame.skin.xml"/>
         <List file="openmw_hud_energybar.skin.xml"/>
         <List file="openmw_hud_box.skin.xml"/>
         <List file="openmw_mainmenu.skin.xml"/>
@@ -22,4 +23,3 @@
         <List file="openmw_postprocessor_hud.skin.xml" />
     </MyGUI>
 </MyGUI>
-

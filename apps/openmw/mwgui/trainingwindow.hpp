@@ -20,6 +20,7 @@ namespace MWGui
         TrainingWindow();
 
         void onOpen() override;
+        void onClose() override;
 
         bool exit() override;
 
@@ -52,6 +53,13 @@ namespace MWGui
 
         WaitDialogProgressBar mProgressBar;
         TimeAdvancer mTimeAdvancer;
+
+        // gamepad functions
+        void gamepadHighlightSelected();
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+        ControlSet getControlLegendContents() override;
+
+        int mGamepadSelected;
     };
 
 }

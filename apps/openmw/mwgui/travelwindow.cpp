@@ -25,11 +25,16 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 
+#include "../mwinput/actions.hpp"
+
+#include "controllegend.hpp"
+
 namespace MWGui
 {
     TravelWindow::TravelWindow()
         : WindowBase("openmw_travel_window.layout")
         , mCurrentY(0)
+        , mDestinationHighlight(0)
     {
         getWidget(mCancelButton, "CancelButton");
         getWidget(mPlayerGold, "PlayerGold");
@@ -37,6 +42,7 @@ namespace MWGui
         getWidget(mDestinations, "Travel");
         getWidget(mDestinationsView, "DestinationsView");
 
+        mDestinationsView->eventKeyButtonPressed += MyGUI::newDelegate(this, &TravelWindow::onKeyButtonPressed);
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &TravelWindow::onCancelButtonClicked);
 
         mDestinations->setCoord(450 / 2 - mDestinations->getTextSize().width / 2, mDestinations->getTop(),
@@ -108,6 +114,8 @@ namespace MWGui
         mCurrentY = 0;
         while (mDestinationsView->getChildCount())
             MyGUI::Gui::getInstance().destroyWidget(mDestinationsView->getChildAt(0));
+        mDestinationWidgets.clear();
+        mDestinationHighlight = 0;
     }
 
     void TravelWindow::setPtr(const MWWorld::Ptr& actor)
@@ -147,6 +155,18 @@ namespace MWGui
         mDestinationsView->setCanvasSize(
             MyGUI::IntSize(mDestinationsView->getWidth(), std::max(mDestinationsView->getHeight(), mCurrentY)));
         mDestinationsView->setVisibleVScroll(true);
+        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mDestinationsView);
+
+        // Gamepad controls need a list of selectable destinations.
+        MyGUI::EnumeratorWidgetPtr destButtonList = mDestinationsView->getEnumerator();
+        while (destButtonList.next())
+        {
+            if (destButtonList.current()->getEnabled())
+                mDestinationWidgets.push_back(destButtonList.current());
+        }
+
+        if (!mDestinationWidgets.empty())
+            widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
     }
 
     void TravelWindow::onTravelButtonClick(MyGUI::Widget* _sender)
@@ -234,5 +254,62 @@ namespace MWGui
         else
             mDestinationsView->setViewOffset(
                 MyGUI::IntPoint(0, static_cast<int>(mDestinationsView->getViewOffset().top + _rel * 0.3f)));
+    }
+
+    void TravelWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B || (mDestinationWidgets.empty() && action == MWInput::MA_A))
+            onCancelButtonClicked(sender);
+        else if (!mDestinationWidgets.empty()) // Only control travel options if there are any.
+        {
+            if (action == MWInput::MA_A)
+                onTravelButtonClick(mDestinationWidgets[mDestinationHighlight]);
+            else if (action == MWInput::MA_B)
+                onCancelButtonClicked(sender);
+            else if (action == MWInput::MA_DPadUp && mDestinationHighlight > 0)
+            {
+                --mDestinationHighlight;
+                scrollToTarget();
+                widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
+            }
+            else if (action == MWInput::MA_DPadDown && mDestinationHighlight < mDestinationWidgets.size() - 1)
+            {
+                ++mDestinationHighlight;
+                scrollToTarget();
+                widgetHighlight(mDestinationWidgets[mDestinationHighlight]);
+            }
+            else
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+        }
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+
+    void TravelWindow::scrollToTarget()
+    {
+        // Centers target list item in mScrollView.
+        if (!mDestinationsView->isVisibleVScroll())
+            return;
+
+        int scrollPos = (mDestinationWidgets[mDestinationHighlight]->getCoord().top - (mDestinationsView->getViewCoord().height / 2)) * -1;
+        mDestinationsView->setViewOffset(MyGUI::IntPoint(0, scrollPos)); // Clamps to max scroll. Positives are set to 0.
+    }
+
+    ControlSet TravelWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"},
+            }
+        };
     }
 }

@@ -44,7 +44,8 @@ add_openmw_dir (mwgui
     itemmodel containeritemmodel inventoryitemmodel sortfilteritemmodel itemview
     tradeitemmodel companionitemmodel pickpocketitemmodel controllers savegamedialog
     recharge mode videowidget backgroundimage itemwidget screenfader debugwindow spellmodel spellview
-    draganddrop timeadvancer jailscreen itemchargeview keyboardnavigation textcolours statswatcher
+    draganddrop timeadvancer jailscreen itemchargeview keyboardnavigation textcolours statswatcher controllegend
+    virtualkeyboard buttonmenu windownavigator
     postprocessorhud settings
     )
 

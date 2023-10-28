@@ -102,6 +102,11 @@ namespace MWInput
         mControllerManager->setGamepadGuiCursorEnabled(enabled);
     }
 
+    bool InputManager::isGamepadGuiCursorEnabled()
+    {
+        return mControllerManager->gamepadGuiCursorEnabled();
+    }
+
     void InputManager::changeInputMode(bool guiMode)
     {
         mControllerManager->setGuiCursorEnabled(guiMode);
@@ -240,8 +245,25 @@ namespace MWInput
         return mControllerManager->joystickLastUsed();
     }
 
+    float InputManager::getAxisRatio(int action)
+    {
+        return mControllerManager->getAxisRatio(action);
+    }
+
     void InputManager::executeAction(int action)
     {
         mActionManager->executeAction(action);
     }
+
+    void InputManager::registerGamepadControlChangeEvent(std::function<void(GameControl)> listener)
+    {
+        mGameControlChangeListeners.push_back(listener);
+    }
+
+    void InputManager::fireGamepadControlChangeEvent(GameControl gameControlMode)
+    {
+        for (auto listener : mGameControlChangeListeners)
+            listener(gameControlMode);
+    }
+
 }

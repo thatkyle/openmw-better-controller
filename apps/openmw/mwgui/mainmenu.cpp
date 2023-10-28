@@ -261,6 +261,8 @@ namespace MWGui
                 button->setProperty("ImageNormal", "textures\\menu_" + buttonId + ".dds");
                 button->setProperty("ImagePushed", "textures\\menu_" + buttonId + "_pressed.dds");
                 button->eventMouseButtonClick += MyGUI::newDelegate(this, &MainMenu::onButtonClicked);
+                button->eventKeySetFocus += MyGUI::newDelegate(this, &MainMenu::onFocusGained);
+                button->eventKeyButtonPressed += MyGUI::newDelegate(this, &MainMenu::onKeyButtonPressed);
                 button->setUserData(buttonId);
             }
         }
@@ -305,6 +307,27 @@ namespace MWGui
             mButtonBox->setCoord(mWidth / 2 - maxwidth / 2, mHeight - curH - bottomPadding, maxwidth, curH);
         }
         else
-            mButtonBox->setCoord(mWidth / 2 - maxwidth / 2, mHeight / 2 - curH / 2, maxwidth, curH);
+            mButtonBox->setCoord (mWidth/2 - maxwidth/2, mHeight/2 - curH/2, maxwidth, curH);
     }
+
+    void MainMenu::onFocusGained(MyGUI::Widget* sender, MyGUI::Widget* oldFocus)
+    {
+        MWBase::Environment::get().getWindowManager()->clearMenuControls();
+    }
+
+    void MainMenu::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (action == MWInput::MenuAction::MA_B && mButtons["return"]->isVisible())
+        {
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+            MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_MainMenu);
+        }
+    }
+
 }

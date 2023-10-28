@@ -1,5 +1,8 @@
 #include "dialogue.hpp"
 
+#include <vector>
+#include <string>
+
 #include <MyGUI_Button.h>
 #include <MyGUI_LanguageManager.h>
 #include <MyGUI_ProgressBar.h>
@@ -18,6 +21,7 @@
 #include "../mwbase/mechanicsmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
+#include "../mwbase/inputmanager.hpp"
 
 #include "../mwworld/class.hpp"
 #include "../mwworld/containerstore.hpp"
@@ -26,10 +30,13 @@
 #include "../mwmechanics/actorutil.hpp"
 #include "../mwmechanics/creaturestats.hpp"
 
+#include "../mwinput/actions.hpp"
+
 #include "bookpage.hpp"
 #include "textcolours.hpp"
 
 #include "journalbooks.hpp" // to_utf8_span
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -85,6 +92,13 @@ namespace MWGui
         mBribe10Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
         mBribe100Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
         mBribe1000Button->eventMouseButtonClick += MyGUI::newDelegate(this, &PersuasionDialog::onPersuade);
+
+        mAdmireButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mIntimidateButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mTauntButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mBribe10Button->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mBribe100Button->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
+        mBribe1000Button->eventKeyButtonPressed += MyGUI::newDelegate(this, &PersuasionDialog::onKeyButtonPressed);
     }
 
     void PersuasionDialog::adjustAction(MyGUI::Widget* action, int& totalHeight)
@@ -142,11 +156,53 @@ namespace MWGui
             mMainWidget->setSize(mInitialMainWidgetWidth, mMainWidget->getSize().height);
 
         WindowModal::onOpen();
+
+        // overwrite navigator
+        mWindowNavigator = WindowNavigator();
+        mWindowNavigator.addWidgetSet({
+            mAdmireButton,
+            mIntimidateButton,
+            mTauntButton,
+            mBribe10Button,
+            mBribe100Button,
+            mBribe1000Button
+        }, true);
+
+        widgetHighlight(mWindowNavigator.getSelectedWidget());
     }
 
     MyGUI::Widget* PersuasionDialog::getDefaultKeyFocus()
     {
         return mAdmireButton;
+    }
+
+    void PersuasionDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        if (character != 1) // Gamepad control.
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator.processInput(action))
+        {
+            if (isVisible())
+            {
+                widgetHighlight(mWindowNavigator.getSelectedWidget());
+                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mWindowNavigator.getSelectedWidget());
+            }
+            return;
+        }
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            onCancel(mCancelButton);
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
     }
 
     // --------------------------------------------------------------------------------------------------
@@ -304,6 +360,9 @@ namespace MWGui
         , mPersuasionDialog(std::make_unique<ResponseCallback>(this))
         , mCallback(std::make_unique<ResponseCallback>(this))
         , mGreetingCallback(std::make_unique<ResponseCallback>(this, false))
+        , mTopicHighlight(0)
+        , mChoiceHighlight(1)
+        , mChoiceToRealVal(1)
     {
         // Centre dialog
         center();
@@ -319,6 +378,7 @@ namespace MWGui
 
         getWidget(mGoodbyeButton, "ByeButton");
         mGoodbyeButton->eventMouseButtonClick += MyGUI::newDelegate(this, &DialogueWindow::onByeClicked);
+        mGoodbyeButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &DialogueWindow::onKeyButtonPressed);
 
         getWidget(mDispositionBar, "Disposition");
         getWidget(mDispositionText, "DispositionText");
@@ -332,6 +392,8 @@ namespace MWGui
 
         mMainWidget->castType<MyGUI::Window>()->eventWindowChangeCoord
             += MyGUI::newDelegate(this, &DialogueWindow::onWindowResize);
+
+        mUsesHighlightOffset = true;
     }
 
     void DialogueWindow::onTradeComplete()
@@ -359,12 +421,15 @@ namespace MWGui
     {
         // if the window has only been moved, not resized, we don't need to update
         if (mCurrentWindowSize == _sender->getSize())
-            return;
-
-        mTopicsList->adjustSize();
-        updateHistory();
-        updateTopicFormat();
-        mCurrentWindowSize = _sender->getSize();
+           
+            updateHighlightAndCaptionList();
+        else
+        {
+            mTopicsList->adjustSize();
+            updateHistory();
+            updateTopicFormat();
+            mCurrentWindowSize = _sender->getSize();
+        }
     }
 
     void DialogueWindow::onMouseWheel(MyGUI::Widget* _sender, int _rel)
@@ -380,16 +445,23 @@ namespace MWGui
     {
         if (exit())
         {
+            mGoodbyeButton->setStateSelected(false);
+            mTopicHighlight = 0;
+            mCurrentTopic = "";
             MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Dialogue);
         }
     }
 
     void DialogueWindow::onSelectListItem(const std::string& topic, int id)
     {
+        mCurrentTopic = topic;
         MWBase::DialogueManager* dialogueManager = MWBase::Environment::get().getDialogueManager();
 
         if (mGoodbye || dialogueManager->isInChoice())
             return;
+
+        if (mGoodbyeButton->getEnabled())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
 
         const MWWorld::Store<ESM::GameSetting>& gmst
             = MWBase::Environment::get().getESMStore()->get<ESM::GameSetting>();
@@ -409,11 +481,11 @@ namespace MWGui
             && topic != sRepair)
         {
             onTopicActivated(topic);
-            if (mGoodbyeButton->getEnabled())
-                MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
         }
         else if (topic == sPersuasion)
+        {
             mPersuasionDialog.setVisible(true);
+        }
         else if (topic == sCompanionShare)
             MWBase::Environment::get().getWindowManager()->pushGuiMode(GM_Companion, mPtr);
         else if (!dialogueManager->checkServiceRefused(mCallback.get()))
@@ -458,6 +530,9 @@ namespace MWGui
             // The history is not reset here
             mKeywords.clear();
             mTopicsList->clear();
+            mTopicWidgets.clear();
+            mTopicHighlight = 0;
+            mCurrentTopic = "";
             for (auto& link : mLinks)
                 mDeleteLater.push_back(
                     std::move(link)); // Links are not deleted right away to prevent issues with event handlers
@@ -513,12 +588,29 @@ namespace MWGui
         mDeleteLater.clear();
     }
 
+    void DialogueWindow::onOpen()
+    {
+        
+    }
+
     void DialogueWindow::onClose()
     {
         if (MWBase::Environment::get().getWindowManager()->containsMode(GM_Dialogue))
             return;
         // Reset history
         mHistoryContents.clear();
+    }
+
+    ControlSet DialogueWindow::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Say"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
+        };
     }
 
     bool DialogueWindow::setKeywords(const std::list<std::string>& keyWords)
@@ -593,6 +685,53 @@ namespace MWGui
         updateHistory();
         // The topics list has been regenerated so topic formatting needs to be updated
         updateTopicFormat();
+
+        updateHighlightAndCaptionList();
+    }
+
+    void DialogueWindow::updateHighlightAndCaptionList()
+    {
+        // Find last selected topic for gamepad highlight.
+        mTopicWidgets.clear();
+        std::string topicName;
+        for (unsigned int i = 0; i < mTopicsList->getItemCount(); ++i)
+        {
+            topicName = mTopicsList->getItemNameAt(i);
+            if (!topicName.empty())
+            {
+                mTopicWidgets.push_back(mTopicsList->getItemWidget(topicName));
+                auto selectedTopic = mCurrentTopic;
+                auto currentTopic = topicName;
+
+                // some topics can start with a lower case, which OpenMW will order correctly based on alphabetical order,
+                // but std::string::compare will not, as it uses ASCII order (all uppercase before lowercase)
+                std::transform(selectedTopic.begin(), selectedTopic.end(), selectedTopic.begin(),
+                    [](unsigned char c) { return std::tolower(c); });
+                std::transform(currentTopic.begin(), currentTopic.end(), currentTopic.begin(),
+                    [](unsigned char c) { return std::tolower(c); });
+
+                // if the topic goes away, we will select the topic just before, in alphabetical order
+                if (selectedTopic.compare(currentTopic) >= 0)
+                    mTopicHighlight = mTopicWidgets.size() - 1;
+            }
+        }
+
+        if (mTopicHighlight > mTopicWidgets.size() - 1)
+            mTopicHighlight = mTopicWidgets.empty() ? 0 : mTopicWidgets.size() - 1;
+
+        if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+            widgetHighlight(nullptr); // Choices aren't widgets so can't be highlighted.
+        else if (mGoodbye || mTopicWidgets.empty())
+        {
+            widgetHighlight(mGoodbyeButton);
+            mGoodbyeButton->setStateSelected(true);
+        }
+        else if (!mTopicWidgets.empty())
+        {
+            widgetHighlight(mTopicWidgets[mTopicHighlight]);
+            if (mGoodbyeButton->getStateSelected())
+                mGoodbyeButton->setStateSelected(false);
+        }
     }
 
     void DialogueWindow::updateHistory(bool scrollbar)
@@ -619,6 +758,7 @@ namespace MWGui
         // choices
         const TextColours& textColours = MWBase::Environment::get().getWindowManager()->getTextColours();
         mChoices = MWBase::Environment::get().getDialogueManager()->getChoices();
+        int choiceCounter = mChoiceToRealVal = 1;
         for (std::pair<std::string, int>& choice : mChoices)
         {
             auto link = std::make_unique<Choice>(choice.second);
@@ -627,9 +767,17 @@ namespace MWGui
             mLinks.push_back(std::move(link));
 
             typesetter->lineBreak();
+            MyGUI::Colour answerColour = textColours.answer;
+            if (mChoiceHighlight == choiceCounter && MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            {
+                mChoiceToRealVal = choice.second; // Since choices can have variable values, manually count the available choices.
+                answerColour = textColours.answerOver;
+            }
+
             BookTypesetter::Style* questionStyle = typesetter->createHotStyle(
-                body, textColours.answer, textColours.answerOver, textColours.answerPressed, interactiveId);
+                body, answerColour, textColours.answerOver, textColours.answerPressed, interactiveId);
             typesetter->write(questionStyle, to_utf8_span(choice.first));
+            ++choiceCounter;
         }
 
         mGoodbye = MWBase::Environment::get().getDialogueManager()->isGoodbye();
@@ -671,12 +819,7 @@ namespace MWGui
             onScrollbarMoved(mScrollBar, 0);
         }
 
-        bool goodbyeEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() || mGoodbye;
-        bool goodbyeWasEnabled = mGoodbyeButton->getEnabled();
-        mGoodbyeButton->setEnabled(goodbyeEnabled);
-        if (goodbyeEnabled && !goodbyeWasEnabled)
-            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mGoodbyeButton);
-
+        mGoodbyeButton->setEnabled(true); // Goodbye should always be enabled. As in the original, it simply won't work during choices. This makes gamepads work too.
         bool topicsEnabled = !MWBase::Environment::get().getDialogueManager()->isInChoice() && !mGoodbye;
         mTopicsList->setEnabled(topicsEnabled);
     }
@@ -697,6 +840,7 @@ namespace MWGui
 
     void DialogueWindow::onChoiceActivated(int id)
     {
+        mChoiceHighlight = 1;
         if (mGoodbye)
         {
             onGoodbyeActivated();
@@ -767,6 +911,96 @@ namespace MWGui
         MWBase::Environment::get().getWindowManager()->removeGuiMode(GM_Dialogue);
     }
 
+    void DialogueWindow::onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        if (character != 1)
+        {
+            if (key == MyGUI::KeyCode::Return)
+            {
+                onSelectListItem(mTopicWidgets[mTopicHighlight]->getCaption(), *mTopicWidgets[mTopicHighlight]->getUserData<int>());
+                MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+            }
+            return;
+        }
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true); // Set to false if not consumed.
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_B)
+            onByeClicked(mGoodbyeButton);
+        else if (action == MWInput::MA_A)
+        {
+            if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+                onChoiceActivated(mChoiceToRealVal);
+            else if (mGoodbye || mGoodbyeButton->getStateSelected() || mTopicWidgets.empty())
+                onByeClicked(mGoodbyeButton);
+            else if (mTopicHighlight < mTopicWidgets.size())
+            {
+                onSelectListItem(mTopicWidgets[mTopicHighlight]->getCaption(), *mTopicWidgets[mTopicHighlight]->getUserData<int>());
+                mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption()); // Update scroll only when the gamepad is used.
+                widgetHighlight(mTopicWidgets[mTopicHighlight]);
+            }
+        }
+        else if (action == MWInput::MA_LTrigger)
+            DialogueWindow::onMouseWheel(mScrollBar, 40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action)));
+        else if (action == MWInput::MA_RTrigger)
+            DialogueWindow::onMouseWheel(mScrollBar, -40.f * MWBase::Environment::get().getInputManager()->getAxisRatio(static_cast<int>(action)));
+        else if (action == MWInput::MA_DPadUp)
+        {
+            if (mGoodbye)
+                return;
+            if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+            {
+                if (mChoiceHighlight > 1)
+                    --mChoiceHighlight;
+
+                updateHistory(); // Update regardless, this highlights a choice for gamepad.
+            }
+            else if (!mTopicWidgets.empty())
+            {
+                if (mGoodbyeButton->getStateSelected())
+                {
+                    mGoodbyeButton->setStateSelected(false);
+                    mTopicHighlight = mTopicWidgets.size() - 1;
+                    widgetHighlight(mTopicWidgets[mTopicHighlight]);
+                }
+                else if (mTopicHighlight)
+                {
+                    --mTopicHighlight;
+                    mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+                    widgetHighlight(mTopicWidgets[mTopicHighlight]);
+                }
+            }
+        }
+        else if (action == MWInput::MA_DPadDown)
+        {
+            if (mGoodbye)
+                return;
+            if (MWBase::Environment::get().getDialogueManager()->isInChoice())
+            {
+                if ((unsigned long)mChoiceHighlight < MWBase::Environment::get().getDialogueManager()->getChoices().size())
+                    ++mChoiceHighlight;
+
+                updateHistory(); // Update regardless, this highlights a choice for gamepad.
+            }
+            else if (!mTopicWidgets.empty() && mTopicHighlight < mTopicWidgets.size() - 1)
+            {
+                ++mTopicHighlight;
+                mTopicsList->scrollToTarget(mTopicWidgets[mTopicHighlight]->getCaption());
+                widgetHighlight(mTopicWidgets[mTopicHighlight]);
+            }
+            else
+            {
+                mGoodbyeButton->setStateSelected(true);
+                widgetHighlight(mGoodbyeButton);
+            }
+        }
+        else if (action == MWInput::MA_DPadLeft || action == MWInput::MA_DPadRight)
+            // consume the key press so we don't change focus
+            return;
+        else
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+
     void DialogueWindow::onFrame(float dt)
     {
         checkReferenceAvailable();
@@ -820,6 +1054,11 @@ namespace MWGui
 
         return !actor.getClass().getScript(actor).empty()
             && actor.getRefData().getLocals().getIntVar(actor.getClass().getScript(actor), "companion");
+    }
+
+    MyGUI::IntCoord DialogueWindow::highlightOffset()
+    {
+        return MyGUI::IntCoord(-1, -1, 4, 3);
     }
 
 }

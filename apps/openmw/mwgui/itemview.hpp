@@ -31,6 +31,13 @@ namespace MWGui
 
         void resetScrollBars();
 
+        int getItemCount();
+
+        // Gamepad control functions:
+        void highlightItem(int index);
+        MyGUI::Widget* getHighlightWidget();
+        int getRowCount();
+
     private:
         void initialiseOverride() override;
 
@@ -42,9 +49,14 @@ namespace MWGui
         void onSelectedItem(MyGUI::Widget* sender);
         void onSelectedBackground(MyGUI::Widget* sender);
         void onMouseWheelMoved(MyGUI::Widget* _sender, int _rel);
+        void scrollToTarget(int index);
 
         std::unique_ptr<ItemModel> mModel;
         MyGUI::ScrollView* mScrollView;
+        int mRows;
+
+        int mHighlight;
+        std::vector<MyGUI::Widget*> mItemWidgets;
     };
 
 }

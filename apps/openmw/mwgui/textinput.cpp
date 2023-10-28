@@ -1,12 +1,15 @@
 #include "textinput.hpp"
 
 #include "../mwbase/environment.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwbase/windowmanager.hpp"
 
 #include <MyGUI_Button.h>
 #include <MyGUI_EditBox.h>
 
 #include "ustring.hpp"
+
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -20,12 +23,14 @@ namespace MWGui
         getWidget(mTextEdit, "TextEdit");
         mTextEdit->eventEditSelectAccept += newDelegate(this, &TextInputDialog::onTextAccepted);
 
-        MyGUI::Button* okButton;
-        getWidget(okButton, "OKButton");
-        okButton->eventMouseButtonClick += MyGUI::newDelegate(this, &TextInputDialog::onOkClicked);
+        getWidget(mOkButton, "OKButton");
+        mOkButton->eventMouseButtonClick += MyGUI::newDelegate(this, &TextInputDialog::onOkClicked);
+        mOkButton->eventKeyButtonPressed += MyGUI::newDelegate(this, &TextInputDialog::onKeyButtonPressed);
 
         // Make sure the edit box has focus
         MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
+
+        mUsesHighlightOffset = true;
     }
 
     void TextInputDialog::setNextButtonShow(bool shown)
@@ -49,8 +54,13 @@ namespace MWGui
     void TextInputDialog::onOpen()
     {
         WindowModal::onOpen();
-        // Make sure the edit box has focus
-        MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
+        // Make sure the edit box has focus unless we're using the joystick
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
+        else 
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mTextEdit);
+
+        widgetHighlight(mTextEdit);
     }
 
     // widget controls
@@ -82,6 +92,40 @@ namespace MWGui
     void TextInputDialog::setTextInput(const std::string& text)
     {
         mTextEdit->setCaption(text);
+    }
+
+    void TextInputDialog::onFrame(float dt)
+    {
+        // we never want to focus the name edit field when using the controller
+        if (MWBase::Environment::get().getInputManager()->joystickLastUsed() &&
+                !MWBase::Environment::get().getWindowManager()->virtualKeyboardVisible())
+            MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mOkButton);
+    }
+
+    void TextInputDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        if (action == MWInput::MA_A) // open virtual keyboard
+            MWBase::Environment::get().getWindowManager()->startVirtualKeyboard(mTextEdit, [this] { onOkClicked(mOkButton); });
+        else if (action == MWInput::MA_X) // accept input
+            onOkClicked(mOkButton);
+    }
+    
+    ControlSet TextInputDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "Select"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_X, "Accept"},
+            }
+        };
     }
 
 }

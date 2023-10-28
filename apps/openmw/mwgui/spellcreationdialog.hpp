@@ -42,6 +42,10 @@ namespace MWGui
         EventHandle_Effect eventEffectRemoved;
 
     protected:
+        MyGUI::IntCoord highlightOffset() override { return MyGUI::IntCoord(MyGUI::IntPoint(-4, -4), MyGUI::IntSize(8, 8)); };
+
+        ControlSet getControlLegendContents() override;
+
         MyGUI::Button* mCancelButton;
         MyGUI::Button* mOkButton;
         MyGUI::Button* mDeleteButton;
@@ -84,12 +88,29 @@ namespace MWGui
         void updateBoxes();
 
     protected:
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
         ESM::ENAMstruct mEffect;
         ESM::ENAMstruct mOldEffect;
 
         const ESM::MagicEffect* mMagicEffect;
 
         bool mConstantEffect;
+    private:
+        void changeHighlight(int amount);
+        void changeSlider(int amount);
+
+        // returns true if the targeted widget was visible
+        bool widgetHighlight(int index);
+
+        MyGUI::Widget* getHighlightedWidget();
+
+        // 0: Range
+        // 1,2: Magnitude
+        // 3: Duration
+        // 4: Area
+        unsigned int mHighlight;
     };
 
     class EffectEditorBase
@@ -154,7 +175,7 @@ namespace MWGui
         void onOpen() override;
         void clear() override { resetReference(); }
 
-        void onFrame(float dt) override { checkReferenceAvailable(); }
+        void onFrame(float dt) override;
 
         void setPtr(const MWWorld::Ptr& actor) override;
 
@@ -168,6 +189,20 @@ namespace MWGui
         void onAccept(MyGUI::EditBox* sender);
 
         void notifyEffectsChanged() override;
+
+        ControlSet getControlLegendContents() override;
+
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
+        MyGUI::IntCoord highlightOffset() override;
+
+        void widgetHighlight(unsigned int index);
+        // divided into three sets:
+        // 0: the spell name
+        // 1 to n: the available spell effects
+        // n+1 to m: the spell effects added to the current spell
+        unsigned int mHighlight;
+
 
         MyGUI::EditBox* mNameEdit;
         MyGUI::TextBox* mMagickaCost;

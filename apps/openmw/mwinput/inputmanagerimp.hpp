@@ -3,6 +3,8 @@
 
 #include <memory>
 
+#include <vector>
+
 #include <osg/ref_ptr>
 #include <osgViewer/ViewerEventHandlers>
 
@@ -68,6 +70,7 @@ namespace MWInput
 
         void setDragDrop(bool dragDrop) override;
         void setGamepadGuiCursorEnabled(bool enabled) override;
+        bool isGamepadGuiCursorEnabled() override;
 
         void toggleControlSwitch(std::string_view sw, bool value) override;
         bool getControlSwitch(std::string_view sw) override;
@@ -92,6 +95,7 @@ namespace MWInput
 
         void setJoystickLastUsed(bool enabled) override;
         bool joystickLastUsed() override;
+        float getAxisRatio(int action) override;
 
         int countSavedGameRecords() const override;
         void write(ESM::ESMWriter& writer, Loading::Listener& progress) override;
@@ -103,6 +107,11 @@ namespace MWInput
         void executeAction(int action) override;
 
         bool controlsDisabled() override { return mControlsDisabled; }
+
+        void registerGamepadControlChangeEvent(std::function<void(GameControl)> listener) override;
+        void fireGamepadControlChangeEvent(GameControl gameControlMode) override;
+
+
 
     private:
         void convertMousePosForMyGUI(int& x, int& y);
@@ -126,6 +135,8 @@ namespace MWInput
         std::unique_ptr<ControllerManager> mControllerManager;
         std::unique_ptr<SensorManager> mSensorManager;
         std::unique_ptr<GyroManager> mGyroManager;
+
+        std::vector< std::function<void(GameControl)> > mGameControlChangeListeners;
     };
 }
 #endif

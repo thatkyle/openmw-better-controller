@@ -37,6 +37,8 @@ namespace MWGui
         void updatePages();
         void clearPages();
 
+            ControlSet getControlLegendContents() override;
+
     private:
         typedef std::pair<int, int> Page;
         typedef std::vector<Page> Pages;

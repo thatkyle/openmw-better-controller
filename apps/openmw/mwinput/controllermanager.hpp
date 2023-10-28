@@ -7,6 +7,7 @@
 
 #include <components/sdlutil/events.hpp>
 #include <components/settings/settings.hpp>
+#include "actions.hpp"
 
 namespace MWInput
 {
@@ -34,7 +35,11 @@ namespace MWInput
         void touchpadPressed(int deviceId, const SDLUtil::TouchEvent& arg) override;
         void touchpadReleased(int deviceId, const SDLUtil::TouchEvent& arg) override;
 
-        void setJoystickLastUsed(bool enabled) { mJoystickLastUsed = enabled; }
+        void touchpadMoved(int deviceId, const SDLUtil::TouchEvent& arg) override;
+        void touchpadPressed(int deviceId, const SDLUtil::TouchEvent& arg) override;
+        void touchpadReleased(int deviceId, const SDLUtil::TouchEvent& arg) override;
+
+        void setJoystickLastUsed(bool enabled);
         bool joystickLastUsed() const { return mJoystickLastUsed; }
 
         void setGuiCursorEnabled(bool enabled) { mGuiCursorEnabled = enabled; }
@@ -48,10 +53,15 @@ namespace MWInput
         bool isGyroAvailable() const;
         std::array<float, 3> getGyroValues() const;
 
+        float getAxisRatio(int action);
+
     private:
         // Return true if GUI consumes input.
         bool gamepadToGuiControl(const SDL_ControllerButtonEvent& arg);
         bool gamepadToGuiControl(const SDL_ControllerAxisEvent& arg);
+
+        void processCurrentJoystickRatiosForGui();
+        void resetJoystickStatesForGui(MenuAction dpadDirection);
 
         void enableGyroSensor();
 
@@ -62,6 +72,16 @@ namespace MWInput
         bool mGamepadGuiCursorEnabled;
         bool mGuiCursorEnabled;
         bool mJoystickLastUsed;
+        bool mGamepadPreviewMode;
+        float mRTriggerPressureVal;
+        float mLTriggerPressureVal;
+        int mLStickXAxisVal;
+        int mLStickYAxisVal;
+        int mGamepadZoom;
+        bool mLStickPressedLeftInGui;
+        bool mLStickPressedRightInGui;
+        bool mLStickPressedUpInGui;
+        bool mLStickPressedDownInGui;
     };
 }
 #endif

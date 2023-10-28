@@ -1,5 +1,7 @@
 #include "birth.hpp"
 
+#include <algorithm>
+
 #include <MyGUI_Gui.h>
 #include <MyGUI_ImageBox.h>
 #include <MyGUI_ListBox.h>
@@ -20,6 +22,8 @@
 
 #include "ustring.hpp"
 #include "widgets.hpp"
+#include "controllegend.hpp"
+#include "windownavigator.hpp"
 
 namespace
 {
@@ -49,6 +53,7 @@ namespace MWGui
         mBirthList->setScrollVisible(true);
         mBirthList->eventListSelectAccept += MyGUI::newDelegate(this, &BirthDialog::onAccept);
         mBirthList->eventListChangePosition += MyGUI::newDelegate(this, &BirthDialog::onSelectBirth);
+        mBirthList->eventKeyButtonPressed += MyGUI::newDelegate(this, &BirthDialog::onKeyButtonPressed);
 
         MyGUI::Button* backButton;
         getWidget(backButton, "BackButton");
@@ -88,6 +93,20 @@ namespace MWGui
 
         if (!signId.empty())
             setBirthId(signId);
+
+        mWindowNavigator = WindowNavigator(mBirthList);
+    }
+
+    ControlSet BirthDialog::getControlLegendContents()
+    {
+        return {
+            {
+                MenuControl{MWInput::MenuAction::MA_A, "OK"}
+            },
+            {
+                MenuControl{MWInput::MenuAction::MA_B, "Back"}
+            }
+        };
     }
 
     void BirthDialog::setBirthId(const ESM::RefId& birthId)
@@ -270,4 +289,29 @@ namespace MWGui
         mSpellArea->setVisibleVScroll(true);
         mSpellArea->setViewOffset(MyGUI::IntPoint(0, 0));
     }
+
+    void BirthDialog::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+    {
+        // Gamepad controls only.
+        if (character != 1)
+            return;
+
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator.processInput(action))
+            return;
+
+        switch (action)
+        {
+        case MWInput::MA_B:
+            BirthDialog::onBackClicked(sender);
+            break;
+        default:
+            MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+            break;
+        }
+    }
+
 }

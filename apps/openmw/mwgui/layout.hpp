@@ -36,6 +36,7 @@ namespace MWGui
         }
 
         MyGUI::Widget* getWidget(std::string_view name);
+    MyGUI::Widget* getWidgetByFullName(const std::string& _name);
 
         template <typename T>
         void getWidget(T*& _widget, std::string_view _name)
@@ -66,6 +67,8 @@ namespace MWGui
 
         // NOTE: this assume that mMainWidget is of type Window.
         void setTitle(std::string_view title);
+
+    bool isWidgetInLayout(const MyGUI::Widget* target);
 
         MyGUI::Widget* mMainWidget;
 

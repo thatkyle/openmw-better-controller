@@ -26,6 +26,7 @@ namespace MWGui
         void setPtr(const MWWorld::Ptr& actor, int startOffset);
 
         void onFrame(float dt) override { checkReferenceAvailable(); }
+            void onFocusLost(MyGUI::Widget* sender, MyGUI::Widget* newFocus);
         void clear() override { resetReference(); }
 
         void onResChange(int, int) override { center(); }
@@ -53,8 +54,17 @@ namespace MWGui
 
         bool playerHasSpell(const ESM::RefId& id);
 
+            // Gamepad controls:
+            void onKeyButtonPressed(MyGUI::Widget *sender, MyGUI::KeyCode key, MyGUI::Char character);
+            std::vector<MyGUI::Widget*> mSpellWidgets;
+            unsigned int mSpellHighlight;
+            ControlSet getControlLegendContents() override;
+
+
     private:
         static bool sortSpells(const ESM::Spell* left, const ESM::Spell* right);
+
+            void scrollToTarget();
     };
 }
 

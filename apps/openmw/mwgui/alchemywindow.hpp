@@ -20,6 +20,7 @@ namespace MWGui
     class ItemWidget;
     class InventoryItemModel;
     class SortFilterItemModel;
+    class WindowNavigator;
 
     class AlchemyWindow : public WindowBase
     {
@@ -28,9 +29,16 @@ namespace MWGui
 
         void onOpen() override;
 
+        void onFrame(float dt) override;
+
         void onResChange(int, int) override { center(); }
 
         std::string_view getWindowIdForLua() const override { return "Alchemy"; }
+
+    protected:
+        ControlSet getControlLegendContents() override;
+
+        MyGUI::IntCoord highlightOffset() override;
 
     private:
         static const float sCountChangeInitialPause; // in seconds
@@ -90,10 +98,14 @@ namespace MWGui
 
         void update();
 
+        void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
+
         std::unique_ptr<MWMechanics::Alchemy> mAlchemy;
 
         std::vector<ItemWidget*> mApparatus;
         std::vector<ItemWidget*> mIngredients;
+
+        std::unique_ptr<WindowNavigator> mWindowNavigator;
     };
 }
 

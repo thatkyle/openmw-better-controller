@@ -2,6 +2,7 @@
 
 #include <iomanip>
 #include <sstream>
+#include <regex>
 
 #include <MyGUI_ComboBox.h>
 #include <MyGUI_ImageBox.h>
@@ -30,12 +31,14 @@
 #include "../mwbase/windowmanager.hpp"
 #include "../mwbase/world.hpp"
 #include "../mwworld/datetimemanager.hpp"
+#include "../mwbase/inputmanager.hpp"
 #include "../mwworld/esmstore.hpp"
 
 #include "../mwstate/character.hpp"
 
 #include "confirmationdialog.hpp"
 #include "ustring.hpp"
+#include "controllegend.hpp"
 
 namespace MWGui
 {
@@ -148,7 +151,7 @@ namespace MWGui
         WindowModal::onOpen();
 
         mSaveNameEdit->setCaption({});
-        if (mSaving)
+        if (mSaving && MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled())
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveNameEdit);
         else
             MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mSaveList);
@@ -218,6 +221,35 @@ namespace MWGui
             mCharacterSelection->setCaptionWithReplacing("#{OMWEngine:SelectCharacter}");
 
         fillSaveList();
+        mWindowNavigator = WindowNavigator(mSaveList);
+    }
+
+    ControlSet SaveGameDialog::getControlLegendContents()
+    {
+        if (mSaving)
+        {
+            return {
+                {
+                    MenuControl{MWInput::MenuAction::MA_A, "Save"},
+                    MenuControl{MWInput::MenuAction::MA_Y, "New Save"},
+                },
+                {
+                    MenuControl{MWInput::MenuAction::MA_B, "Back"}
+                }
+            };
+        }
+        else
+        {
+            return {
+                {
+                    MenuControl{MWInput::MenuAction::MA_A, "Load Game"},
+                    MenuControl{MWInput::MenuAction::MA_X, "Delete Game"}
+                },
+                {
+                    MenuControl{MWInput::MenuAction::MA_B, "Cancel"}
+                }
+            };
+        }
     }
 
     void SaveGameDialog::setLoadOrSave(bool load)
@@ -236,6 +268,7 @@ namespace MWGui
         }
 
         center();
+        
     }
 
     void SaveGameDialog::onCancelButtonClicked(MyGUI::Widget* sender)
@@ -313,8 +346,64 @@ namespace MWGui
 
     void SaveGameDialog::onKeyButtonPressed(MyGUI::Widget* _sender, MyGUI::KeyCode key, MyGUI::Char character)
     {
-        if (key == MyGUI::KeyCode::Delete && mCurrentSlot)
-            confirmDeleteSave();
+        if (character != 1)
+        {
+            if (key == MyGUI::KeyCode::Delete && mCurrentSlot)
+                confirmDeleteSave();
+
+            return;
+        }
+
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(true); // Set to false if not consumed.
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+        if (mWindowNavigator.processInput(action))
+            return;
+
+        if (action == MWInput::MA_B)
+        {
+            onCancelButtonClicked(_sender);
+        }
+        else if (action == MWInput::MA_X && !mSaving)
+        {
+            onDeleteButtonClicked(_sender);
+        }
+        else if (action == MWInput::MA_Y && mSaving)
+        {   
+            // set the current slot to null, so that we start a new save
+            mCurrentSlot = nullptr;
+
+            auto t = std::time(nullptr);
+            auto tm = *std::localtime(&t);
+
+            // set the caption of the save to the current date/time
+            std::stringstream timeStream;
+            timeStream << std::put_time(&tm, "%Y/%m/%d at %H:%M:%S");
+            mSaveNameEdit->setCaption(timeStream.str());
+
+            // open the virtual keyboard to allow the user to change the caption, then save the game if they hit start
+            MWBase::Environment::get().getWindowManager()->startVirtualKeyboard(mSaveNameEdit, [this, _sender] { onOkButtonClicked(_sender); });
+        }
+        else if (action == MWInput::MA_LTrigger)
+        {
+            int index = mCharacterSelection->getIndexSelected();
+            if (mCharacterSelection->getItemCount() > 1 && index > 0)
+            {
+                mCharacterSelection->setIndexSelected(index - 1);
+                onCharacterAccept(mCharacterSelection, index - 1);
+            }
+        }
+        else if (action == MWInput::MA_RTrigger)
+        {
+            int index = mCharacterSelection->getIndexSelected();
+            if (mCharacterSelection->getItemCount() > 1 && index < mCharacterSelection->getItemCount() - 1)
+            {
+                mCharacterSelection->setIndexSelected(index + 1);
+                onCharacterAccept(mCharacterSelection, index + 1);
+            }
+        }
+        else
+             MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
     }
 
     void SaveGameDialog::onOkButtonClicked(MyGUI::Widget* sender)
@@ -355,8 +444,9 @@ namespace MWGui
         {
             mSaveList->addItem(it->mProfile.mDescription);
         }
+
         // When loading, Auto-select the first save, if there is one
-        if (mSaveList->getItemCount() && !mSaving)
+        if (mSaveList->getItemCount() && (!mSaving || !MWBase::Environment::get().getInputManager()->isGamepadGuiCursorEnabled()))
         {
             mSaveList->setIndexSelected(0);
             onSlotSelected(mSaveList, 0);
@@ -395,7 +485,23 @@ namespace MWGui
         }
 
         if (mSaving)
+        {
             mSaveNameEdit->setCaption(sender->getItemNameAt(pos));
+
+            // if the selected save is dated in the same format as a new save created via the Gamepad, we can
+            // overwrite the date/time with the current date/time
+            if (std::regex_match(mSaveNameEdit->getCaption().asUTF8(), std::regex("^[0-9]{4,}/[0-9]{2}/[0-9]{2} at [0-9]{2}:[0-9]{2}:[0-9]{2}$")))
+            {
+                auto t = std::time(nullptr);
+                auto tm = *std::localtime(&t);
+
+                // set the caption of the save to the current date/time
+                std::stringstream timeStream;
+                timeStream << std::put_time(&tm, "%Y/%m/%d at %H:%M:%S");
+                mSaveNameEdit->setCaption(timeStream.str());
+            }
+        }
+            
 
         mCurrentSlot = nullptr;
         unsigned int i = 0;

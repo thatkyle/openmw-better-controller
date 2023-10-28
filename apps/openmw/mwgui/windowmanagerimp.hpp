@@ -116,7 +116,11 @@ namespace MWGui
     class DebugWindow;
     class PostProcessorHud;
     class JailScreen;
-    class KeyboardNavigation;
+    class ControlLegend;
+  class VirtualKeyboard;
+  class KeyboardNavigation;
+
+  struct MenuControl;
 
     class WindowManager : public MWBase::WindowManager
     {
@@ -182,6 +186,7 @@ namespace MWGui
         MWGui::ConfirmationDialog* getConfirmationDialog() override;
         MWGui::TradeWindow* getTradeWindow() override;
         MWGui::PostProcessorHud* getPostProcessorHud() override;
+    MWGui::ContainerWindow* getContainerWindow() override;
 
         /// Make the player use an item, while updating GUI state accordingly
         void useItem(const MWWorld::Ptr& item, bool bypassBeastRestrictions = false) override;
@@ -202,6 +207,8 @@ namespace MWGui
 
         void setFocusObject(const MWWorld::Ptr& focus) override;
         void setFocusObjectScreenCoords(float min_x, float min_y, float max_x, float max_y) override;
+
+    void setGamepadGuiFocusWidget(MyGUI::Widget* target, Layout* layout) override;
 
         void getMousePosition(int& x, int& y) override;
         void getMousePosition(float& x, float& y) override;
@@ -287,6 +294,10 @@ namespace MWGui
 
         void processChangedSettings(const Settings::CategorySettingVector& changed) override;
 
+    bool processInventoryTrigger(MWInput::MenuAction action,
+                                 MWGui::GuiMode caller,
+                                 MWGui::GuiWindow window = MWGui::GuiWindow::GW_None) override;
+
         void windowVisibilityChange(bool visible) override;
         void windowResized(int x, int y) override;
         void windowClosed() override;
@@ -320,6 +331,7 @@ namespace MWGui
         void onSoulgemDialogButtonPressed(int button);
 
         bool getCursorVisible() override;
+    void toggleSelectionHighlights(bool toggle) override;
 
         /// Call when mouse cursor or buttons are used.
         void setCursorActive(bool active) override;
@@ -380,11 +392,22 @@ namespace MWGui
 
         bool injectKeyPress(MyGUI::KeyCode key, unsigned int text, bool repeat = false) override;
         bool injectKeyRelease(MyGUI::KeyCode key) override;
+    void consumeKeyPress(bool consume = true) override;
 
         const std::string& getVersionDescription() const override;
 
         void onDeleteCustomData(const MWWorld::Ptr& ptr) override;
         void forceLootMode(const MWWorld::Ptr& ptr) override;
+
+    void setMenuControls(ControlSet& controlSet) override;
+    void clearMenuControls() override;
+
+    void setHighlight(MyGUI::Widget* target);
+
+    void startVirtualKeyboard(MyGUI::EditBox* target) override;
+    void startVirtualKeyboard(MyGUI::EditBox* target, const std::function<void()> onAccept) override;
+    bool virtualKeyboardVisible() override;
+
 
         void asyncPrepareSaveMap() override;
 
@@ -455,6 +478,9 @@ namespace MWGui
         PostProcessorHud* mPostProcessorHud;
         JailScreen* mJailScreen;
         ContainerWindow* mContainerWindow;
+        ControlLegend* mControlLegend;
+        VirtualKeyboard* mVirtualKeyboard;
+        ToolTips* mGamepadToolTips;
 
         std::vector<std::unique_ptr<WindowBase>> mWindows;
 
@@ -466,6 +492,8 @@ namespace MWGui
         std::unique_ptr<CharacterCreation> mCharGen;
 
         MyGUI::Widget* mInputBlocker;
+
+    MyGUI::ImageBox* mGamepadHighlight;
 
         bool mHudEnabled;
         bool mCursorVisible;
@@ -579,6 +607,8 @@ namespace MWGui
         void updatePinnedWindows();
 
         void enableScene(bool enable);
+    bool noRepeatKeyTest(MyGUI::KeyCode key, unsigned int text, bool repeat);
+    bool mKeyPressConsumed;
 
         void handleScheduledMessageBoxes();
 
@@ -588,7 +618,9 @@ namespace MWGui
         uint32_t getCullMask() override;
 
         Files::ConfigurationManager& mCfgMgr;
-    };
+      
+    GuiWindow mLastInventoryFocus;
+  };
 }
 
 #endif

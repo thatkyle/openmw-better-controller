@@ -26,7 +26,8 @@ namespace MWGui
 
     Recharge::Recharge()
         : WindowBase("openmw_recharge_dialog.layout")
-    {
+        , mGamepadSelected(0)
+{
         getWidget(mBox, "Box");
         getWidget(mGemBox, "GemBox");
         getWidget(mGemIcon, "GemIcon");
@@ -35,6 +36,7 @@ namespace MWGui
 
         mCancelButton->eventMouseButtonClick += MyGUI::newDelegate(this, &Recharge::onCancel);
         mBox->eventItemClicked += MyGUI::newDelegate(this, &Recharge::onItemClicked);
+    mBox->eventKeyButtonPressed += MyGUI::newDelegate(this, &Recharge::onKeyButtonPressed);
 
         mBox->setDisplayMode(ItemChargeView::DisplayMode_EnchantmentCharge);
 
@@ -50,9 +52,17 @@ namespace MWGui
         model->setFilter(SortFilterItemModel::Filter_OnlyRechargable);
         mBox->setModel(model);
 
+    mGamepadSelected = 0;
+    MWBase::Environment::get().getWindowManager()->setKeyFocusWidget(mBox);
+
         // Reset scrollbars
         mBox->resetScrollbars();
     }
+
+void Recharge::onClose()
+{
+    MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(nullptr, nullptr);
+}
 
     void Recharge::setPtr(const MWWorld::Ptr& item)
     {
@@ -64,7 +74,9 @@ namespace MWGui
         mGemIcon->setUserData(MWWorld::Ptr(item));
 
         updateView();
-    }
+    
+    gamepadHighlightSelected();
+}
 
     void Recharge::updateView()
     {
@@ -135,5 +147,71 @@ namespace MWGui
 
         updateView();
     }
+
+
+
+void Recharge::onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character)
+{
+    if (character != 1) // Gamepad control.
+        return;
+
+    int repairCount = mBox->getItemCount();
+
+    if (repairCount == 0)
+        return;
+
+    MWBase::Environment::get().getWindowManager()->consumeKeyPress(true);
+    MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+
+    if (action == MWInput::MenuAction::MA_DPadDown)
+    {
+        if (mGamepadSelected < repairCount - 1)
+        {
+            mGamepadSelected++;
+            gamepadHighlightSelected();
+        }
+    }
+    else if (action == MWInput::MenuAction::MA_DPadUp)
+    {
+        if (mGamepadSelected > 0)
+        {
+            mGamepadSelected--;
+            gamepadHighlightSelected();
+        }
+    }
+    else if (action == MWInput::MenuAction::MA_A)
+    {
+        onItemClicked(nullptr, *mBox->getItemWidget(mGamepadSelected)->getUserData<MWWorld::Ptr>());
+
+        gamepadHighlightSelected();
+    }
+    else if (action == MWInput::MenuAction::MA_B)
+        onCancel(mCancelButton);
+    else
+    {
+        MWBase::Environment::get().getWindowManager()->consumeKeyPress(false);
+    }
+}
+
+void Recharge::gamepadHighlightSelected()
+{
+    int repairCount = mBox->getItemCount();
+
+    if (mGamepadSelected > repairCount - 1)
+        mGamepadSelected = repairCount - 1;
+    if (mGamepadSelected < 0)
+        mGamepadSelected = 0;
+
+    if (repairCount)
+    {
+        widgetHighlight(mBox->getItemWidget(mGamepadSelected));
+
+        MWBase::Environment::get().getWindowManager()->setGamepadGuiFocusWidget(mBox->getItemWidget(mGamepadSelected), this);
+    }
+    else
+    {
+        widgetHighlight(nullptr);
+    }
+}
 
 }

@@ -30,6 +30,8 @@ namespace MWGui
         void setTakeButtonShow(bool show);
         void onKeyButtonPressed(MyGUI::Widget* sender, MyGUI::KeyCode key, MyGUI::Char character);
 
+            ControlSet getControlLegendContents() override;
+
     private:
         Gui::ImageButton* mCloseButton;
         Gui::ImageButton* mTakeButton;

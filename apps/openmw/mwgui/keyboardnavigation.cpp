@@ -9,6 +9,9 @@
 
 #include "../mwbase/environment.hpp"
 #include "../mwbase/windowmanager.hpp"
+#include "../mwbase/inputmanager.hpp"
+
+#include "../mwinput/actions.hpp"
 
 namespace MWGui
 {
@@ -171,33 +174,56 @@ namespace MWGui
         if (!mEnabled)
             return false;
 
-        switch (key.getValue())
+    if (text == 1)  // Text is used to signal gamepad controls.
+    {
+        
+        MWInput::MenuAction action = static_cast<MWInput::MenuAction>(key.getValue());
+        switch (action)
         {
-            case MyGUI::KeyCode::ArrowLeft:
+            case MWInput::MA_DPadLeft:
                 return switchFocus(D_Left, false);
-            case MyGUI::KeyCode::ArrowRight:
+            case MWInput::MA_DPadRight:
                 return switchFocus(D_Right, false);
-            case MyGUI::KeyCode::ArrowUp:
+            case MWInput::MA_DPadUp:
                 return switchFocus(D_Up, false);
-            case MyGUI::KeyCode::ArrowDown:
+            case MWInput::MA_DPadDown:
                 return switchFocus(D_Down, false);
-            case MyGUI::KeyCode::Tab:
-                return switchFocus(MyGUI::InputManager::getInstance().isShiftPressed() ? D_Prev : D_Next, true);
-            case MyGUI::KeyCode::Return:
-            case MyGUI::KeyCode::NumpadEnter:
-            case MyGUI::KeyCode::Space:
-            {
-                // We should disable repeating for activation keys
-                MyGUI::InputManager::getInstance().injectKeyRelease(MyGUI::KeyCode::None);
-                if (repeat)
-                    return true;
-
+            case MWInput::MA_A:
                 return accept();
-            }
             default:
                 return false;
         }
     }
+    else
+    {
+        switch (key.getValue())
+        {
+        case MyGUI::KeyCode::ArrowLeft:
+            return switchFocus(D_Left, false);
+        case MyGUI::KeyCode::ArrowRight:
+            return switchFocus(D_Right, false);
+        case MyGUI::KeyCode::ArrowUp:
+            return switchFocus(D_Up, false);
+        case MyGUI::KeyCode::ArrowDown:
+            return switchFocus(D_Down, false);
+        case MyGUI::KeyCode::Tab:
+            return switchFocus(MyGUI::InputManager::getInstance().isShiftPressed() ? D_Prev : D_Next, true);
+        case MyGUI::KeyCode::Return:
+        case MyGUI::KeyCode::NumpadEnter:
+        case MyGUI::KeyCode::Space:
+        {
+            // We should disable repeating for activation keys
+            MyGUI::InputManager::getInstance().injectKeyRelease(MyGUI::KeyCode::None);
+            if (repeat)
+                return true;
+
+            return accept();
+        }
+        default:
+            return false;
+        }
+    }
+}
 
     bool KeyboardNavigation::switchFocus(int direction, bool wrap)
     {

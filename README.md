@@ -1,0 +1,1 @@
+# openmw-better-controller
